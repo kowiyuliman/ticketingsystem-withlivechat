@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {return view('welcome');});
 
-Route::get('/dashboard',[DashboardController::class,'index'])->middleware(['auth']);
+Route::get('/dashboard',[DashboardController::class,'index'])->middleware(['auth', 'admin']);
 
 //route user 
 Route::middleware(['auth'])->group(function(){
@@ -30,6 +30,8 @@ Route::middleware(['auth'])->group(function(){
 });
 
 Route::prefix('admin')->middleware(['auth'])->group(function(){
+
+    Route::get('/dashboard',[DashboardController::class,'index'])->middleware(['auth']);
 
     //route tiket
     Route::get('/tickets', [AdminTicketController::class,'index']);
@@ -79,8 +81,46 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
     Route::post('/ticket/mergeTicket/{id}', [AdminTicketController::class, 'mergeTicket']);
 
     // search ticket
-    Route::get('/ticket/searchTicket', [AdminTicketController::class, 'searchTicket']
-);
+    Route::get('/ticket/searchTicket', [AdminTicketController::class, 'searchTicket']);
+
+    // === INVENTORY ROUTES ===
+    Route::prefix('inventory')->middleware(['auth', 'admin'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('admin.inventory.index');
+        
+        // Assets CRUD
+        Route::get('/assets', [\App\Http\Controllers\Admin\InventoryController::class, 'assets'])->name('admin.inventory.assets');
+        Route::get('/assets/create', [\App\Http\Controllers\Admin\InventoryController::class, 'createAsset'])->name('admin.inventory.assets.create');
+        Route::post('/assets/store', [\App\Http\Controllers\Admin\InventoryController::class, 'storeAsset'])->name('admin.inventory.assets.store');
+        Route::get('/assets/edit/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'editAsset'])->name('admin.inventory.assets.edit');
+        Route::post('/assets/update/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'updateAsset'])->name('admin.inventory.assets.update');
+        Route::delete('/assets/delete/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'deleteAsset'])->name('admin.inventory.assets.delete');
+        Route::post('/assets/import', [\App\Http\Controllers\Admin\InventoryController::class, 'importAsset'])->name('admin.inventory.assets.import');
+        Route::get('/assets/download-template', [\App\Http\Controllers\Admin\InventoryController::class, 'downloadTemplate'])->name('admin.inventory.assets.download-template');
+
+        // Assignments
+        Route::get('/assignments', [\App\Http\Controllers\Admin\InventoryController::class, 'assignments'])->name('admin.inventory.assignments');
+        Route::get('/assignments/create', [\App\Http\Controllers\Admin\InventoryController::class, 'createAssignment'])->name('admin.inventory.assignments.create');
+        Route::post('/assignments/store', [\App\Http\Controllers\Admin\InventoryController::class, 'storeAssignment'])->name('admin.inventory.assignments.store');
+        Route::post('/assignments/return/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'returnAssignment'])->name('admin.inventory.assignments.return');
+
+        // Loans
+        Route::get('/loans', [\App\Http\Controllers\Admin\InventoryController::class, 'loans'])->name('admin.inventory.loans');
+        Route::get('/loans/create', [\App\Http\Controllers\Admin\InventoryController::class, 'createLoan'])->name('admin.inventory.loans.create');
+        Route::post('/loans/store', [\App\Http\Controllers\Admin\InventoryController::class, 'storeLoan'])->name('admin.inventory.loans.store');
+        Route::post('/loans/return/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'returnLoan'])->name('admin.inventory.loans.return');
+
+        // Repairs
+        Route::get('/repairs', [\App\Http\Controllers\Admin\InventoryController::class, 'repairs'])->name('admin.inventory.repairs');
+        Route::get('/repairs/create', [\App\Http\Controllers\Admin\InventoryController::class, 'createRepair'])->name('admin.inventory.repairs.create');
+        Route::post('/repairs/store', [\App\Http\Controllers\Admin\InventoryController::class, 'storeRepair'])->name('admin.inventory.repairs.store');
+        Route::post('/repairs/update/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'updateRepairStatus'])->name('admin.inventory.repairs.update');
+
+        // Damages
+        Route::get('/damages', [\App\Http\Controllers\Admin\InventoryController::class, 'damages'])->name('admin.inventory.damages');
+        Route::get('/damages/create', [\App\Http\Controllers\Admin\InventoryController::class, 'createDamage'])->name('admin.inventory.damages.create');
+        Route::post('/damages/store', [\App\Http\Controllers\Admin\InventoryController::class, 'storeDamage'])->name('admin.inventory.damages.store');
+        Route::post('/damages/update/{id}', [\App\Http\Controllers\Admin\InventoryController::class, 'updateDamage'])->name('admin.inventory.damages.update');
+    });
 });
 
 

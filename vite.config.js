@@ -9,14 +9,14 @@ export default defineConfig({
         }),
     ],
     server: {
-        host: '192.168.200.2',
+        host: '192.168.200.6',
         port: 5173,
         strictPort: true,
         cors: {
             origin: '*', //WAJIB TAMBAH INI
         },
         hmr: {
-            host: '192.168.200.2',
+            host: '192.168.200.6',
         },
     },
 });

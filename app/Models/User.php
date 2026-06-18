@@ -60,4 +60,8 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'leader_id');
     }
 
+    public function assignments()
+    {
+        return $this->hasMany(AssetAssignment::class);
+    }
 }

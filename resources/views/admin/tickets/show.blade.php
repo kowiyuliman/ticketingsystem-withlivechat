@@ -72,7 +72,7 @@
             </div>
             <div class="card-body">
                 <p>
-                    <b>Status:</b><br>
+                    <b>Status :</b><br>
                     @if($ticket->status == 'open')
                         <span class="badge bg-info">Open</span>
                     @elseif($ticket->status == 'on_progress')
@@ -89,10 +89,10 @@
                         </span>
                     @endif
                 </p>
-                <p><b>Kategori:</b><br>{{ ucfirst($ticket->kategori) }}</p>
-                <p><b>Assign To:</b><br>{{ $ticket->technician->name ?? '-' }}</p>
-                <p><b>Dibuat:</b><br>{{ $ticket->created_at->format('d-m-Y H:i') }}</p>
-                <p><b>Durasi:</b><br>{{ $ticket->durasi_menit ?? '-'  }}</p>
+                <p><b>Kategori :</b><br>{{ ucfirst($ticket->kategori) }}</p>
+                <p><b>Dikerjakan Oleh :</b><br>{{ $ticket->technician->name ?? '-' }}</p>
+                <p><b>Dibuat :</b><br>{{ $ticket->created_at->format('d-m-Y H:i') }}</p>
+                <p><b>Durasi :</b><br>{{ $ticket->durasi_menit ?? '-'  }}</p>
             </div>
             @if($ticket->status == 'merged' && $ticket->mergedTicket)
             <div class="alert alert-secondary">
@@ -135,7 +135,7 @@
 
         {{-- START --}}
         <p>
-            <b>Mulai Dikerjakan:</b>
+            <b>Mulai Dikerjakan :</b>
             <br>
             @if($ticket->started_at instanceof \Carbon\Carbon)
                 {{ $ticket->started_at->format('d-m-Y H:i') }}
@@ -146,7 +146,7 @@
         
         {{-- END --}}
         <p>
-            <b>Selesai:</b><br>
+            <b>Selesai :</b><br>
             @if($ticket->resolved_at)
                 {{ $ticket->resolved_at->format('d-m-Y H:i') }}
             @else
@@ -158,7 +158,7 @@
 
         {{-- DURASI --}}
       <p>
-        <b>Durasi Pengerjaan:</b><br>
+        <b>Durasi Pengerjaan :</b><br>
 
         @if($ticket->started_at)
             <span class="badge bg-primary">
@@ -201,19 +201,14 @@
 
     {{-- MERGED TICKETS --}}
 @if($ticket->mergedTickets->count())
-
 <div class="card mt-3">
-
     <div class="card-header bg-warning">
         <h3 class="card-title">
             Merged Tickets
         </h3>
     </div>
-
     <div class="card-body">
-
         <table class="table table-bordered">
-
             <thead>
                 <tr>
                     <th>Ticket</th>
@@ -221,33 +216,22 @@
                     <th>Alasan Merge</th>
                 </tr>
             </thead>
-
             <tbody>
-
                 @foreach($ticket->mergedTickets as $merge)
-
                 <tr>
-
                     <td>
                         {{ $merge->ticket_code }}
                     </td>
-
                     <td>
                         {{ $merge->nama }}
                     </td>
-
                     <td>
                         {{ $merge->merge_reason }}
                     </td>
-
                 </tr>
-
                 @endforeach
-
             </tbody>
-
         </table>
-
     </div>
 </div>
 @endif

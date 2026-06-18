@@ -320,7 +320,7 @@ return [
 
         [
         'text' => 'Dashboard',
-        'url'  => 'dashboard',
+        'url'  => '/admin/dashboard',
         'icon' => 'fas fa-fw fa-home',
         'can' => 'admin',
         ],
@@ -352,6 +352,20 @@ return [
         'icon' => 'fas fa-chart-bar',
         'can' => ['admin','leader'],
         ],
+
+        // [
+        // 'text'    => 'Inventory',
+        // 'icon'    => 'fas fa-boxes',
+        // 'can'     => 'admin',
+        // 'submenu' => [
+        //     ['text' => 'Dashboard', 'url' => 'admin/inventory', 'icon' => 'fas fa-tachometer-alt'],
+        //     ['text' => 'Data Asset', 'url' => 'admin/inventory/assets', 'icon' => 'fas fa-laptop'],
+        //     ['text' => 'Assignment', 'url' => 'admin/inventory/assignments', 'icon' => 'fas fa-user-tag'],
+        //     ['text' => 'Peminjaman', 'url' => 'admin/inventory/loans', 'icon' => 'fas fa-handshake'],
+        //     ['text' => 'Repair', 'url' => 'admin/inventory/repairs', 'icon' => 'fas fa-wrench'],
+        //     ['text' => 'Asset Rusak', 'url' => 'admin/inventory/damages', 'icon' => 'fas fa-exclamation-triangle'],
+        // ],
+        // ],
     
 
         [
@@ -377,7 +391,7 @@ return [
 
         [
         'text' => 'My Asset',
-        'url'  => 'http://192.168.200.2:3000/public-directory',
+        'url'  => 'http://192.168.200.6:3000/public-directory',
         'icon' => 'fas fa-boxes',
         'target' => '_blank',
         'can' => ['user','leader'], 
