@@ -1,59 +1,176 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 IT Helpdesk & Ticketing System with Live Chat
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
+[![AdminLTE](https://img.shields.io/badge/AdminLTE-3.x-3c8dbc?style=for-the-badge&logo=adminlte&logoColor=white)](https://adminlte.io)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6%20%7C%205-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-## About Laravel
+> **Sistem Manajemen Tiket Kendala IT, Inventaris Aset, dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📌 Daftar Isi
+- [Tentang Aplikasi](#-tentang-aplikasi)
+- [Fitur Utama](#-fitur-utama)
+- [Keunggulan Aplikasi](#-keunggulan-aplikasi)
+- [Struktur Hak Akses & Role](#-struktur-hak-akses--role)
+- [Spesifikasi Teknologi](#-spesifikasi-teknologi)
+- [Panduan Instalasi](#-panduan-instalasi)
+- [Akun & Role Pengguna](#-akun--role-pengguna)
+- [Lisensi](#-lisensi)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 📖 Tentang Aplikasi
+**IT Helpdesk & Ticketing System** adalah platform terintegrasi yang menjembatani komunikasi antara karyawan (*end-user*) dan tim IT Support perusahaan. Sistem ini dilengkapi dengan portal pelaporan kendala mandiri, live chat interaktif dengan status pengiriman pesan, dashboard monitoring real-time untuk level pimpinan (*management*), serta manajemen inventaris aset perangkat IT.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ✨ Fitur Utama
 
-## Laravel Sponsors
+### 1. 💬 User Portal & Instant Ticketing
+- **Pengajuan Tiket Cepat**: Pelaporan kendala tanpa proses login yang rumit; otomatis mendeteksi identitas pengguna berdasarkan *Serial Number* (SN) / No. Laptop.
+- **Live Chat Dua Arah**: Komunikasi langsung dengan teknisi pada setiap tiket tanpa perlu me-refresh halaman web.
+- **Tanda Pesan Terbaca (Read Receipts)**: Dilengkapi status centang dua (abu-abu = terkirim, biru = sudah dibaca oleh admin/user).
+- **Lampiran Gambar & Screenshot Paste**: Mendukung unggah foto bukti kendala atau langsung *paste* screenshot dari clipboard.
+- **Pelacakan Status Real-Time**: Status tiket transparan (*Open*, *On Progress*, *Pending*, *Closed*, *Cancelled*) beserta alasan penundaan/pending.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. 📊 Real-Time Admin & Executive Dashboard
+- **Auto-Sync Metrik Real-Time**: Data tiket dan statistik diperbarui otomatis di latar belakang tanpa reload halaman.
+- **Smart Resource Throttling**: Mengoptimalkan konsumsi sumber daya server dengan mengatur interval request saat browser diminimize/tidak aktif.
+- **Kartu Indikator Interaktif**: Badge metrik (*Open, On Progress, Pending, Close, Cancel*) dapat diklik untuk langsung membuka filter tiket yang sesuai.
+- **Grafik Analitik Interaktif**:
+  - Tren tiket harian (7 hari terakhir).
+  - Distribusi kategori kendala (*Hardware, Software, Network, Other*).
+  - Rasio status penyelesaian tiket.
 
-### Premium Partners
+### 3. 👥 Manajemen Pengguna & Hak Akses (Multi-Role)
+- **Role Khusus Management (Bos)**: Mode monitoring dashboard eksekutif secara *read-only* tanpa opsi mengubah tiket/data aset.
+- **Role Admin / IT Support**: Akses penuh penanganan tiket, manajemen inventaris, dan konfigurasi sistem.
+- **Role Leader & Staff User**: Pemantauan tiket spesifik tim dan pembuatan tiket kendala operasional.
+- **Menu Kelola Admin**: Manajemen akun administrator secara mandiri dengan perlindungan anti-hapus akun sendiri (*self-delete protection*).
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 4. 💻 Manajemen Inventaris Aset IT
+- **Pencatatan Aset Menyeluruh**: Mendata Laptop, Desktop PC, Monitor, Printer, dan Periferal.
+- **Riwayat Perangkat**: Integrasi otomatis antara nomor aset dengan tiket kerusakan yang pernah dilaporkan.
+- **Manajemen Siklus Aset**: Pemantauan peminjaman aset (*Loans*), perbaikan (*Repairs*), dan kerusakan (*Damages*).
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🌟 Keunggulan Aplikasi
 
-## Code of Conduct
+| Keunggulan | Deskripsi |
+|---|---|
+| ⚡ **Zero-Friction Submission** | User tidak perlu mengingat username/password akun untuk lapor kendala. |
+| 🔄 **Live Sync Tanpa Refresh** | Percakapan live chat dan metrik statistik diperbarui otomatis secara instan. |
+| 🛡️ **Role-Based Security** | Akses dibatasi ketat menggunakan Middleware & Authorization Gates Laravel. |
+| 📈 **Executive Visibility** | Pimpinan dapat memantau produktivitas dan kepuasan layanan IT kapan saja secara real-time. |
+| 🧪 **High Reliability** | Dilengkapi dengan pengujian otomatis (*Automated Feature Tests*) untuk menjamin kestabilan sistem. |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🔐 Struktur Hak Akses & Role
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```mermaid
+flowchart TD
+    A[Sistem IT Management] --> B[🛡️ Admin / IT Support]
+    A --> C[👔 Management / Bos]
+    A --> D[👥 Leader]
+    A --> E[👤 User / Karyawan]
 
-## License
+    B --> B1[Kelola & Proses Tiket]
+    B --> B2[Live Chat Support]
+    B --> B3[Kelola Inventaris Aset]
+    B --> B4[Kelola Akun Admin]
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    C --> C1[Dashboard Monitoring Real-Time]
+    C --> C2[Lihat Analitik & Tren]
+    C --> C3[Read-Only Mode]
+
+    D --> D1[Kelola Tim]
+    D --> D2[Pantau Tiket Tim]
+
+    E --> E1[Buat Tiket Kendala]
+    E --> E2[Live Chat Tiket Mandiri]
+```
+
+---
+
+## 🛠️ Spesifikasi Teknologi
+
+- **Backend Framework**: [Laravel 12](https://laravel.com)
+- **Bahasa Pemrograman**: [PHP 8.2+](https://php.net)
+- **Database**: MySQL 8.0+ / MariaDB 10.4+ (Mendukung SQLite untuk Automated Testing)
+- **Template & UI Admin**: [AdminLTE 3](https://adminlte.io) berbasis [Bootstrap 4](https://getbootstrap.com) & FontAwesome 6
+- **Frontend Portal User**: Modern Responsive UI berbasis Bootstrap 5 & FontAwesome 6
+- **Visualisasi Data**: [Chart.js](https://www.chartjs.org)
+- **Real-Time Polling Engine**: Optimized AJAX dynamic background poller dengan Page Visibility API
+- **Testing Framework**: [Pest PHP](https://pestphp.com) & [PHPUnit](https://phpunit.de)
+
+---
+
+## 🚀 Panduan Instalasi
+
+### 1. Prasyarat Sistem
+Pastikan perangkat Anda telah terpasang:
+- PHP >= 8.2
+- Composer
+- Node.js & NPM
+- MySQL / MariaDB Server
+
+### 2. Clone Repositori
+```bash
+git clone https://github.com/kowiyuliman/ticketingsystem-withlivechat.git
+cd ticketingsystem-withlivechat
+```
+
+### 3. Instal Dependensi Backend & Frontend
+```bash
+composer install
+npm install
+```
+
+### 4. Konfigurasi Environment (`.env`)
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Sesuaikan konfigurasi database pada `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=mptb_it-management
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 5. Generate Application Key & Migrasi Database
+```bash
+php artisan key:generate
+php artisan migrate
+```
+
+### 6. Build Aset & Jalankan Server Lokal
+```bash
+# Terminal 1 - Jalankan server Laravel
+php artisan serve
+
+# Terminal 2 - Jalankan asset bundler
+npm run dev
+```
+Aplikasi dapat diakses melalui browser di: `http://127.0.0.1:8000`
+
+---
+
+## 🧪 Menjalankan Automated Testing
+Untuk memverifikasi seluruh modul berjalan tanpa error:
+```bash
+php artisan test
+```
+
+---
+
+## 📄 Lisensi
+Aplikasi ini dirilis di bawah lisensi [MIT License](LICENSE).
