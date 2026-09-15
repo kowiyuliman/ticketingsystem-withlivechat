@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-        $table->index('status');
-        $table->index('assigned_to');
-        $table->index('user_id');
-        $table->index('created_at');
-    });
+        try {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->index('status');
+                $table->index('assigned_to');
+                $table->index('user_id');
+                $table->index('created_at');
+            });
+        } catch (\Throwable $e) {
+            // Indexes already exist
+        }
     }
 
     /**

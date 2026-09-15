@@ -9,8 +9,29 @@ class TicketComment extends Model
     protected $fillable = [
         'ticket_id',
         'user_id',
-        'comment'
+        'is_admin',
+        'comment',
+        'attachment',
+        'delivered_at',
+        'read_at',
     ];
+
+    protected $casts = [
+        'is_admin'     => 'boolean',
+        'delivered_at' => 'datetime',
+        'read_at'      => 'datetime',
+    ];
+
+    public function getReadStatusAttribute(): string
+    {
+        if ($this->read_at) {
+            return 'read'; // ✓✓ Sky Blue (Read)
+        }
+        if ($this->delivered_at) {
+            return 'delivered'; // ✓✓ Gray (Delivered)
+        }
+        return 'sent'; // ✓ Gray (Sent)
+    }
 
     public function user()
     {

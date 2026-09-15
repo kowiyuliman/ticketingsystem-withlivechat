@@ -34,10 +34,6 @@
                     <input type="text" value="{{ $ticket->nomor_ruangan }}" class="form-control" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Nomor WhatsApp</label>
-                    <input type="text" value="{{ $ticket->no_whatsapp }}" class="form-control" readonly>
-                </div>
-                <div class="form-group">
                     <label>IP Address</label>
                     <input type="text" value="{{ $ticket->ip_address }}" class="form-control" readonly>
                 </div>

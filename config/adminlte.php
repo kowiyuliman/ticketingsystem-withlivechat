@@ -319,82 +319,59 @@ return [
         ],
 
         [
-        'text' => 'Dashboard',
-        'url'  => '/admin/dashboard',
-        'icon' => 'fas fa-fw fa-home',
-        'can' => 'admin',
+            'text' => 'Dashboard',
+            'url'  => '/admin/dashboard',
+            'icon' => 'fas fa-fw fa-home',
+            'can'  => ['admin', 'management'],
         ],
 
         [
-        'text' => 'Admin Tickets',
-        'url'  => 'admin/tickets',
-        'icon' => 'fas fa-tools',
-        'can' => 'admin',
+            'text' => 'Semua Tiket',
+            'url'  => 'admin/tickets',
+            'icon' => 'fas fa-tools',
+            'can'  => 'admin',
         ],
 
         [
-        'text' => 'My Ticket',
-        'url'  => 'admin/TicketAdmin',
-        'icon' => 'fas fa-user-cog',
-        'can' => 'admin',
+            'text' => 'Tiket Saya',
+            'url'  => 'admin/TicketAdmin',
+            'icon' => 'fas fa-user-cog',
+            'can'  => 'admin',
         ],
 
         [
-        'text' => 'Ticket Report',
-        'url'  => 'admin/report',
-        'icon' => 'fas fa-chart-bar',
-        'can' => 'admin',
+            'text' => 'Tiket Dibatalkan',
+            'url'  => 'admin/cancelled',
+            'icon' => 'fas fa-ban',
+            'can'  => 'admin',
         ],
 
         [
-        'text' => 'User Management',
-        'url'  => '/admin/users',
-        'icon' => 'fas fa-chart-bar',
-        'can' => ['admin','leader'],
-        ],
-
-        // [
-        // 'text'    => 'Inventory',
-        // 'icon'    => 'fas fa-boxes',
-        // 'can'     => 'admin',
-        // 'submenu' => [
-        //     ['text' => 'Dashboard', 'url' => 'admin/inventory', 'icon' => 'fas fa-tachometer-alt'],
-        //     ['text' => 'Data Asset', 'url' => 'admin/inventory/assets', 'icon' => 'fas fa-laptop'],
-        //     ['text' => 'Assignment', 'url' => 'admin/inventory/assignments', 'icon' => 'fas fa-user-tag'],
-        //     ['text' => 'Peminjaman', 'url' => 'admin/inventory/loans', 'icon' => 'fas fa-handshake'],
-        //     ['text' => 'Repair', 'url' => 'admin/inventory/repairs', 'icon' => 'fas fa-wrench'],
-        //     ['text' => 'Asset Rusak', 'url' => 'admin/inventory/damages', 'icon' => 'fas fa-exclamation-triangle'],
-        // ],
-        // ],
-    
-
-        [
-        'text' => 'Create Ticket',
-        'url'  => 'create-ticket',
-        'icon' => 'fas fa-ticket-alt',
-        'can' => ['user','leader'],
+            'text' => 'Laporan Tiket',
+            'url'  => 'admin/report',
+            'icon' => 'fas fa-chart-bar',
+            'can'  => 'admin',
         ],
 
         [
-        'text' => 'My Tickets',
-        'url'  => 'my-tickets',
-        'icon' => 'fas fa-list',
-        'can' => ['user','leader'], 
+            'text' => 'Management Admin',
+            'url'  => 'admin/admins',
+            'icon' => 'fas fa-user-shield',
+            'can'  => 'admin',
         ],
 
         [
-        'text' => 'Ticket Cacelled',
-        'url'  => 'admin/cancelled',
-        'icon' => 'fas fa-list',
-        'can' => ['admin'], 
+            'text' => 'Portal Pengaduan',
+            'url'  => 'portal',
+            'icon' => 'fas fa-ticket-alt',
+            'can'  => ['user','leader'],
         ],
 
         [
-        'text' => 'My Asset',
-        'url'  => 'http://192.168.200.6:3000/public-directory',
-        'icon' => 'fas fa-boxes',
-        'target' => '_blank',
-        'can' => ['user','leader'], 
+            'text' => 'Riwayat Tiket',
+            'url'  => 'my-tickets',
+            'icon' => 'fas fa-list',
+            'can'  => ['user','leader'], 
         ],
         
 

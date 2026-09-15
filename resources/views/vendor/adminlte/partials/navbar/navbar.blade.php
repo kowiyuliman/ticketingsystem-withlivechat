@@ -38,159 +38,72 @@
             @include('adminlte::partials.navbar.menu-item-right-sidebar-toggler')
         @endif
 
-        {{-- Notifikasi --}}
+        {{-- Notifikasi Navbar Admin --}}
         <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="Notifikasi Sistem">
                 <i class="far fa-bell"></i>
-                    @php
-                        $count = auth()->user()->unreadNotifications()->count();
-                    @endphp
-                    @if($count > 0)
-                        <span class="badge badge-danger navbar-badge">
-                            {{ $count > 99 ? '99+' : $count }}
-                        </span>
-                    @endif
+                @php
+                    $unreadCount = auth()->user() ? auth()->user()->unreadNotifications()->count() : 0;
+                    $totalCount = auth()->user() ? auth()->user()->notifications()->count() : 0;
+                    $notifications = auth()->user() ? auth()->user()->notifications()->latest()->take(5)->get() : collect();
+                @endphp
+                @if($unreadCount > 0)
+                    <span class="badge badge-danger navbar-badge">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                @elseif($totalCount > 0)
+                    <span class="badge badge-info navbar-badge">{{ $totalCount > 99 ? '99+' : $totalCount }}</span>
+                @endif
             </a>
-            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right notification-dropdown">
-                <div class="dropdown-header">
-                    <strong>
-                        {{ $count }}
-                        Notifikasi Belum Dibaca
-                    </strong>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right shadow-lg border-0 p-0 overflow-hidden" style="min-width: 310px; border-radius: 14px;">
+                <div class="bg-light px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between">
+                    <span class="font-weight-bold text-dark text-xs uppercase" style="font-size: 11px;">
+                        <i class="far fa-bell text-primary mr-1"></i> Notifikasi
+                    </span>
+                    <span class="badge badge-info px-2 py-0.5" style="font-size: 10px;">{{ $totalCount }} Total</span>
                 </div>
-                @foreach(
-                    auth()->user()
-                        ->unreadNotifications()
-                        ->latest()
-                        ->take(5)
-                        ->get()
-                    as $notification
-                )
 
-                   <a href="/notification/{{$notification->id}}"
-                    class="dropdown-item notification-item">
-                        <div class="font-weight-bold">
-                            {{ $notification->data['message'] }}
-                        </div>
-                        <small class="text-muted">
-                            {{ $notification->created_at->diffForHumans() }}
-                        </small>
-                    </a>
-                @endforeach
-                <!-- <a href="#"
-                    class="dropdown-item text-center text-primary"
-                    data-toggle="modal"
-                    data-target="#notifModal">
-                        <i class="fas fa-list"></i>
-                        Lihat Semua Notifikasi
-
-                    </a> -->
-                <div class="dropdown-divider"></div>
-                    <div class="px-2 py-2">
-                        <a href="/notifications/read"
-                        class="btn btn-success btn-sm btn-block mb-2">
-                            <i class="fas fa-check"></i>
-                                Tandai Semua Dibaca
+                <div class="notification-list overflow-auto" style="max-height: 280px;">
+                    @forelse($notifications as $notif)
+                        @php
+                            $notifData = $notif->data;
+                            $msg = $notifData['message'] ?? ($notifData['keterangan'] ?? 'Notifikasi baru');
+                            $url = $notifData['url'] ?? ('/notification/' . $notif->id);
+                            $isUnread = is_null($notif->read_at);
+                        @endphp
+                        <a href="{{ url($url) }}" class="dropdown-item px-3 py-2.5 border-bottom d-flex align-items-start text-wrap {{ $isUnread ? 'bg-light font-weight-bold' : '' }}">
+                            <div class="rounded-circle {{ $isUnread ? 'bg-primary' : 'bg-secondary' }} text-white d-inline-flex align-items-center justify-content-center flex-shrink-0 mr-2 mt-1" style="width: 24px; height: 24px; font-size: 10px; line-height: 1;">
+                                <i class="fas {{ $isUnread ? 'fa-envelope' : 'fa-check' }}"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="text-xs text-dark" style="font-size: 12px; line-height: 1.3;">
+                                    {{ $msg }}
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 10px;">
+                                    <i class="far fa-clock mr-1"></i> {{ $notif->created_at->diffForHumans() }}
+                                </small>
+                            </div>
                         </a>
-                        <form action="/notifications/clear"
-                            method="POST">
+                    @empty
+                        <div class="text-center text-muted py-4 px-3" style="font-size: 12px;">
+                            <i class="far fa-bell-slash d-block text-lg mb-1 opacity-50"></i>
+                            Tidak ada notifikasi
+                        </div>
+                    @endforelse
+                </div>
+
+                @if($totalCount > 0)
+                    <div class="p-2 bg-light border-top text-center">
+                        <form action="/notifications/clear" method="POST" class="m-0">
                             @csrf
                             @method('DELETE')
-                            <button
-                                class="btn btn-danger btn-sm btn-block">
-                                <i class="fas fa-trash"></i>
-                                Hapus Semua
+                            <button type="submit" class="btn btn-xs btn-outline-danger btn-block font-weight-bold py-1.5 shadow-2xs">
+                                <i class="fas fa-trash-alt mr-1"></i> Hapus Semua Notifikasi
                             </button>
                         </form>
                     </div>
+                @endif
+            </div>
         </li>
     </ul>
-
-<!-- MODAL NOTIFIKASI -->
-<div class="modal fade"
-     id="notifModal"
-     tabindex="-1"
-     role="dialog">
-    <div class="modal-dialog modal-lg"
-         role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary">
-                <h5 class="modal-title">
-                    <i class="far fa-bell"></i>
-                    Semua Notifikasi
-                    <span class="badge badge-light">
-                        {{ auth()->user()->notifications()->count() }}
-                    </span>
-                </h5>
-                <button type="button"
-                        class="close text-white"
-                        data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Pesan</th>
-                                <th>Waktu</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse(auth()->user()
-                                ->notifications()
-                                ->latest()
-                                ->take(10)
-                                ->get() as $notif)
-                                <tr>
-                                    <td>
-                                        {{ $notif->data['message'] }}
-                                    </td>
-                                    <td>
-                                        {{ $notif->created_at->diffForHumans() }}
-                                    </td>
-                                    <td>
-                                        @if(isset($notif->data['url']))
-                                            <a href="{{ $notif->data['url'] }}"
-                                               class="btn btn-sm btn-primary">
-                                                Buka
-                                            </a>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3"
-                                        class="text-center">
-                                        Tidak ada notifikasi
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="/notifications/read"
-                   class="btn btn-success">
-                    <i class="fas fa-check"></i>
-                    Tandai Semua Dibaca
-                </a>
-                <form action="/notifications/clear"
-                      method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-danger">
-                        <i class="fas fa-trash"></i>
-                        Hapus Semua
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 </nav>
 
 

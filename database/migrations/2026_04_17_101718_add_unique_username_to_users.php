@@ -7,9 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->unique('username');
-        });
+        try {
+            Schema::table('users', function (Blueprint $table) {
+                $table->unique('username');
+            });
+        } catch (\Throwable $e) {
+            // Index already exists
+        }
     }
 
     public function down()

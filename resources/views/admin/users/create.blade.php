@@ -63,6 +63,7 @@
                             <option value="user">User</option>
                             <option value="leader">Leader</option>
                             <option value="admin">Admin</option>
+                            <option value="management">Management / Bos (Hanya Dashboard)</option>
                         </select>
                     </div>
                     @else

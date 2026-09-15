@@ -1,83 +1,84 @@
 @extends('adminlte::page')
 
-@section('title','My Ticket')
+@section('title', 'Tiket Saya')
 
 @section('content_header')
-<h1>My Ticket</h1>
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+    <div>
+        <h1 class="m-0 font-weight-bold text-dark">Tiket Saya</h1>
+        <p class="text-muted text-sm mb-0">Daftar tiket yang saat ini sedang Anda tangani</p>
+    </div>
+</div>
 @stop
 
 @section('content')
 
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Daftar Ticket Saya</h3>
+@include('partials.floating_toast')
+
+<div class="card card-outline card-info shadow-sm">
+    <div class="card-header bg-light">
+        <h3 class="card-title font-weight-bold text-dark">
+            <i class="fas fa-user-cog text-info mr-1"></i> Tiket Dalam Penanganan Saya
+        </h3>
     </div>
 
-    <div class="card-body table-responsive">
-        <table id="myTicketTable" class="table table-bordered table-striped">
-            <thead class="bg-dark text-white">
-                <tr>
-                    <th>No</th>
-                    <th>Kode</th>
-                    <th>Status</th>
-                    <th>Deskripsi</th>
-                    <th width="100">Action</th>
-                </tr>
-            </thead>
+    <div class="card-body p-3">
+        <div class="table-responsive">
+            <table id="myTicketTable" class="table table-hover align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="text-center">No</th>
+                        <th>Kode Tiket</th>
+                        <th>Pelapor / Laptop</th>
+                        <th>Status</th>
+                        <th>Kategori</th>
+                        <th>Deskripsi Kendala</th>
+                        <th>Waktu Mulai</th>
+                        <th class="text-center">Aksi Live Chat</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                @foreach($tickets as $ticket)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td><b>{{ $ticket->ticket_code }}</b></td>
-
-                    <td>
-                        @if($ticket->status == 'open')
-                            <span class="badge bg-info">OPEN</span>
-                        @elseif($ticket->status == 'on_progress')
-                            <span class="badge bg-primary">PROGRESS</span>
-                        @elseif($ticket->status == 'pending')
-                            <span class="badge bg-warning">PENDING</span>
-                        @elseif($ticket->status == 'closed')
-                            <span class="badge bg-success">CLOSED</span>
-                        @endif
-                    </td>
-
-                    <td>{{ Str::limit($ticket->deskripsi, 50) }}</td>
-
-                    <td>
-                        <a href="/admin/ticket/edit/{{ $ticket->id }}" 
-                           class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                    </td>
-
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                <tbody>
+                    @foreach($tickets as $ticket)
+                    <tr>
+                        <td class="text-center">{{ $loop->iteration }}</td>
+                        <td><span class="badge badge-light border font-weight-bold">{{ $ticket->ticket_code }}</span></td>
+                        <td>
+                            <b>{{ $ticket->nama }}</b>
+                            <div class="text-muted text-xs">💻 {{ $ticket->nomor_laptop }}</div>
+                        </td>
+                        <td>
+                            @if($ticket->status == 'open')
+                                <span class="badge bg-danger">OPEN</span>
+                            @elseif($ticket->status == 'on_progress')
+                                <span class="badge bg-primary">PROGRESS</span>
+                            @elseif($ticket->status == 'pending')
+                                <span class="badge bg-warning text-dark">PENDING</span>
+                            @elseif($ticket->status == 'closed')
+                                <span class="badge bg-success">CLOSED</span>
+                            @endif
+                        </td>
+                        <td><span class="badge badge-warning uppercase font-weight-bold">{{ strtoupper($ticket->kategori ?? 'General') }}</span></td>
+                        <td><span class="text-truncate d-inline-block" style="max-width: 220px;" title="{{ $ticket->deskripsi }}">{{ $ticket->deskripsi }}</span></td>
+                        <td>{{ $ticket->started_at ? $ticket->started_at->format('d M Y, H:i') : '-' }}</td>
+                        <td class="text-center">
+                            <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                                <i class="fas fa-comments"></i> Buka Live Chat
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 @stop
 
-{{-- CSS DATATABLE --}}
-@section('css')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<style>
-        td:first-child, th:first-child {
-                    text-align: center;
-                    width: 50px;
-                }
-    </style>
-@stop
-
-{{-- JS DATATABLE --}}
 @section('js')
-
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
 <script>
 $(document).ready(function () {
     $('#myTicketTable').DataTable({
@@ -85,29 +86,13 @@ $(document).ready(function () {
         autoWidth: false,
         pageLength: 10,
         language: {
-            search: "search:",
+            search: "Cari:",
             lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Empty",
+            zeroRecords: "Tidak ada tiket",
             info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-            infoEmpty: "Empty",
-            paginate: {
-                previous: "←",
-                next: "→"
-            }
+            paginate: { previous: "←", next: "→" }
         }
     });
 });
 </script>
-
-<script>
-    let table = $('#your-table-id').DataTable();
-        table.on('order.dt search.dt', function () {
-            table.column(0, { search:'applied', order:'applied' })
-                .nodes()
-                .each(function (cell, i) {
-                    cell.innerHTML = i + 1;
-                });
-        }).draw();
-</script>
-
 @stop

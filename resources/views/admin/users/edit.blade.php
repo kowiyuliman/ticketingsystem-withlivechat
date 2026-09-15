@@ -99,7 +99,7 @@
                                 name="password"
                                 id="password"
                                 class="form-control"
-                                required>
+                                placeholder="Kosongkan jika tidak ingin mengubah password">
                             <div class="input-group-append">
                                 <span class="input-group-text"
                                     onclick="togglePassword()"
@@ -124,6 +124,9 @@
                             </option>
                             <option value="leader" {{ $user->role=='leader'?'selected':'' }}>
                                 leader
+                            </option>
+                            <option value="management" {{ $user->role=='management'?'selected':'' }}>
+                                management (Bos / Hanya Dashboard)
                             </option>
                         </select>
                     </div>

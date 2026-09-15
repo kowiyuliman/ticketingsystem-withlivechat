@@ -23,16 +23,24 @@ class AppServiceProvider extends ServiceProvider
     {
 
         Gate::define('admin', function ($user) {
-        return $user->role === 'admin';
+            return $user->role === 'admin';
         });
 
         Gate::define('user', function ($user) {
-        return $user->role === 'user';
+            return $user->role === 'user';
         });
 
         Gate::define('leader', function ($user) {
-        return $user->role == 'leader';
-    });
+            return $user->role == 'leader';
+        });
+
+        Gate::define('management', function ($user) {
+            return $user->role === 'management';
+        });
+
+        Gate::define('dashboard', function ($user) {
+            return in_array($user->role, ['admin', 'management']);
+        });
     }
     
 }

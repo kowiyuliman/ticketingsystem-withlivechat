@@ -13,10 +13,12 @@ class Ticket extends Model
         'nomor_meja',
         'nomor_ruangan',
         'ip_address',
+        'nomor_laptop',
         'kategori',
         'deskripsi',
         'screenshot',
         'status',
+        'status_reason',
         'assigned_to',
         'started_at',
         'created_by',
@@ -25,6 +27,29 @@ class Ticket extends Model
         'merged_to',
         'merge_reason'
     ];
+
+    public function getReasonTextAttribute()
+    {
+        if (!empty($this->status_reason)) {
+            return $this->status_reason;
+        }
+
+        if ($this->relationLoaded('histories') && ($this->status === 'pending' || $this->status === 'cancelled')) {
+            $history = $this->histories
+                ->whereIn('status', ['pending', 'cancelled'])
+                ->sortByDesc('created_at')
+                ->first();
+
+            if ($history && !empty($history->keterangan)) {
+                if (\Illuminate\Support\Str::contains($history->keterangan, 'Keterangan: ')) {
+                    return \Illuminate\Support\Str::after($history->keterangan, 'Keterangan: ');
+                }
+                return $history->keterangan;
+            }
+        }
+
+        return null;
+    }
 
     protected $casts = [
     'started_at' => 'datetime',
@@ -142,5 +167,36 @@ class Ticket extends Model
             Ticket::class,
             'merged_to'
         );
+    }
+
+    /**
+     * Generate structured ticket code: MPTB-IT-YYYYMMDD-{KAT}-XXX
+     * e.g. MPTB-IT-20260915-HW-001
+     * hw -> HW, sw -> SW, ntw -> NTW, oth -> OTH
+     * Resets daily sequence per category (3 digits padding).
+     */
+    public static function generateTicketCode(?string $kategori, ?string $date = null): string
+    {
+        $katCode = match(strtolower(trim($kategori ?? ''))) {
+            'hardware' => 'HW',
+            'software' => 'SW',
+            'network'  => 'NTW',
+            'other'    => 'OTH',
+            default    => 'OTH',
+        };
+
+        $dateStr = $date ?: date('Ymd');
+        $prefix = "MPTB-IT-{$dateStr}-{$katCode}-";
+
+        $latest = static::where('ticket_code', 'LIKE', "{$prefix}%")
+            ->orderByDesc('ticket_code')
+            ->first();
+
+        $seq = 1;
+        if ($latest && preg_match('/-(\d+)$/', $latest->ticket_code, $matches)) {
+            $seq = (int)$matches[1] + 1;
+        }
+
+        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 }

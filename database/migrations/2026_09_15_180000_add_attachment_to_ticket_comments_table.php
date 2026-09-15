@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('users', 'role')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->string('role')->default('user');
+        if (!Schema::hasColumn('ticket_comments', 'attachment')) {
+            Schema::table('ticket_comments', function (Blueprint $table) {
+                $table->string('attachment')->nullable()->after('comment');
             });
         }
     }
@@ -23,8 +23,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
+        Schema::table('ticket_comments', function (Blueprint $table) {
+            $table->dropColumn('attachment');
         });
     }
 };
+

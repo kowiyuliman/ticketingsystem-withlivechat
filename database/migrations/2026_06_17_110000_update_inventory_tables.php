@@ -16,6 +16,9 @@ return new class extends Migration
             }
             // Drop asset_code if exists
             if (Schema::hasColumn('assets', 'asset_code')) {
+                try {
+                    $table->dropUnique(['asset_code']);
+                } catch (\Throwable $e) {}
                 $table->dropColumn('asset_code');
             }
             // Add received_at

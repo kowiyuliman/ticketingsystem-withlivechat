@@ -13,25 +13,27 @@ use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
 
 
-Route::get('/', function () {return view('welcome');});
+// Public User Portal & Frictionless Ticketing Routes
+Route::get('/', [TicketController::class, 'portal'])->name('portal');
+Route::get('/portal', [TicketController::class, 'portal']);
+Route::post('/set-laptop', [TicketController::class, 'setLaptop'])->name('laptop.set');
+Route::post('/create-ticket', [TicketController::class, 'store'])->name('ticket.store');
+Route::get('/ticket/{id}', [TicketController::class, 'show'])->name('ticket.show');
+Route::get('/ticket/comments/{id}', [TicketController::class, 'fetchComments'])->name('ticket.comments');
+Route::post('/ticket/comment/{id}', [TicketController::class, 'comment'])->name('ticket.comment');
 
-Route::get('/dashboard',[DashboardController::class,'index'])->middleware(['auth', 'admin']);
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
-//route user 
+// Route user authenticated
 Route::middleware(['auth'])->group(function(){
-
-    Route::get('/create-ticket',[TicketController::class,'create']);
-    Route::post('/create-ticket',[TicketController::class,'store']);
-    Route::get('/my-tickets',[TicketController::class,'index']);
-    Route::get('/ticket/{id}',[TicketController::class,'show']);
+    Route::get('/my-tickets', [TicketController::class, 'index']);
     Route::get('/change-password', [ChangePasswordController::class, 'index']);
     Route::post('/change-password', [ChangePasswordController::class, 'update']);
-    
 });
 
 Route::prefix('admin')->middleware(['auth'])->group(function(){
 
-    Route::get('/dashboard',[DashboardController::class,'index'])->middleware(['auth']);
+    Route::get('/dashboard',[DashboardController::class,'index'])->name('admin.dashboard');
 
     //route tiket
     Route::get('/tickets', [AdminTicketController::class,'index']);
@@ -65,6 +67,16 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
     Route::post('/users/update/{id}', [AdminUserController::class,'update']);
     Route::delete('/users/delete/{id}', [AdminUserController::class,'destroy']);
 
+    //route management khusus admin
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/admins', [\App\Http\Controllers\Admin\AdminManagementController::class, 'index'])->name('admin.admins.index');
+        Route::get('/admins/create', [\App\Http\Controllers\Admin\AdminManagementController::class, 'create'])->name('admin.admins.create');
+        Route::post('/admins', [\App\Http\Controllers\Admin\AdminManagementController::class, 'store'])->name('admin.admins.store');
+        Route::get('/admins/edit/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'edit'])->name('admin.admins.edit');
+        Route::post('/admins/update/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'update'])->name('admin.admins.update');
+        Route::delete('/admins/delete/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'destroy'])->name('admin.admins.delete');
+    });
+
     //route import bulk user
     Route::post('/users/import', [AdminUserController::class,'import']);
 
@@ -75,7 +87,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
     Route::get('/ticket/fetch', [AdminTicketController::class, 'fetchTickets']);
 
     //dashboard realtime
-    Route::get('/dashboard/realtime', [DashboardController::class, 'realtime']);
+    Route::get('/dashboard/realtime', [DashboardController::class, 'realtime'])->name('admin.dashboard.realtime');
 
     // merge ticket
     Route::post('/ticket/mergeTicket/{id}', [AdminTicketController::class, 'mergeTicket']);

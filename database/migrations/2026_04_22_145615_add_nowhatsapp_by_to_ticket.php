@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tickets', function (Blueprint $table) {
-        $table->string('no_whatsapp')->after('nomor_ruangan');
-    });
+        if (!Schema::hasColumn('tickets', 'no_whatsapp')) {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->string('no_whatsapp')->nullable()->default('-')->after('nomor_ruangan');
+            });
+        }
     }
 
     /**

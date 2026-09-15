@@ -45,6 +45,21 @@ class TicketController extends Controller
     public function show($id)
     {
         $ticket = Ticket::with('histories','comments.user','timelines','mergedChildren')->findOrFail($id);
+
+        // Record admin active presence on this ticket
+        \Illuminate\Support\Facades\Cache::put("ticket_{$id}_admin_last_seen", now(), now()->addMinutes(2));
+        \Illuminate\Support\Facades\Cache::put("ticket_{$id}_admin_name", Auth::user()->name, now()->addMinutes(2));
+
+        // Mark unread user comments as delivered and read by admin
+        \App\Models\TicketComment::where('ticket_id', $ticket->id)
+            ->where('is_admin', false)
+            ->whereNull('delivered_at')
+            ->update(['delivered_at' => now()]);
+        \App\Models\TicketComment::where('ticket_id', $ticket->id)
+            ->where('is_admin', false)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         return view('admin.tickets.show', compact('ticket'));
     }
 
@@ -71,82 +86,190 @@ class TicketController extends Controller
 
     public function update(Request $request, $id)
     {
-        
         $ticket = Ticket::findOrFail($id);
 
-        if($ticket->assigned_to != Auth::id()){
-            return redirect('/admin/tickets')->with('error','Bukan tiket kamu');
+        if ($ticket->assigned_to && $ticket->assigned_to != Auth::id() && Auth::user()->role !== 'admin') {
+            return redirect('/admin/tickets')->with('error', 'Bukan tiket kamu');
+        }
+
+        if (!$ticket->assigned_to) {
+            $ticket->assigned_to = Auth::id();
         }
 
         $oldStatus = $ticket->status;
+        $newStatus = $request->input('status', $ticket->status);
+        $keteranganInput = trim($request->input('keterangan', ''));
+
+        $oldKategori = $ticket->kategori;
+        $newKategori = $request->input('kategori', $ticket->kategori);
+        $kategoriChanged = $newKategori && $newKategori !== $oldKategori;
+        $oldTicketCode = $ticket->ticket_code;
+        $newTicketCode = $ticket->ticket_code;
+
+        if ($kategoriChanged) {
+            $dateStr = $ticket->created_at ? $ticket->created_at->format('Ymd') : date('Ymd');
+            $newTicketCode = Ticket::generateTicketCode($newKategori, $dateStr);
+        }
 
         $ticket->update([
-            'status' => $request->status,
-            'kategori' => $request->kategori,
+            'ticket_code'   => $newTicketCode,
+            'status'        => $newStatus,
+            'kategori'      => $newKategori,
+            'status_reason' => !empty($keteranganInput) ? $keteranganInput : ($newStatus === 'pending' || $newStatus === 'cancelled' ? $ticket->status_reason : null),
         ]);
 
         \Illuminate\Support\Facades\Cache::flush();
 
-        // SLA
-        if ($oldStatus != 'on_progress' && $request->status == 'on_progress') {
+        // SLA Tracking
+        if ($oldStatus != 'on_progress' && $newStatus == 'on_progress') {
             $ticket->started_at = now();
         }
 
-        if ($oldStatus != 'closed' && $request->status == 'closed') {
+        if ($oldStatus != 'closed' && $newStatus == 'closed') {
             $ticket->resolved_at = now();
         }
 
         $ticket->save();
 
+        $statusLabel = match($newStatus) {
+            'pending' => 'Pending',
+            'cancelled' => 'Cancelled',
+            'closed' => 'Closed',
+            'on_progress' => 'On Progress',
+            'open' => 'Open',
+            default => ucfirst($newStatus)
+        };
+
+        $historyKeterangan = !empty($keteranganInput)
+            ? "Status diubah ke {$statusLabel}. Keterangan: {$keteranganInput}"
+            : "Admin " . Auth::user()->name . " mengupdate tiket ke {$statusLabel}";
+
         TicketHistory::create([
-            'ticket_id' => $ticket->id,
-            'status' => $request->status,
-            'keterangan' => "Admin " . Auth::user()->name . " mengupdate tiket",
+            'ticket_id'  => $ticket->id,
+            'status'     => $newStatus,
+            'keterangan' => $historyKeterangan,
             'updated_by' => Auth::id()
         ]);
 
-        if($ticket->user){
+        // If category changed, log to history and notify live chat
+        if ($kategoriChanged) {
+            $oldKatName = ucfirst($oldKategori ?? 'other');
+            $newKatName = ucfirst($newKategori);
+            TicketHistory::create([
+                'ticket_id'  => $ticket->id,
+                'status'     => $newStatus,
+                'keterangan' => "Admin " . Auth::user()->name . " mengubah kategori dari {$oldKatName} ke {$newKatName}. Nomor tiket diperbarui: #{$newTicketCode}",
+                'updated_by' => Auth::id()
+            ]);
+
+            TicketComment::create([
+                'ticket_id'  => $ticket->id,
+                'user_id'    => Auth::id(),
+                'is_admin'   => true,
+                'comment'    => "🔄 Kategori kendala diubah dari [{$oldKatName}] menjadi [{$newKatName}]. Nomor tiket diperbarui menjadi #{$newTicketCode}",
+                'attachment' => null,
+            ]);
+        }
+
+        // Post status update reason to Live Chat stream if provided
+        if (!empty($keteranganInput)) {
+            TicketComment::create([
+                'ticket_id'  => $ticket->id,
+                'user_id'    => Auth::id(),
+                'is_admin'   => true,
+                'comment'    => "📌 Status tiket diubah menjadi [{$statusLabel}]. Keterangan: {$keteranganInput}",
+                'attachment' => null,
+            ]);
+        }
+
+        if ($ticket->user) {
             $ticket->user->notify(new TicketUpdateNotification($ticket));
         }
 
-        return redirect('/admin/tickets')->with('success','Ticket berhasil diupdate');
+        // Redirect back to Admin Tickets List if ticket is CLOSED
+        if ($newStatus === 'closed') {
+            return redirect('/admin/tickets')->with('success', 'Tiket #' . $ticket->ticket_code . ' berhasil ditutup.');
+        }
 
+        // Stay on current Live Chat page for other status updates (on_progress, pending, open, cancelled)
+        return redirect()->back()->with('success', 'Status tiket berhasil diupdate menjadi ' . $statusLabel . ($kategoriChanged ? ' & nomor tiket diperbarui menjadi #' . $newTicketCode : ''));
     }
 
     public function takeTicket($id)
     {
         $ticket = Ticket::findOrFail($id);
 
-        // hanya boleh ambil jika masih open
-        if($ticket->status != 'open'){
-            return redirect('/admin/tickets')
-                ->with('error','Ticket sudah diambil');
+        // hanya boleh ambil jika belum diambil orang lain
+        if ($ticket->status != 'open' && $ticket->assigned_to && $ticket->assigned_to != Auth::id()) {
+            return redirect()->back()->with('error', 'Ticket sudah diambil oleh teknisi lain');
         }
 
         $ticket->update([
-            'status' => 'on_progress',
+            'status'      => 'on_progress',
             'assigned_to' => Auth::id(),
-            'started_at' => now()
+            'started_at'  => $ticket->started_at ?? now()
         ]);
 
-        return redirect('/admin/tickets')
-            ->with('success','Ticket berhasil diambil & mulai dikerjakan');
+        return redirect()->back()->with('success', 'Ticket berhasil diambil & mulai dikerjakan');
     }
 
-    public function comment(Request $request,$id)
+    public function comment(Request $request, $id)
     {
         $request->validate([
-            'comment'=>'required'
+            'comment'    => 'nullable|string',
+            'attachment' => 'nullable|image|max:10240',
         ]);
 
-        TicketComment::create([
-            'ticket_id'=>$id,
-            'user_id'=>Auth::id(),
-            'comment'=>$request->comment,
-            'user_id' => Auth::id()
+        $ticket = Ticket::findOrFail($id);
+        $attachmentPath = null;
+
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('tickets/comments', 'public');
+        } elseif ($request->filled('attachment_base64')) {
+            $base64Data = $request->input('attachment_base64');
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $type)) {
+                $data = substr($base64Data, strpos($base64Data, ',') + 1);
+                $ext = strtolower($type[1]) === 'jpeg' ? 'jpg' : strtolower($type[1]);
+                $decoded = base64_decode($data);
+                if ($decoded !== false) {
+                    $fileName = 'comment_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
+                    $filePath = 'tickets/comments/' . $fileName;
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($filePath, $decoded);
+                    $attachmentPath = $filePath;
+                }
+            }
+        }
+
+        if (empty(trim($request->comment ?? '')) && empty($attachmentPath)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Pesan atau foto tidak boleh kosong.'], 422);
+            }
+            return back()->with('error', 'Pesan atau foto tidak boleh kosong.');
+        }
+
+        $comment = TicketComment::create([
+            'ticket_id'  => $ticket->id,
+            'user_id'    => Auth::id(),
+            'is_admin'   => true,
+            'comment'    => $request->comment ?? '',
+            'attachment' => $attachmentPath,
         ]);
 
-        return back()->with('success','Komentar berhasil ditambahkan');
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'comment' => [
+                    'id'             => $comment->id,
+                    'comment'        => $comment->comment ?? '',
+                    'attachment_url' => $comment->attachment ? asset('storage/' . $comment->attachment) : null,
+                    'is_user'        => false,
+                    'user_name'      => Auth::user()->name ?? 'Teknisi IT',
+                    'created_at'     => $comment->created_at->format('H:i'),
+                ]
+            ]);
+        }
+
+        return back();
     }
 
 

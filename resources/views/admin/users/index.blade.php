@@ -21,6 +21,9 @@
             <button class="btn btn-primary btn-filter" data-role="leader">
                 <i class="fas fa-user-tie"></i> Leader
             </button>
+            <button class="btn btn-dark btn-filter" data-role="management">
+                <i class="fas fa-briefcase"></i> Management
+            </button>
             <button class="btn btn-success btn-filter" data-role="user">
                 <i class="fas fa-user"></i> User
             </button>

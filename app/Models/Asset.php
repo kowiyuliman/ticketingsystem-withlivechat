@@ -9,6 +9,8 @@ class Asset extends Model
     protected $fillable = [
         'asset_code',
         'type',
+        'hostname',
+        'ip_address',
         'brand',
         'model',
         'serial_number',
@@ -16,20 +18,6 @@ class Asset extends Model
         'status',
         'notes',
     ];
-
-    // Auto-generate asset_code
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($asset) {
-            if (empty($asset->asset_code)) {
-                $lastAsset = static::orderBy('id', 'desc')->first();
-                $nextId = $lastAsset ? $lastAsset->id + 1 : 1;
-                $asset->asset_code = 'AST-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
-            }
-        });
-    }
 
     // Label tipe asset
     public static function typeLabels()
@@ -41,6 +29,7 @@ class Asset extends Model
             'lan_adapter' => 'LAN Adapter',
             'headset'     => 'Headset',
             'usb_audio'   => 'USB Audio',
+            'hp_root'     => 'HP Root',
         ];
     }
 
@@ -103,6 +92,20 @@ class Asset extends Model
     public function getStatusLabelAttribute()
     {
         return self::statusLabels()[$this->status] ?? $this->status;
+    }
+
+    public function getJenisIconAttribute(): string
+    {
+        return match($this->type) {
+            'laptop'      => '💻',
+            'charger'     => '🔌',
+            'mouse'       => '🖱️',
+            'lan_adapter' => '🌐',
+            'headset'     => '🎧',
+            'usb_audio'   => '🎙️',
+            'hp_root'     => '📱',
+            default       => '📦',
+        };
     }
 
     public function getStatusColorAttribute()

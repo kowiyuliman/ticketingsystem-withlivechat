@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up()
     {
-        DB::statement("ALTER TABLE tickets 
-            MODIFY status ENUM('open','on_progress','pending','closed','cancelled') 
-            NOT NULL DEFAULT 'open'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE tickets 
+                MODIFY status ENUM('open','on_progress','pending','closed','cancelled') 
+                NOT NULL DEFAULT 'open'");
+        }
     }
 
     public function down()

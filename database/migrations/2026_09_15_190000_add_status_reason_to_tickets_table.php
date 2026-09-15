@@ -9,11 +9,11 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        if (!Schema::hasColumn('users', 'username')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->string('username')->unique()->after('name');
+        if (!Schema::hasColumn('tickets', 'status_reason')) {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->text('status_reason')->nullable()->after('status');
             });
         }
     }
@@ -23,8 +23,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
+        Schema::table('tickets', function (Blueprint $table) {
+            $table->dropColumn('status_reason');
         });
     }
 };
+
