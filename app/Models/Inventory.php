@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inventory extends Model
 {
-    protected $connection = 'inventory';
+    public function getConnectionName()
+    {
+        if (app()->environment('testing')) {
+            return config('database.default');
+        }
+        return config('database.connections.inventory.database') ? 'inventory' : config('database.default');
+    }
+
     protected $table = 'inventories';
 
     protected $fillable = [
