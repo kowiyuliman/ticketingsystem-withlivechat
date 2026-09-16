@@ -35,28 +35,37 @@ class TicketController extends Controller
               ->orWhere('jenis', 'LIKE', '%laptop%');
         })
         ->orderBy('sn')
-        ->get(['sn', 'pengguna', 'department']);
+        ->get(['id', 'sn', 'pengguna', 'department', 'merk', 'lokasi']);
 
-        // Query tickets STRICTLY for this specific laptop SN
-        $tickets = $hostname ? Ticket::where('nomor_laptop', $hostname)->latest()->get() : collect();
+        // Query tickets STRICTLY for this specific laptop SN (if valid)
+        $tickets = collect();
+        $isRecognizedLaptop = !empty($hostname) && !in_array($hostname, ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN']);
+        if ($isRecognizedLaptop) {
+            $tickets = Ticket::where('nomor_laptop', $hostname)
+                ->latest()
+                ->get();
+        }
 
-        // Get all registered assets assigned to this Laptop/User
+        // Get all registered assets assigned to this Laptop/User (Laptop, Charger, Mouse, Headset, LAN Extender, etc.)
         $inventoryAssets = collect();
-        if ($hostname) {
-            if (!empty($detection['nama_user']) && !str_starts_with($detection['nama_user'], 'Pengguna LAP-') && !str_starts_with($detection['nama_user'], 'Pengguna ')) {
-                $inventoryAssets = \App\Models\Inventory::where('pengguna', $detection['nama_user'])
-                    ->orWhere('sn', $hostname)
-                    ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
-                    ->get();
-            } else {
-                $inventoryAssets = \App\Models\Inventory::where('sn', $hostname)
-                    ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
-                    ->get();
-            }
+        $userName = $detection['inventory']?->pengguna ?? $detection['nama_user'];
+
+        if (!empty($userName) && !str_starts_with($userName, 'Pengguna ') && !str_starts_with($userName, 'Pilih Laptop') && $userName !== 'Pengguna Baru') {
+            $inventoryAssets = \App\Models\Inventory::where(function ($q) use ($userName, $hostname, $isRecognizedLaptop) {
+                $q->whereRaw('LOWER(TRIM(pengguna)) = ?', [strtolower(trim($userName))]);
+                if ($isRecognizedLaptop) {
+                    $q->orWhere('sn', $hostname)
+                      ->orWhere('keterangan', 'LIKE', "%{$hostname}%");
+                }
+            })->get();
+        } elseif ($isRecognizedLaptop) {
+            $inventoryAssets = \App\Models\Inventory::where('sn', $hostname)
+                ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
+                ->get();
         }
 
         $tableAssets = collect();
-        if ($hostname) {
+        if ($isRecognizedLaptop) {
             $tableQuery = Asset::where('hostname', $hostname)
                 ->orWhere('serial_number', $hostname);
 
@@ -68,11 +77,19 @@ class TicketController extends Controller
             $tableAssets = $tableQuery->get();
         }
 
-        // Merge both sources and deduplicate
+        // Merge both sources, deduplicate, and sort by asset priority
         $myAssets = $inventoryAssets->concat($tableAssets)->unique(function ($item) {
             $sn = $item->sn ?? $item->serial_number ?? $item->asset_code ?? $item->id;
             $type = $item->jenis ?? $item->type ?? 'asset';
             return strtolower($sn . '_' . $type);
+        })->sortBy(function ($item) {
+            $j = strtolower($item->jenis ?? $item->type ?? '');
+            if (str_contains($j, 'laptop') || str_contains($j, 'notebook')) return 1;
+            if (str_contains($j, 'charger') || str_contains($j, 'adaptor')) return 2;
+            if (str_contains($j, 'mouse')) return 3;
+            if (str_contains($j, 'headset') || str_contains($j, 'earphone')) return 4;
+            if (str_contains($j, 'lan') || str_contains($j, 'extender')) return 5;
+            return 6;
         })->values();
 
         return view('user.portal', compact('detection', 'tickets', 'myAssets', 'availableLaptops'));
@@ -81,6 +98,7 @@ class TicketController extends Controller
     public function setLaptop(Request $request)
     {
         $inputSn = trim($request->input('nomor_laptop', ''));
+        $tab = $request->input('tab', 'history');
         $detectionService = new LaptopDetectionService();
         $inventory = $detectionService->findInventoryByDeviceName($inputSn);
 
@@ -99,7 +117,7 @@ class TicketController extends Controller
             session(['mptb_laptop_sn' => $sn]);
         }
 
-        return redirect()->route('portal', ['tab' => $request->input('tab', 'history')])
+        return redirect()->route('portal', ['tab' => $tab])
             ->withCookie(cookie()->forever('mptb_laptop_sn', $sn))
             ->with('success', $msg);
     }
@@ -140,23 +158,33 @@ class TicketController extends Controller
             $screenshot = $request->file('screenshot')->store('tickets', 'public');
         }
 
-        $nomorLaptop = $detection['hostname'] ?: ($rawNomorLaptop ?: 'LAP-UNKNOWN');
-        $namaUser = Auth::check() ? Auth::user()->name : ($detection['nama_user'] ?: ($request->input('nama') ?: 'Pengguna ' . $nomorLaptop));
-
-        if ($nomorLaptop && $nomorLaptop !== 'LAP-UNKNOWN') {
+        $nomorLaptop = $rawNomorLaptop ?: $detection['hostname'];
+        if (in_array($nomorLaptop, ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+            $nomorLaptop = 'LAP-UNKNOWN';
+        } else {
             \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $nomorLaptop, 525600);
             session(['mptb_laptop_sn' => $nomorLaptop]);
         }
 
+        $namaUser = Auth::check() ? Auth::user()->name : ($request->input('nama') ?: $detection['nama_user']);
+        if (str_starts_with($namaUser, 'Pilih Laptop') || $namaUser === 'Pengguna Baru') {
+            $namaUser = 'Pengguna ' . ($nomorLaptop !== 'LAP-UNKNOWN' ? $nomorLaptop : 'Baru');
+        }
+
         $userId = Auth::id() ?? $detection['user_id'] ?? null;
         if (!$userId) {
-            $user = User::create([
-                'name'     => $namaUser,
-                'username' => 'guest_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nomorLaptop ?: 'user')) . '_' . rand(1000, 9999),
-                'password' => bcrypt('password'),
-                'role'     => 'user',
-            ]);
-            $userId = $user->id;
+            $existingUser = User::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($namaUser))])->first();
+            if ($existingUser) {
+                $userId = $existingUser->id;
+            } else {
+                $user = User::create([
+                    'name'     => $namaUser,
+                    'username' => 'guest_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nomorLaptop ?: 'user')) . '_' . rand(1000, 9999),
+                    'password' => bcrypt('password'),
+                    'role'     => 'user',
+                ]);
+                $userId = $user->id;
+            }
         }
         $ipAddress = $request->input('ip_address') ?: $detection['ip_address'];
 

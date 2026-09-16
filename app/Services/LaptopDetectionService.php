@@ -5,13 +5,13 @@ namespace App\Services;
 use App\Models\Inventory;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\Asset;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Cache;
 
 class LaptopDetectionService
 {
     /**
-     * Detect client IPv4, Laptop Computer Name, and Owner from `inventories` Table
+     * Detect client IPv4, Laptop Computer Name, and Owner from `inventories` Table (Read-Only)
      */
     public function detect(?string $overrideHostname = null): array
     {
@@ -28,31 +28,25 @@ class LaptopDetectionService
 
         $candidateNames = [];
 
-        // 1. Priority 1: Explicit Override / URL Query / Cookie / Session
-        $savedSn = $overrideHostname ?? request()->query('laptop_sn') ?? request()->cookie('mptb_laptop_sn') ?? session('mptb_laptop_sn');
-        if ($savedSn && trim($savedSn) !== '') {
+        // 1. Priority 1: Explicit Override / URL Query / Cookie / Session / Header
+        $savedSn = $overrideHostname 
+            ?? request()->query('laptop_sn') 
+            ?? request()->cookie('mptb_laptop_sn') 
+            ?? session('mptb_laptop_sn')
+            ?? request()->header('X-Device-Name')
+            ?? request()->header('X-Laptop-SN');
+
+        if ($savedSn && trim($savedSn) !== '' && !in_array(strtoupper(trim($savedSn)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
             $candidateNames[] = trim($savedSn);
         }
 
-        // 2. Priority 2: Custom Client Header (if reverse proxy / agent sends it)
-        if ($headerDevice = request()->header('X-Device-Name')) {
-            $candidateNames[] = trim($headerDevice);
+        // 2. Priority 2: Automated Network Computer Name Detection (NetBIOS UDP 137 + DNS PTR)
+        $networkHost = $this->resolveClientHostname($ip, $rawIp);
+        if (!empty($networkHost) && !in_array(strtoupper($networkHost), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN', 'UNKNOWN'])) {
+            $candidateNames[] = $networkHost;
         }
 
-        // 3. Priority 3: Network Hostname / Computer Name Detection via DNS
-        if ($rawIp === '127.0.0.1' || $rawIp === '::1') {
-            $localHost = gethostname();
-            if ($localHost) {
-                $candidateNames[] = $localHost;
-            }
-        } else {
-            $networkHost = @gethostbyaddr($rawIp);
-            if ($networkHost && $networkHost !== $rawIp && !filter_var($networkHost, FILTER_VALIDATE_IP)) {
-                $candidateNames[] = $networkHost;
-            }
-        }
-
-        // 4. Priority 4: Memory from previous tickets submitted by this IP address
+        // 3. Priority 3: Memory from previous tickets submitted from this IP address
         if (empty($candidateNames)) {
             $prevTicket = Ticket::where('ip_address', $ip)
                 ->whereNotNull('nomor_laptop')
@@ -63,19 +57,19 @@ class LaptopDetectionService
                 ->latest()
                 ->first();
 
-            if ($prevTicket && $prevTicket->nomor_laptop) {
+            if ($prevTicket && $prevTicket->nomor_laptop && !in_array($prevTicket->nomor_laptop, ['LAP-UNKNOWN', 'BELUM DIPILIH', 'BELUM TERDETEKSI'])) {
                 $candidateNames[] = $prevTicket->nomor_laptop;
             }
         }
 
-        // 5. Match candidates against `inventories`
+        // 4. Match candidates against `inventories`
         $inventory = null;
-        $matchedSn = null;
+        $hostname = null;
 
         foreach ($candidateNames as $candidate) {
             $inventory = $this->findInventoryByDeviceName($candidate);
             if ($inventory) {
-                $matchedSn = $inventory->sn;
+                $hostname = $inventory->sn;
                 break;
             }
         }
@@ -87,18 +81,17 @@ class LaptopDetectionService
             $noWhatsapp = $inventory->kontak ?? '-';
             $isDetected = true;
         } else {
-            // If candidate has an explicit LAP string or user typed it, preserve it
             $firstCandidate = !empty($candidateNames) ? $candidateNames[0] : null;
             if ($firstCandidate && !filter_var($firstCandidate, FILTER_VALIDATE_IP)) {
-                $normalizedFirst = $this->normalizeLapCode($firstCandidate);
-                $hostname = $normalizedFirst ?: strtoupper($firstCandidate);
+                $normalized = $this->normalizeLapCode($firstCandidate);
+                $hostname = $normalized ?: strtoupper($firstCandidate);
                 $namaUser = 'Pengguna ' . $hostname;
                 $department = '-';
                 $noWhatsapp = '-';
                 $isDetected = false;
             } else {
                 $hostname = null;
-                $namaUser = null;
+                $namaUser = 'Pengguna Baru';
                 $department = '-';
                 $noWhatsapp = '-';
                 $isDetected = false;
@@ -107,13 +100,14 @@ class LaptopDetectionService
 
         // Find associated user in system if exists
         $user = null;
-        if ($namaUser) {
-            $user = User::where('name', $namaUser)->first();
+        if ($namaUser && $namaUser !== 'Pengguna Baru') {
+            $user = User::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($namaUser))])->first();
         }
 
         return [
             'ip_address'   => $ip,
-            'hostname'     => $hostname,
+            'hostname'     => $hostname ?: 'BELUM TERDETEKSI',
+            'raw_hostname' => $hostname,
             'user_id'      => $user?->id,
             'nama_user'    => $namaUser,
             'department'   => $department,
@@ -121,6 +115,83 @@ class LaptopDetectionService
             'inventory'    => $inventory,
             'is_detected'  => $isDetected,
         ];
+    }
+
+    /**
+     * Resolve Windows Computer Name via NetBIOS (UDP 137) or DNS PTR with short timeout & caching
+     */
+    public function resolveClientHostname(string $ip, ?string $rawIp = null): ?string
+    {
+        if ($ip === '127.0.0.1' || $rawIp === '127.0.0.1' || $rawIp === '::1') {
+            return gethostname();
+        }
+
+        return Cache::remember("laptop_host_{$ip}", 300, function () use ($ip) {
+            // A. Query NetBIOS Node Status (UDP Port 137 - Standard Windows LAN resolution)
+            $netbiosName = $this->queryNetbios($ip, 0.25);
+            if (!empty($netbiosName) && $netbiosName !== 'UNKNOWN' && !filter_var($netbiosName, FILTER_VALIDATE_IP)) {
+                return $netbiosName;
+            }
+
+            // B. Fallback to DNS PTR lookup
+            $dns = @gethostbyaddr($ip);
+            if (!empty($dns) && $dns !== $ip) {
+                $clean = strtoupper(explode('.', $dns)[0] ?? $dns);
+                if (!filter_var($clean, FILTER_VALIDATE_IP) && $clean !== 'UNKNOWN') {
+                    return $clean;
+                }
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Send NetBIOS Node Status Query over UDP 137
+     */
+    protected function queryNetbios(string $ip, float $timeout = 0.25): ?string
+    {
+        $fp = @fsockopen("udp://$ip", 137, $errno, $errstr, $timeout);
+        if (!$fp) return null;
+
+        $seconds = (int) $timeout;
+        $micro = (int) (($timeout - $seconds) * 1000000);
+        stream_set_timeout($fp, $seconds, $micro);
+
+        // Standard RFC 1002 NetBIOS Node Status Request Packet
+        $packet = "\x81\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x43\x4b\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x41\x00\x00\x21\x00\x01";
+        
+        @fwrite($fp, $packet);
+        $response = @fread($fp, 1024);
+        @fclose($fp);
+
+        if (!$response || strlen($response) < 57) {
+            return null;
+        }
+
+        $numNames = ord($response[56]);
+        for ($i = 0; $i < $numNames; $i++) {
+            $offset = 57 + ($i * 18);
+            if (strlen($response) < $offset + 18) break;
+            $name = trim(substr($response, $offset, 15));
+            $type = ord($response[$offset + 15]);
+            $flags = ord($response[$offset + 16]);
+
+            // Type 0x00 = Workstation / Computer Name, Type 0x20 = Server Service
+            if (!empty($name) && ($type === 0x00 || $type === 0x20) && !($flags & 0x80)) {
+                return strtoupper($name);
+            }
+        }
+
+        // Fallback: take first valid non-empty name from response
+        if (strlen($response) >= 72) {
+            $name = trim(substr($response, 57, 15));
+            if (!empty($name)) {
+                return strtoupper($name);
+            }
+        }
+
+        return null;
     }
 
     /**
