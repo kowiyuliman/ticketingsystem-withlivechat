@@ -47,12 +47,6 @@
                     <input type="text" value="{{ strtoupper($user->role) }}" class="form-control" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Leader</label>
-                    <input type="text" 
-                        value="{{ $user->leader->name ?? '-' }}" 
-                        class="form-control" readonly>
-                </div>
-                <div class="form-group">
                     <label>Dibuat</label>
                     <input type="text" 
                         value="{{ $user->created_at->format('d-m-Y H:i') }}" 
@@ -76,7 +70,7 @@
                     <label>Nama</label>
                     <input type="text" 
                         name="name" 
-                        value="{{ $user->name }}" 
+                        value="{{ old('name', $user->name) }}" 
                         class="form-control" 
                         required>
                 </div>
@@ -85,7 +79,7 @@
                     <label>Username</label>
                     <input type="text" 
                         name="username" 
-                        value="{{ $user->username }}" 
+                        value="{{ old('username', $user->username) }}" 
                         class="form-control" 
                         required>
                 </div>
@@ -116,44 +110,26 @@
                     <div class="form-group">
                         <label>Role</label>
                         <select name="role" class="form-control" required>
-                            <option value="user" {{ $user->role=='user'?'selected':'' }}>
+                            <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>
                                 user
                             </option>
-                            <option value="admin" {{ $user->role=='admin'?'selected':'' }}>
+                            <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
                                 admin
                             </option>
-                            <option value="leader" {{ $user->role=='leader'?'selected':'' }}>
-                                leader
-                            </option>
-                            <option value="management" {{ $user->role=='management'?'selected':'' }}>
+                            <option value="management" {{ old('role', $user->role) == 'management' ? 'selected' : '' }}>
                                 management (Bos / Hanya Dashboard)
                             </option>
                         </select>
                     </div>
-                 @endif
-                {{-- LEADER --}}
-                @if(auth()->user()->role == 'admin')
-                <div class="form-group">
-                    <label>Leader</label>
-                    <select name="leader_id" class="form-control">
-                        <option value="">-- Tidak ada --</option>
-                        @foreach($leaders as $leader)
-                            <option value="{{ $leader->id }}"
-                                {{ $user->leader_id == $leader->id ? 'selected' : '' }}>
-                                {{ $leader->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
                 @endif
             </div>
             <div class="card-footer text-right">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i> Update
-                </button>
                 <a href="/admin/users" class="btn btn-secondary">
                     Kembali
                 </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Update
+                </button>
             </div>
         </div>
         </form>

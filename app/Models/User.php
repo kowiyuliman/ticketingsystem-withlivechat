@@ -24,7 +24,6 @@ class User extends Authenticatable
         'username',
         'password',
         'role',
-        'leader_id'
     ];
 
     /**
@@ -48,16 +47,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function leader()
-    {
-        return $this->belongsTo(User::class, 'leader_id');
-    }
-
-    public function team()
-    {
-        return $this->hasMany(User::class, 'leader_id');
     }
 
     public function assignments()

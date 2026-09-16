@@ -15,9 +15,10 @@
 - [Fitur Utama](#-fitur-utama)
 - [Keunggulan Aplikasi](#-keunggulan-aplikasi)
 - [Struktur Hak Akses & Role](#-struktur-hak-akses--role)
+- [Detail Role & Akun Pengguna](#-detail-role--akun-pengguna)
 - [Spesifikasi Teknologi](#-spesifikasi-teknologi)
 - [Panduan Instalasi](#-panduan-instalasi)
-- [Akun & Role Pengguna](#-akun--role-pengguna)
+- [Menjalankan Automated Testing](#-menjalankan-automated-testing)
 - [Lisensi](#-lisensi)
 
 ---
@@ -41,14 +42,14 @@
 - **Smart Resource Throttling**: Mengoptimalkan konsumsi sumber daya server dengan mengatur interval request saat browser diminimize/tidak aktif.
 - **Kartu Indikator Interaktif**: Badge metrik (*Open, On Progress, Pending, Close, Cancel*) dapat diklik untuk langsung membuka filter tiket yang sesuai.
 - **Grafik Analitik Interaktif**:
-  - Tren tiket harian (7 hari terakhir).
+  - Tren tiket harian (14 hari terakhir).
   - Distribusi kategori kendala (*Hardware, Software, Network, Other*).
-  - Rasio status penyelesaian tiket.
+  - Statistik beban kerja teknisi dan riwayat tiket per perangkat laptop.
 
 ### 3. 👥 Manajemen Pengguna & Hak Akses (Multi-Role)
 - **Role Khusus Management (Bos)**: Mode monitoring dashboard eksekutif secara *read-only* tanpa opsi mengubah tiket/data aset.
 - **Role Admin / IT Support**: Akses penuh penanganan tiket, manajemen inventaris, dan konfigurasi sistem.
-- **Role Leader & Staff User**: Pemantauan tiket spesifik tim dan pembuatan tiket kendala operasional.
+- **Role User / Karyawan**: Pembuatan tiket kendala operasional, tracking status mandiri, dan komunikasi live chat.
 - **Menu Kelola Admin**: Manajemen akun administrator secara mandiri dengan perlindungan anti-hapus akun sendiri (*self-delete protection*).
 
 ### 4. 💻 Manajemen Inventaris Aset IT
@@ -76,24 +77,31 @@
 flowchart TD
     A[Sistem IT Management] --> B[🛡️ Admin / IT Support]
     A --> C[👔 Management / Bos]
-    A --> D[👥 Leader]
-    A --> E[👤 User / Karyawan]
+    A --> D[👤 User / Karyawan]
 
     B --> B1[Kelola & Proses Tiket]
     B --> B2[Live Chat Support]
     B --> B3[Kelola Inventaris Aset]
-    B --> B4[Kelola Akun Admin]
+    B --> B4[Kelola Akun Admin & User]
 
     C --> C1[Dashboard Monitoring Real-Time]
     C --> C2[Lihat Analitik & Tren]
     C --> C3[Read-Only Mode]
 
-    D --> D1[Kelola Tim]
-    D --> D2[Pantau Tiket Tim]
-
-    E --> E1[Buat Tiket Kendala]
-    E --> E2[Live Chat Tiket Mandiri]
+    D --> D1[Buat Tiket Kendala]
+    D --> D2[Live Chat Tiket Mandiri]
+    D --> D3[Riwayat Tiket Personal]
 ```
+
+---
+
+## 👥 Detail Role & Akun Pengguna
+
+| Role | Deskripsi Hak Akses | Area / URL Utama |
+|---|---|---|
+| **🛡️ Admin** | Akses penuh: manajemen tiket, update status, live chat admin, modul inventaris aset, kelola user, dan kelola admin. | `/admin/dashboard`<br>`/admin/tickets`<br>`/admin/inventory`<br>`/admin/users`<br>`/admin/admins` |
+| **👔 Management** | Monitoring performa dan analitik eksekutif secara *read-only*. Tidak memiliki akses untuk memodifikasi tiket maupun data aset. | `/admin/dashboard`<br>`/admin/dashboard/realtime` |
+| **👤 User** | Akses portal pelaporan tiket kendala mandiri, live chat dengan teknisi, serta riwayat tiket pribadi. | `/portal`<br>`/ticket/{id}`<br>`/my-tickets` |
 
 ---
 
@@ -152,6 +160,11 @@ php artisan key:generate
 php artisan migrate
 ```
 
+Untuk menambahkan data awal (seeder admin default):
+```bash
+php artisan db:seed
+```
+
 ### 6. Build Aset & Jalankan Server Lokal
 ```bash
 # Terminal 1 - Jalankan server Laravel
@@ -167,7 +180,7 @@ Aplikasi dapat diakses melalui browser di: `http://127.0.0.1:8000`
 ## 🧪 Menjalankan Automated Testing
 Untuk memverifikasi seluruh modul berjalan tanpa error:
 ```bash
-php artisan test
+php artisan test --filter="UserManagementTest|AdminManagementTest|AdminDashboardTest|ManagementRoleTest|UserPortalTest"
 ```
 
 ---

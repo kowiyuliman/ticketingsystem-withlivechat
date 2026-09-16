@@ -76,6 +76,80 @@
 
 @stop
 
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<style>
+    .dataTables_wrapper { padding-top: 6px; }
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 14px !important;
+        font-size: 0.875rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 8px !important;
+        padding: 5px 12px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        margin: 0 3px !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.previous {
+        margin-right: 12px !important;
+        padding: 5px 14px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+        margin-left: 12px !important;
+        padding: 5px 14px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+        color: #94a3b8 !important;
+        cursor: not-allowed !important;
+        opacity: 0.65;
+    }
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        padding: 4px 8px;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 20px;
+        padding: 5px 14px;
+        margin-left: 8px;
+    }
+</style>
+@stop
+
 @section('js')
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -86,11 +160,16 @@ $(document).ready(function () {
         autoWidth: false,
         pageLength: 10,
         language: {
-            search: "Cari:",
+            search: "Cari Tiket:",
             lengthMenu: "Tampilkan _MENU_ data",
             zeroRecords: "Tidak ada tiket",
-            info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
-            paginate: { previous: "←", next: "→" }
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ tiket",
+            infoEmpty: "Menampilkan 0 tiket",
+            infoFiltered: "(disaring dari _MAX_ total tiket)",
+            paginate: { 
+                previous: "<i class='fas fa-chevron-left mr-1'></i> Previous", 
+                next: "Next <i class='fas fa-chevron-right ml-1'></i>" 
+            }
         }
     });
 });

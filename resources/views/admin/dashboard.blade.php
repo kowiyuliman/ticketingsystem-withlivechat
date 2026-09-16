@@ -52,11 +52,11 @@
             <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header border-0 d-flex justify-content-between align-items-center w-100">
                     <h3 class="card-title font-weight-bold text-dark mb-0" style="float: none;">
-                        <i class="fas fa-exclamation-circle text-warning mr-1"></i> Tiket Open Terbaru (Perlu Ditangani)
+                        Tiket Open Terbaru (Perlu Ditangani)
                     </h3>
                     @if(!$isManagement)
                     <div class="card-tools ml-auto">
-                        <a href="{{ url('admin/tickets') }}" class="btn btn-xs btn-outline-warning font-weight-bold">
+                        <a href="{{ url('admin/tickets') }}" class="btn btn-sm btn-primary font-weight-bold shadow-sm">
                             Lihat Semua Tiket &rarr;
                         </a>
                     </div>
@@ -123,7 +123,7 @@
             <div class="card card-outline card-secondary shadow-sm">
                 <div class="card-header border-0">
                     <h3 class="card-title font-weight-bold text-dark">
-                        <i class="fas fa-laptop text-info mr-1"></i> Statistik Tiket per Laptop & Pengguna (Database Inventories)
+                        Statistik Tiket per Laptop & Pengguna (Database Inventories)
                     </h3>
                 </div>
                 <div class="card-body">
@@ -186,7 +186,7 @@
             <div class="card card-outline card-primary shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        <i class="fas fa-chart-line text-primary mr-1"></i> Tren Tiket Harian
+                        Tren Tiket Harian
                     </h3>
                 </div>
                 <div class="card-body">
@@ -201,7 +201,7 @@
             <div class="card card-outline card-success shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        <i class="fas fa-chart-bar text-success mr-1"></i> Grafik Tiket Bulanan
+                        Grafik Tiket Bulanan
                     </h3>
                 </div>
                 <div class="card-body">
@@ -219,7 +219,7 @@
             <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        <i class="fas fa-chart-pie text-warning mr-1"></i> Distribusi Kategori Kendala
+                        Distribusi Kategori Kendala
                     </h3>
                 </div>
                 <div class="card-body">
@@ -234,7 +234,7 @@
             <div class="card card-outline card-info shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        <i class="fas fa-users-cog text-info mr-1"></i> Grafik Workload IT
+                        Grafik Workload IT
                     </h3>
                 </div>
                 <div class="card-body">
@@ -252,7 +252,7 @@
             <div class="card card-outline card-dark shadow-sm">
                 <div class="card-header border-0">
                     <h3 class="card-title font-weight-bold text-dark">
-                        <i class="fas fa-user-shield text-info mr-1"></i> Workload IT
+                        Workload IT
                     </h3>
                 </div>
                 <div class="card-body table-responsive p-0">

@@ -22,15 +22,6 @@ class DashboardController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        if($user->role == 'leader'){
-            $teamIds = User::where('leader_id', $user->id)->pluck('id');
-
-            $query->where(function($q) use ($teamIds, $user){
-                $q->whereIn('user_id', $teamIds)
-                ->orWhere('user_id', $user->id);
-            });
-        }
-
         // CACHE PER ROLE (penting)
         $cacheKey = 'dashboard_'.$user->role.'_'.$user->id;
         $stats = Cache::remember($cacheKey, 30, function() use ($query){
@@ -238,11 +229,6 @@ class DashboardController extends Controller
             $query = Ticket::query();
             if ($user && $user->role == 'user') {
                 $query->where('user_id', $user->id);
-            } elseif ($user && $user->role == 'leader') {
-                $teamIds = User::where('leader_id', $user->id)->pluck('id');
-                $query->where(function($q) use ($teamIds, $user){
-                    $q->whereIn('user_id', $teamIds)->orWhere('user_id', $user->id);
-                });
             }
 
             // Stats

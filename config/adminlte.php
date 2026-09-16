@@ -364,14 +364,14 @@ return [
             'text' => 'Portal Pengaduan',
             'url'  => 'portal',
             'icon' => 'fas fa-ticket-alt',
-            'can'  => ['user','leader'],
+            'can'  => 'user',
         ],
 
         [
             'text' => 'Riwayat Tiket',
             'url'  => 'my-tickets',
             'icon' => 'fas fa-list',
-            'can'  => ['user','leader'], 
+            'can'  => 'user', 
         ],
         
 

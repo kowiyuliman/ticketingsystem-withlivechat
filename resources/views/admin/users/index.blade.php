@@ -18,9 +18,6 @@
             <button class="btn btn-danger btn-filter" data-role="admin">
                 <i class="fas fa-user-shield"></i> Admin
             </button>
-            <button class="btn btn-primary btn-filter" data-role="leader">
-                <i class="fas fa-user-tie"></i> Leader
-            </button>
             <button class="btn btn-dark btn-filter" data-role="management">
                 <i class="fas fa-briefcase"></i> Management
             </button>
@@ -82,7 +79,6 @@
             <th>Nama</th>
             <th>Username</th>
             <th>Role</th>
-            <th>Leader</th>
             <th>Action</th>
         </tr>
     </thead>
@@ -99,9 +95,6 @@
                 <span class="badge bg-info">
                     {{ $user->role }}
                 </span>
-            </td>
-            <td>
-                {{ $user->leader->name ?? '-' }}
             </td>
             <td>
                 <a href="/admin/users/edit/{{ $user->id }}"
@@ -193,7 +186,7 @@
                     searchable: false
                 },
                 {
-                    targets: 6,
+                    targets: 5,
                     orderable: false,
                     searchable: false
                 }

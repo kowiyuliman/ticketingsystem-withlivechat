@@ -279,6 +279,138 @@
 </div>
 @stop
 
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+
+<style>
+    /* DataTables Bottom & Top Layout */
+    .dataTables_wrapper {
+        padding-top: 6px;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 14px !important;
+        font-size: 0.875rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important; /* Jarak antar tombol pagination */
+    }
+
+    /* Tombol Angka Pagination */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 8px !important;
+        padding: 5px 12px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        cursor: pointer !important;
+        margin: 0 3px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Jarak Khusus untuk Tombol Previous dan Next */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.previous {
+        margin-right: 12px !important; /* Jarak renggang sebelum nomor halaman */
+        padding: 5px 14px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+        margin-left: 12px !important; /* Jarak renggang setelah nomor halaman */
+        padding: 5px 14px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    /* Hover State */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Active / Current Page */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+    }
+
+    /* Disabled State */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+        color: #94a3b8 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
+        opacity: 0.65;
+    }
+
+    /* Length & Search Filter Controls */
+    .dataTables_wrapper .dataTables_length {
+        margin-bottom: 12px;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        padding: 4px 8px;
+        margin: 0 6px;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 12px;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 20px;
+        border: 1px solid #cbd5e1;
+        padding: 5px 14px;
+        margin-left: 8px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+</style>
+@stop
+
 @section('js')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
@@ -290,7 +422,18 @@
             autoWidth: false,
             pageLength: 10,
             lengthMenu: [10, 25, 50],
-            language: { emptyTable: "Tidak ada tiket" }
+            language: {
+                emptyTable: "Tidak ada tiket",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ tiket",
+                infoEmpty: "Menampilkan 0 tiket",
+                infoFiltered: "(disaring dari _MAX_ total tiket)",
+                lengthMenu: "Tampilkan _MENU_ tiket",
+                search: "Cari Tiket:",
+                paginate: {
+                    previous: "<i class='fas fa-chevron-left mr-1'></i> Previous",
+                    next: "Next <i class='fas fa-chevron-right ml-1'></i>"
+                }
+            }
         };
 
         $('#table-open').DataTable(tableConfig);

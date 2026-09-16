@@ -31,11 +31,11 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Nama</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
                     </div>
                     <div class="form-group mt-2">
                         <label>Username</label>
-                        <input type="text" name="username" class="form-control" required>
+                        <input type="text" name="username" class="form-control" required value="{{ old('username') }}">
                     </div>
                     <div class="form-group mt-2">
                         <label>Password</label>
@@ -55,20 +55,14 @@
                         </div>
                     </div>
 
-                    {{-- 🔥 ROLE (Leader tidak bisa pilih role) --}}
-                    @if(auth()->user()->role == 'admin')
                     <div class="form-group mt-2">
                         <label>Role</label>
-                        <select name="role" class="form-control">
-                            <option value="user">User</option>
-                            <option value="leader">Leader</option>
-                            <option value="admin">Admin</option>
-                            <option value="management">Management / Bos (Hanya Dashboard)</option>
+                        <select name="role" class="form-control" required>
+                            <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
+                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="management" {{ old('role') == 'management' ? 'selected' : '' }}>Management / Bos (Hanya Dashboard)</option>
                         </select>
                     </div>
-                    @else
-                        <input type="hidden" name="role" value="user">
-                    @endif
                 </div>
                 <div class="card-footer text-right">
                     <a href="/admin/users" class="btn btn-secondary">
@@ -109,6 +103,5 @@
         }
     </script>
 @stop
-
 
 @stop

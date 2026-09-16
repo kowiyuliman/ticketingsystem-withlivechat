@@ -152,19 +152,7 @@ Route::get('/admin/check-ticket', function(){
     ]);
 })->middleware('auth');
 
-
-// Route::prefix('leader')->middleware(['auth'])->group(function(){
-
-//     Route::get('/users', [AdminUserController::class,'index']);
-//     Route::get('/users/create', [AdminUserController::class,'create']);
-//     Route::post('/users/store', [AdminUserController::class,'store']);
-//     Route::get('/users/edit/{id}', [AdminUserController::class,'edit']);
-//     Route::post('/users/update/{id}', [AdminUserController::class,'update']);
-//     Route::delete('/users/delete/{id}', [AdminUserController::class,'destroy']);
-
-// });
-    
-    Route::get('/notification/{id}', function($id){
+Route::get('/notification/{id}', function($id){
     $notification = auth()->user()->notifications()->findOrFail($id);
     // tandai sudah dibaca
     $notification->markAsRead();

@@ -13,32 +13,27 @@ class UsersImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         // skip jika kosong
-        if (!$row['username'] || !$row['name']) {
+        if (empty($row['username']) || empty($row['name'])) {
             return null;
         }
+
+        $username = strtolower(trim($row['username']));
 
         // cek username unik
-        if (User::where('username', $row['username'])->exists()) {
+        if (User::where('username', $username)->exists()) {
             return null;
         }
 
-        // 🔥 auto assign leader
-        $leader_id = null;
-
-        if (Auth::user()->role == 'leader') {
-            $leader_id = Auth::id();
-        } else {
-            // jika admin → ambil dari excel
-            $leader = User::where('name', $row['leader'])->first();
-            $leader_id = $leader ? $leader->id : null;
+        $role = $row['role'] ?? 'user';
+        if ($role === 'leader') {
+            $role = 'user';
         }
 
         return new User([
             'name' => $row['name'],
-            'username' => $row['username'],
+            'username' => $username,
             'password' => Hash::make($row['password'] ?? '123456'),
-            'role' => $row['role'] ?? 'user',
-            'leader_id' => $leader_id
+            'role' => $role,
         ]);
     }
 }

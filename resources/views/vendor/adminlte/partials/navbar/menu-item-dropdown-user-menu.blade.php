@@ -71,7 +71,7 @@
                 </a>
             @endif
              {{-- CHANGE PASSWORD --}}
-            @if(auth()->user()->role == 'user' || auth()->user()->role == 'leader')
+            @if(auth()->user()->role == 'user')
             <li>
                 <a href="{{ url('change-password') }}" class="dropdown-item">
                     <i class="fas fa-key mr-2 text-warning"></i>

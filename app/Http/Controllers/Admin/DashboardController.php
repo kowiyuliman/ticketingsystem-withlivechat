@@ -22,15 +22,6 @@ class DashboardController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        if($user->role == 'leader'){
-            $teamIds = User::where('leader_id', $user->id)->pluck('id');
-
-            $query->where(function($q) use ($teamIds, $user){
-                $q->whereIn('user_id', $teamIds)
-                ->orWhere('user_id', $user->id);
-            });
-        }
-
         // CACHE PER ROLE (penting)
         $cacheKey = 'dashboard_'.$user->role.'_'.$user->id;
 
@@ -89,32 +80,9 @@ class DashboardController extends Controller
         ->orderByDesc('total_ticket')
         ->get();
 
-        // LEADER STATS
-        $leaderStats = User::where('role','leader')
-        ->get()
-        ->map(function($leader){
-
-            $teamIds = User::where('leader_id', $leader->id)->pluck('id');
-
-            $tickets = Ticket::where(function($q) use ($teamIds, $leader){
-                $q->whereIn('user_id', $teamIds)
-                ->orWhere('user_id', $leader->id);
-            });
-
-            return [
-                'name' => $leader->name,
-                'total_user' => $teamIds->count(),
-                'open' => (clone $tickets)->where('status','open')->count(),
-                'progress' => (clone $tickets)->where('status','on_progress')->count(),
-                'pending' => (clone $tickets)->where('status','pending')->count(),
-                'closed' => (clone $tickets)->where('status','closed')->count(),
-                'total_ticket' => (clone $tickets)->count(),
-            ];
-        });
-
         return view('admin.dashboard', compact(
             'total','open','progress','pending','closed','today',
-            'daily','monthly','kategori','sla_avg','technicianWorkload','leaderStats'
+            'daily','monthly','kategori','sla_avg','technicianWorkload'
         ));
     }
 
