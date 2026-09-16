@@ -27,7 +27,7 @@
     <header class="bg-white border-b border-sky-100 sticky top-0 z-50 shadow-sm">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <a href="{{ route('login') }}" class="flex items-center space-x-3 hover:opacity-90 transition-opacity" title="Login Admin">
+                <a href="{{ url('/') }}" class="flex items-center space-x-3 hover:opacity-90 transition-opacity" title="Portal Lapor IT">
                     <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-sky-200">
                         🛠️
                     </div>
@@ -78,11 +78,9 @@
         <div id="view-create" class="{{ $activeTab == 'create' ? '' : 'hidden' }} max-w-3xl mx-auto">
             
             <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
-                {{--  <span class="inline-block bg-white/80 backdrop-blur text-sky-700 text-xs font-extrabold px-3 py-1 rounded-full mb-2 border border-sky-200">
-                    TERDETEKSI OTOMATIS
-                </span>  --}}
                 <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                
+                <p class="text-xs sm:text-sm text-sky-800">Pilih kategori kendala dan ceritakan keluh kesah Anda untuk penanganan cepat oleh tim IT</p>
+                <p class="text-xs sm:text-sm text-sky-500">Penting ojo curhat</p>
             </div>
 
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
@@ -95,7 +93,7 @@
                     </div>
                     <div class="bg-white p-3 rounded-xl border border-sky-100">
                         <span class="text-[11px] text-slate-400 font-medium block">Nama Pemilik</span>
-                        <span class="font-extrabold text-slate-800 text-xs">👤 {{ $detection['nama_user'] }}</span>
+                        <span class="font-extrabold text-slate-800 text-xs truncate block" title="{{ $detection['nama_user'] }}">👤 {{ $detection['nama_user'] }}</span>
                     </div>
                     <div class="bg-white p-3 rounded-xl border border-sky-100">
                         <span class="text-[11px] text-slate-400 font-medium block">IP Address (Kabel)</span>
@@ -156,15 +154,17 @@
         <!-- TAB 2: TIKET SAYA & STATUS -->
         <div id="view-history" class="{{ $activeTab == 'history' ? '' : 'hidden' }} max-w-4xl mx-auto">
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-sky-50">
                     <div>
                         <h2 class="text-xl font-extrabold text-slate-900">Riwayat Pengaduan Saya</h2>
-                        <p class="text-xs text-slate-500">Daftar tiket yang terdaftar untuk laptop {{ $detection['hostname'] }}</p>
+                        <p class="text-xs text-slate-500">Daftar tiket yang terdaftar untuk <strong>{{ $detection['nama_user'] }}</strong> ({{ $detection['hostname'] }})</p>
                     </div>
-                    <button type="button" onclick="switchTab('create')" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
-                        <span>➕</span>
-                        <span>Buat Tiket Baru</span>
-                    </button>
+                    <div>
+                        <button type="button" onclick="switchTab('create')" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+                            <span>➕</span>
+                            <span>Buat Tiket Baru</span>
+                        </button>
+                    </div>
                 </div>
 
                 @if($tickets->isEmpty())
@@ -230,7 +230,7 @@
                         <h2 class="text-xl font-extrabold text-slate-900">Perangkat &amp; Aset IT Terdaftar</h2>
                         <p class="text-xs text-slate-500">Daftar seluruh perlengkapan IT yang terikat pada <strong>{{ $detection['nama_user'] }}</strong> ({{ $detection['hostname'] }})</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div>
                         <span class="text-xs bg-sky-50 text-sky-800 font-bold px-3 py-1.5 rounded-xl border border-sky-200/60 flex items-center gap-1.5 shadow-2xs">
                             <span>📦 Total Aset:</span>
                             <span class="bg-sky-600 text-white text-[11px] px-2 py-0.5 rounded-full font-black">{{ $myAssets->count() }}</span>
@@ -243,14 +243,12 @@
                         <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center text-3xl font-bold mb-3 shadow-2xs">
                             💻
                         </div>
-                        <h3 class="font-extrabold text-base text-slate-900 mb-1">Laptop Aktif Terdeteksi</h3>
-                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-4">Belum ada periferal tambahan (seperti mouse, headset, LAN adapter, USB audio, HP root) yang terdaftar atas nama pengguna ini di database inventaris.</p>
-                        <div class="inline-flex flex-wrap items-center justify-center gap-2 bg-white px-4 py-2 rounded-xl border border-sky-100 text-xs font-semibold text-slate-700 shadow-2xs">
+                        <h3 class="font-extrabold text-base text-slate-900 mb-1">Aset Terhubung</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-2">Semua perangkat dan perlengkapan IT Anda otomatis terdata dari sistem inventaris.</p>
+                        <div class="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-sky-100 text-xs font-semibold text-slate-700 shadow-2xs">
                             <span>💻 {{ $detection['hostname'] }}</span>
                             <span class="text-slate-300">•</span>
                             <span>👤 {{ $detection['nama_user'] }}</span>
-                            <span class="text-slate-300">•</span>
-                            <span>🌐 {{ $detection['ip_address'] }}</span>
                         </div>
                     </div>
                 @else
@@ -261,7 +259,7 @@
                                 $assetBrand = $asset->merk ?? $asset->brand ?? '-';
                                 $assetSn = $asset->sn ?? $asset->serial_number ?? $asset->asset_code ?? '-';
                                 $assetCondition = strtolower($asset->kondisi ?? $asset->condition ?? 'baik');
-                                $assetStatus = strtolower($asset->status ?? 'digunakan');
+                                $assetStatus = strtolower($asset->status ?? 'aktif');
                                 $icon = $asset->jenis_icon ?? '📦';
                             @endphp
                             <div class="p-4 sm:p-5 rounded-2xl border border-sky-100 hover:border-sky-300 bg-white hover:bg-sky-50/20 transition-all shadow-2xs flex items-start space-x-3.5">
@@ -303,107 +301,7 @@
 
     </main>
 
-    <!-- Laptop Selection Modal -->
-    <div id="laptop-modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all" onclick="closeLaptopModal(event)">
-        <div class="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-sky-100 flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 bg-sky-50/80 border-b border-sky-100 flex items-center justify-between">
-                <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">💻</span>
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 text-sm">Pilih Nomor Laptop Anda</h3>
-                        <p class="text-[11px] text-sky-700">Pilih laptop Anda untuk memfilter riwayat tiket perangkat ini</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeLaptopModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold">
-                    ✕
-                </button>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto space-y-4">
-                <!-- Custom Input Option -->
-                <form action="{{ route('laptop.set') }}" method="POST" class="space-y-2">
-                    @csrf
-                    <input type="hidden" name="tab" value="{{ $activeTab }}">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Ketik Nomor Laptop / SN</label>
-                    <div class="flex items-center gap-2">
-                        <input type="text" name="nomor_laptop" id="modal-custom-laptop" placeholder="Contoh: LAP-0303" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all uppercase font-bold" required>
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
-                            Setel
-                        </button>
-                    </div>
-                </form>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink mx-3 text-[11px] text-slate-400 uppercase font-semibold">Atau Pilih Dari Database Inventaris</span>
-                    <div class="flex-grow border-t border-slate-200"></div>
-                </div>
-
-                <!-- Live Search Box for Inventories -->
-                <div>
-                    <input type="text" id="laptop-search-input" onkeyup="filterLaptopList()" placeholder="🔍 Cari nama pengguna atau nomor laptop..." class="w-full bg-slate-50 border border-sky-100 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-sky-400 focus:bg-white transition-all">
-                </div>
-
-                <!-- Laptop List Grid -->
-                <div class="max-h-56 overflow-y-auto space-y-1.5 pr-1" id="laptop-item-list">
-                    @if(isset($availableLaptops))
-                        @foreach($availableLaptops as $inv)
-                            <form action="{{ route('laptop.set') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="tab" value="{{ $activeTab }}">
-                                <input type="hidden" name="nomor_laptop" value="{{ $inv->sn }}">
-                                <button type="submit" class="w-full text-left p-2.5 rounded-xl hover:bg-sky-50 border border-transparent hover:border-sky-200 transition-all flex items-center justify-between group laptop-item-card" data-search="{{ strtolower($inv->sn . ' ' . $inv->pengguna . ' ' . $inv->department) }}">
-                                    <div class="flex items-center space-x-2.5">
-                                        <span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs flex-shrink-0">💻</span>
-                                        <div>
-                                            <span class="font-bold text-xs text-slate-800 group-hover:text-sky-700 block">{{ $inv->sn }}</span>
-                                            <span class="text-[10px] text-slate-400 block">{{ $inv->pengguna ?: 'Tanpa Pengguna' }} ({{ $inv->department ?: '-' }})</span>
-                                        </div>
-                                    </div>
-                                    <span class="text-[10px] text-sky-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Pilih &rarr;</span>
-                                </button>
-                            </form>
-                        @endforeach
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        function openLaptopModal() {
-            const modal = document.getElementById('laptop-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function closeLaptopModal(e) {
-            if (!e || e.target.id === 'laptop-modal' || e.target.closest('button')) {
-                const modal = document.getElementById('laptop-modal');
-                if (modal) {
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            }
-        }
-
-        function filterLaptopList() {
-            const query = document.getElementById('laptop-search-input').value.toLowerCase().trim();
-            const cards = document.querySelectorAll('.laptop-item-card');
-            cards.forEach(card => {
-                const searchData = card.getAttribute('data-search') || '';
-                if (searchData.includes(query)) {
-                    card.parentElement.classList.remove('hidden');
-                } else {
-                    card.parentElement.classList.add('hidden');
-                }
-            });
-        }
-
         function validateForm() {
             const hasCategory = document.querySelector('input[name="kategori"]:checked');
             const descEl = document.getElementById('ticket-deskripsi');

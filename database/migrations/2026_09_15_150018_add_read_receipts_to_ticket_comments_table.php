@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::table('ticket_comments', function (Blueprint $table) {
             if (!Schema::hasColumn('ticket_comments', 'delivered_at')) {
-                $table->timestamp('delivered_at')->nullable()->after('attachment');
+                $table->timestamp('delivered_at')->nullable();
             }
             if (!Schema::hasColumn('ticket_comments', 'read_at')) {
-                $table->timestamp('read_at')->nullable()->after('delivered_at');
+                $table->timestamp('read_at')->nullable();
             }
         });
     }

@@ -24,49 +24,95 @@ class LaptopDetectionService
             $ip = filter_var($lanIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $lanIp : '127.0.0.1';
         }
 
-        // 1. Check override or Cookie/Session saved laptop SN
-        $savedSn = $overrideHostname ?? request()->cookie('mptb_laptop_sn') ?? session('mptb_laptop_sn');
+        $hostname = null;
+        $inventory = null;
 
-        if ($savedSn) {
-            $hostname = strtoupper(trim($savedSn));
-        } else {
-            // 2. Try network hostname detection
-            if ($rawIp === '127.0.0.1' || $rawIp === '::1') {
-                $rawHostname = gethostname();
+        // 1. Check override parameter, Query param, Cookie, Session, or Header
+        $savedSn = $overrideHostname 
+            ?? request()->query('laptop_sn')
+            ?? request()->cookie('mptb_laptop_sn') 
+            ?? session('mptb_laptop_sn')
+            ?? request()->header('X-Laptop-SN');
+
+        if (!empty($savedSn)) {
+            $candidate = strtoupper(trim($savedSn));
+            
+            // Search in inventories by exact SN or partial SN or Pengguna name
+            $inventory = Inventory::where('sn', $candidate)
+                ->orWhere('sn', 'LIKE', "%{$candidate}%")
+                ->orWhereRaw('LOWER(TRIM(pengguna)) = ?', [strtolower(trim($candidate))])
+                ->orWhere('keterangan', 'LIKE', "%{$candidate}%")
+                ->first();
+
+            if ($inventory) {
+                $hostname = $inventory->sn;
             } else {
-                $rawHostname = gethostbyaddr($rawIp);
-            }
-
-            // Clean hostname (e.g. LAP-0253.mptb.domain -> LAP-0253)
-            $hostname = strtoupper(explode('.', $rawHostname)[0] ?? $rawHostname);
-
-            // If raw IP was returned, try finding inventory by matching IP or check first available inventory
-            if (filter_var($hostname, FILTER_VALIDATE_IP)) {
-                $invByIp = Inventory::where('sn', 'LIKE', 'LAP%')->first();
-                $hostname = $invByIp?->sn ?? 'LAP-0253';
+                $hostname = $candidate;
             }
         }
 
-        // 🔍 Search in `inventories` table by serial number (`sn`) or `keterangan`
-        $inventory = Inventory::where('sn', $hostname)
-            ->orWhere('sn', 'LIKE', "%{$hostname}%")
-            ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
-            ->first();
+        // 2. If not saved in cookie/session, try network hostname detection via reverse DNS / NetBIOS
+        if (!$inventory) {
+            $rawHostname = null;
+            if ($rawIp === '127.0.0.1' || $rawIp === '::1') {
+                $rawHostname = gethostname();
+            } else {
+                $rawHostname = @gethostbyaddr($rawIp);
+            }
 
-        $namaUser = $inventory?->pengguna ?? ('Pengguna ' . $hostname);
+            if (!empty($rawHostname)) {
+                // Clean hostname (e.g. LAP-0253.mptb.domain -> LAP-0253)
+                $cleanHost = strtoupper(explode('.', $rawHostname)[0] ?? $rawHostname);
 
-        // Find associated user in system if exists
-        $user = User::where('name', $namaUser)->first();
+                // Ensure it's not returning just the IP address and not generic localhost
+                if (!filter_var($cleanHost, FILTER_VALIDATE_IP) && $cleanHost !== 'UNKNOWN') {
+                    // Try to match LAP-xxxx pattern if contained in hostname
+                    if (preg_match('/LAP-?\d+/i', $cleanHost, $matches)) {
+                        $matchedLap = strtoupper(str_replace('LAP', 'LAP-', str_replace('-', '', $matches[0])));
+                        $inv = Inventory::where('sn', $matchedLap)->first();
+                        if ($inv) {
+                            $inventory = $inv;
+                            $hostname = $inv->sn;
+                        }
+                    }
+
+                    if (!$inventory) {
+                        $inv = Inventory::where('sn', $cleanHost)
+                            ->orWhere('sn', 'LIKE', "%{$cleanHost}%")
+                            ->orWhere('keterangan', 'LIKE', "%{$cleanHost}%")
+                            ->first();
+
+                        if ($inv) {
+                            $inventory = $inv;
+                            $hostname = $inv->sn;
+                        } else {
+                            // Valid hostname string from network but not in DB
+                            $hostname = $cleanHost;
+                        }
+                    }
+                }
+            }
+        }
+
+        $isDetected = (bool) $inventory;
+        $namaUser = $inventory?->pengguna ?? ($hostname ? ('Pengguna ' . $hostname) : 'Pilih Laptop Anda');
+
+        // Find associated user in ticketing system if exists
+        $user = null;
+        if ($inventory?->pengguna) {
+            $user = User::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($inventory->pengguna))])->first();
+        }
 
         return [
             'ip_address'   => $ip,
-            'hostname'     => $hostname,
+            'hostname'     => $hostname ?: 'BELUM DIPILIH',
+            'raw_hostname' => $hostname,
             'user_id'      => $user?->id,
             'nama_user'    => $namaUser,
             'department'   => $inventory?->department ?? '-',
             'no_whatsapp'  => $inventory?->kontak ?? '-',
             'inventory'    => $inventory,
-            'is_detected'  => (bool) $inventory,
+            'is_detected'  => $isDetected,
         ];
     }
 }

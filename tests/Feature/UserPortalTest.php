@@ -525,62 +525,79 @@ class UserPortalTest extends TestCase
 
     public function test_user_portal_loads_all_registered_assets_including_peripherals()
     {
-        $employeeName = 'Ahmad Fathoni';
-        $laptopSn = 'LAP-9999';
+        $employeeName = 'Ahmad Fathoni Test';
+        $laptopSn = 'LAP-TEST-99';
+
+        \App\Models\Inventory::where('sn', 'LIKE', 'LAP-TEST%')
+            ->orWhere('pengguna', $employeeName)
+            ->orWhere('sn', 'LAP-9999')
+            ->delete();
 
         // Create multiple inventory assets for this employee
         \App\Models\Inventory::create([
-            'jenis'     => 'Laptop',
-            'merk'      => 'Lenovo ThinkPad',
-            'sn'        => $laptopSn,
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'Laptop',
+            'merk'        => 'Lenovo ThinkPad',
+            'sn'          => $laptopSn,
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         \App\Models\Inventory::create([
-            'jenis'     => 'Mouse',
-            'merk'      => 'Logitech B100',
-            'sn'        => 'MOS-8888',
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'Mouse',
+            'merk'        => 'Logitech B100',
+            'sn'          => 'MOS-TEST-88',
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         \App\Models\Inventory::create([
-            'jenis'     => 'Headset',
-            'merk'      => 'Jabra Evolve 20',
-            'sn'        => 'HED-7777',
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'Headset',
+            'merk'        => 'Jabra Evolve 20',
+            'sn'          => 'HED-TEST-77',
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         \App\Models\Inventory::create([
-            'jenis'     => 'LAN Adapter',
-            'merk'      => 'TP-Link UE300',
-            'sn'        => 'LAN-6666',
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'LAN Adapter',
+            'merk'        => 'TP-Link UE300',
+            'sn'          => 'LAN-TEST-66',
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         \App\Models\Inventory::create([
-            'jenis'     => 'USB Audio',
-            'merk'      => 'Vention USB Sound',
-            'sn'        => 'AUD-5555',
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'USB Audio',
+            'merk'        => 'Vention USB Sound',
+            'sn'          => 'AUD-TEST-55',
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         \App\Models\Inventory::create([
-            'jenis'     => 'HP Root',
-            'merk'      => 'Xiaomi Redmi 9A Root',
-            'sn'        => 'HPR-4444',
-            'pengguna'  => $employeeName,
-            'kondisi'   => 'Baik',
-            'status'    => 'Aktif',
+            'jenis'       => 'HP Root',
+            'merk'        => 'Xiaomi Redmi 9A Root',
+            'sn'          => 'HPR-TEST-44',
+            'pengguna'    => $employeeName,
+            'kepemilikan' => 'PTMPTB',
+            'lokasi'      => 'Ruang Kerja',
+            'kondisi'     => 'Baik',
+            'status'      => 'Aktif',
         ]);
 
         // Request portal with laptop SN
@@ -589,17 +606,20 @@ class UserPortalTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Perangkat &amp; Aset IT Terdaftar', false);
-        $response->assertSee('LAP-9999');
-        $response->assertSee('MOS-8888');
-        $response->assertSee('HED-7777');
-        $response->assertSee('LAN-6666');
-        $response->assertSee('AUD-5555');
-        $response->assertSee('HPR-4444');
+        $response->assertSee('LAP-TEST-99');
+        $response->assertSee('MOS-TEST-88');
+        $response->assertSee('HED-TEST-77');
+        $response->assertSee('LAN-TEST-66');
+        $response->assertSee('AUD-TEST-55');
+        $response->assertSee('HPR-TEST-44');
         $response->assertSee('Logitech B100');
         $response->assertSee('Jabra Evolve 20');
         $response->assertSee('TP-Link UE300');
         $response->assertSee('Vention USB Sound');
         $response->assertSee('Xiaomi Redmi 9A Root');
+
+        // Cleanup
+        \App\Models\Inventory::where('pengguna', $employeeName)->delete();
     }
 }
 
