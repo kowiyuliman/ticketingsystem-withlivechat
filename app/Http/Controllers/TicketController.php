@@ -38,32 +38,35 @@ class TicketController extends Controller
         ->get(['sn', 'pengguna', 'department']);
 
         // Query tickets STRICTLY for this specific laptop SN
-        $tickets = Ticket::where('nomor_laptop', $hostname)
-            ->latest()
-            ->get();
+        $tickets = $hostname ? Ticket::where('nomor_laptop', $hostname)->latest()->get() : collect();
 
-        // Get all registered assets assigned to this Laptop/User (Laptop, Charger, Mouse, Headset, LAN Adapter, USB Audio, HP Root, etc.)
+        // Get all registered assets assigned to this Laptop/User
         $inventoryAssets = collect();
-        if (!empty($detection['nama_user']) && !str_starts_with($detection['nama_user'], 'Pengguna LAP-') && !str_starts_with($detection['nama_user'], 'Pengguna ')) {
-            $inventoryAssets = \App\Models\Inventory::where('pengguna', $detection['nama_user'])
-                ->orWhere('sn', $hostname)
-                ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
-                ->get();
-        } else {
-            $inventoryAssets = \App\Models\Inventory::where('sn', $hostname)
-                ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
-                ->get();
+        if ($hostname) {
+            if (!empty($detection['nama_user']) && !str_starts_with($detection['nama_user'], 'Pengguna LAP-') && !str_starts_with($detection['nama_user'], 'Pengguna ')) {
+                $inventoryAssets = \App\Models\Inventory::where('pengguna', $detection['nama_user'])
+                    ->orWhere('sn', $hostname)
+                    ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
+                    ->get();
+            } else {
+                $inventoryAssets = \App\Models\Inventory::where('sn', $hostname)
+                    ->orWhere('keterangan', 'LIKE', "%{$hostname}%")
+                    ->get();
+            }
         }
 
-        $tableAssets = Asset::where('hostname', $hostname)
-            ->orWhere('serial_number', $hostname);
+        $tableAssets = collect();
+        if ($hostname) {
+            $tableQuery = Asset::where('hostname', $hostname)
+                ->orWhere('serial_number', $hostname);
 
-        if ($detection['user_id']) {
-            $tableAssets->orWhereHas('assignments', function ($q) use ($detection) {
-                $q->where('user_id', $detection['user_id'])->whereNull('returned_at');
-            });
+            if ($detection['user_id']) {
+                $tableQuery->orWhereHas('assignments', function ($q) use ($detection) {
+                    $q->where('user_id', $detection['user_id'])->whereNull('returned_at');
+                });
+            }
+            $tableAssets = $tableQuery->get();
         }
-        $tableAssets = $tableAssets->get();
 
         // Merge both sources and deduplicate
         $myAssets = $inventoryAssets->concat($tableAssets)->unique(function ($item) {
@@ -77,14 +80,28 @@ class TicketController extends Controller
 
     public function setLaptop(Request $request)
     {
-        $sn = strtoupper(trim($request->input('nomor_laptop')));
+        $inputSn = trim($request->input('nomor_laptop', ''));
+        $detectionService = new LaptopDetectionService();
+        $inventory = $detectionService->findInventoryByDeviceName($inputSn);
+
+        if ($inventory) {
+            $sn = $inventory->sn;
+            $nama = $inventory->pengguna ?: $inventory->sn;
+            $msg = 'Perangkat berhasil disetel ke ' . $sn . ' (' . $nama . ')';
+        } else {
+            $normalized = $detectionService->normalizeLapCode($inputSn);
+            $sn = $normalized ?: strtoupper($inputSn);
+            $msg = 'Perangkat disetel ke ' . $sn;
+        }
+
         if ($sn) {
             \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $sn, 525600);
             session(['mptb_laptop_sn' => $sn]);
         }
+
         return redirect()->route('portal', ['tab' => $request->input('tab', 'history')])
             ->withCookie(cookie()->forever('mptb_laptop_sn', $sn))
-            ->with('success', 'Perangkat berhasil disetel ke ' . $sn);
+            ->with('success', $msg);
     }
 
     public function index()
@@ -111,8 +128,9 @@ class TicketController extends Controller
             'deskripsi.min'      => 'Deskripsi kendala minimal 5 karakter.',
         ]);
 
+        $rawNomorLaptop = $request->input('nomor_laptop');
         $detectionService = new LaptopDetectionService();
-        $detection = $detectionService->detect();
+        $detection = $detectionService->detect($rawNomorLaptop);
 
         $kategori = $request->input('kategori');
         $ticket_code = Ticket::generateTicketCode($kategori);
@@ -122,8 +140,13 @@ class TicketController extends Controller
             $screenshot = $request->file('screenshot')->store('tickets', 'public');
         }
 
-        $namaUser = Auth::check() ? Auth::user()->name : ($request->input('nama') ?: $detection['nama_user']);
-        $nomorLaptop = $request->input('nomor_laptop') ?: $detection['hostname'];
+        $nomorLaptop = $detection['hostname'] ?: ($rawNomorLaptop ?: 'LAP-UNKNOWN');
+        $namaUser = Auth::check() ? Auth::user()->name : ($detection['nama_user'] ?: ($request->input('nama') ?: 'Pengguna ' . $nomorLaptop));
+
+        if ($nomorLaptop && $nomorLaptop !== 'LAP-UNKNOWN') {
+            \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $nomorLaptop, 525600);
+            session(['mptb_laptop_sn' => $nomorLaptop]);
+        }
 
         $userId = Auth::id() ?? $detection['user_id'] ?? null;
         if (!$userId) {

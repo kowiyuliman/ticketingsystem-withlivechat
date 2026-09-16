@@ -33,12 +33,22 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-none">Lapor IT</h1>
-                        <p class="text-xs text-sky-600 font-medium">{{ $detection['nama_user'] }}</p>
+                        <p class="text-xs text-sky-600 font-medium">
+                            @if(!empty($detection['hostname']))
+                                {{ $detection['hostname'] }} • {{ $detection['nama_user'] }}
+                            @else
+                                Portal Pengaduan Kendala IT
+                            @endif
+                        </p>
                     </div>
                 </a>
             </div>
 
             <div class="flex items-center space-x-2">
+                <button type="button" onclick="openLaptopModal()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                    <span>💻</span>
+                    <span>{{ $detection['hostname'] ?: 'Pilih Laptop' }}</span>
+                </button>
                 @auth
                     <a href="{{ url('/admin/dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
                         Dashboard Admin
@@ -78,30 +88,59 @@
         <div id="view-create" class="{{ $activeTab == 'create' ? '' : 'hidden' }} max-w-3xl mx-auto">
             
             <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
-                {{--  <span class="inline-block bg-white/80 backdrop-blur text-sky-700 text-xs font-extrabold px-3 py-1 rounded-full mb-2 border border-sky-200">
-                    TERDETEKSI OTOMATIS
-                </span>  --}}
                 <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                
+                <p class="text-xs sm:text-sm text-slate-600 font-medium">Layanan respon cepat penanganan kendala IT dan Helpdesk MPTB.</p>
             </div>
 
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
                 
-                <!-- Info Summary Card -->
-                <div class="mb-6 p-4 bg-sky-50/60 rounded-2xl border border-sky-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="bg-white p-3 rounded-xl border border-sky-100">
-                        <span class="text-[11px] text-slate-400 font-medium block">Nomor Laptop</span>
-                        <span class="font-extrabold text-slate-800 text-xs">💻 {{ $detection['hostname'] }}</span>
+                @if($detection['is_detected'])
+                    <!-- Info Summary Card (Terdeteksi Otomatis / Terpilih) -->
+                    <div class="mb-6 p-4 bg-sky-50/60 rounded-2xl border border-sky-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-xs font-extrabold text-slate-700">Perangkat Terdeteksi di Database Inventaris</span>
+                            </div>
+                            <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
+                                ✏️ Ganti / Pilih Laptop
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-white p-3 rounded-xl border border-sky-100">
+                                <span class="text-[11px] text-slate-400 font-medium block">Nomor Laptop</span>
+                                <span class="font-extrabold text-slate-800 text-xs">💻 {{ $detection['hostname'] }}</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-sky-100">
+                                <span class="text-[11px] text-slate-400 font-medium block">Nama Pemilik</span>
+                                <span class="font-extrabold text-slate-800 text-xs">👤 {{ $detection['nama_user'] }}</span>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl border border-sky-100">
+                                <span class="text-[11px] text-slate-400 font-medium block">IP Address (Kabel/LAN)</span>
+                                <span class="font-extrabold text-slate-800 text-xs">🌐 {{ $detection['ip_address'] }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white p-3 rounded-xl border border-sky-100">
-                        <span class="text-[11px] text-slate-400 font-medium block">Nama Pemilik</span>
-                        <span class="font-extrabold text-slate-800 text-xs">👤 {{ $detection['nama_user'] }}</span>
+                @else
+                    <!-- Alert Card Jika Belum Terdeteksi Otomatis -->
+                    <div class="mb-6 p-4 bg-amber-50/90 rounded-2xl border border-amber-200">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-sm flex-shrink-0">
+                                    ⚠️
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-amber-900">Nomor Laptop Belum Terdeteksi Otomatis</h4>
+                                    <p class="text-[11px] text-amber-700">Silakan pilih nomor laptop Anda agar sistem mencocokkan dengan data pemilik & riwayat pengaduan.</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="openLaptopModal()" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 flex-shrink-0">
+                                <span>🔍</span>
+                                <span>Pilih Nomor Laptop</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="bg-white p-3 rounded-xl border border-sky-100">
-                        <span class="text-[11px] text-slate-400 font-medium block">IP Address (Kabel)</span>
-                        <span class="font-extrabold text-slate-800 text-xs">🌐 {{ $detection['ip_address'] }}</span>
-                    </div>
-                </div>
+                @endif
 
                 <form action="{{ route('ticket.store') }}" method="POST" onsubmit="return handleFormSubmit(this)">
                     @csrf
@@ -447,6 +486,12 @@
         }
 
         function handleFormSubmit(form) {
+            const laptopInput = form.querySelector('input[name="nomor_laptop"]');
+            if (!laptopInput || !laptopInput.value || laptopInput.value.trim() === '') {
+                alert('Silakan pilih nomor laptop Anda terlebih dahulu.');
+                openLaptopModal();
+                return false;
+            }
             const hasCategory = document.querySelector('input[name="kategori"]:checked');
             const descEl = document.getElementById('ticket-deskripsi');
             if (!hasCategory) {
@@ -500,6 +545,12 @@
                 descEl.addEventListener('change', validateForm);
             }
             validateForm();
+
+            @if(!$detection['is_detected'] && empty($detection['hostname']))
+                setTimeout(function() {
+                    openLaptopModal();
+                }, 350);
+            @endif
         });
     </script>
 </body>

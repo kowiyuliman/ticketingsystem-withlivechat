@@ -601,5 +601,86 @@ class UserPortalTest extends TestCase
         $response->assertSee('Vention USB Sound');
         $response->assertSee('Xiaomi Redmi 9A Root');
     }
+
+    public function test_laptop_detection_exact_and_fuzzy_sn_matching()
+    {
+        \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'Lenovo ThinkPad',
+            'sn'        => 'LAP-0315',
+            'pengguna'  => 'Abdul Aziz Suryadi',
+            'department'=> 'IT Support',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        $service = new \App\Services\LaptopDetectionService();
+
+        // 1. Exact match
+        $invExact = $service->findInventoryByDeviceName('LAP-0315');
+        $this->assertNotNull($invExact);
+        $this->assertEquals('Abdul Aziz Suryadi', $invExact->pengguna);
+
+        // 2. Fuzzy match without hyphen (e.g. lap0315 or LAP0315)
+        $invFuzzy1 = $service->findInventoryByDeviceName('lap0315');
+        $this->assertNotNull($invFuzzy1);
+        $this->assertEquals('LAP-0315', $invFuzzy1->sn);
+
+        // 3. Fuzzy match short digits (e.g. LAP-315)
+        $invFuzzy2 = $service->findInventoryByDeviceName('LAP-315');
+        $this->assertNotNull($invFuzzy2);
+        $this->assertEquals('LAP-0315', $invFuzzy2->sn);
+
+        // 4. Windows hostname prefix (e.g. DESKTOP-LAP0315)
+        $invFuzzy3 = $service->findInventoryByDeviceName('DESKTOP-LAP0315');
+        $this->assertNotNull($invFuzzy3);
+        $this->assertEquals('LAP-0315', $invFuzzy3->sn);
+
+        // 5. Hostname with domain (e.g. LAP-0315.mptb.lan)
+        $invFuzzy4 = $service->findInventoryByDeviceName('LAP-0315.mptb.lan');
+        $this->assertNotNull($invFuzzy4);
+        $this->assertEquals('LAP-0315', $invFuzzy4->sn);
+    }
+
+    public function test_laptop_detection_does_not_falsely_assign_first_record_on_unknown_ip()
+    {
+        \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'HP Pavilion',
+            'sn'        => 'LAP-0001',
+            'pengguna'  => 'First User In DB',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        $service = new \App\Services\LaptopDetectionService();
+        $detection = $service->detect('192.168.200.99');
+
+        // Should NOT falsely match LAP-0001
+        $this->assertFalse($detection['is_detected']);
+        $this->assertNull($detection['inventory']);
+    }
+
+    public function test_set_laptop_normalizes_and_matches_owner()
+    {
+        \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'Asus ExpertBook',
+            'sn'        => 'LAP-0227',
+            'pengguna'  => 'Abdul Majid',
+            'department'=> 'Operational',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        $response = $this->post(route('laptop.set'), [
+            'nomor_laptop' => 'lap227',
+        ]);
+
+        $response->assertRedirect(route('portal', ['tab' => 'history']));
+        $response->assertSessionHas('mptb_laptop_sn', 'LAP-0227');
+        $response->assertCookie('mptb_laptop_sn', 'LAP-0227');
+    }
 }
+
 
