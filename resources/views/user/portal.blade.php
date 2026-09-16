@@ -44,11 +44,11 @@
                 </a>
             </div>
 
-            <div class="flex items-center space-x-2">
+            <!-- <div class="flex items-center space-x-2">
                 <button type="button" onclick="openLaptopModal()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
                     <span>💻</span>
                     <span>{{ $detection['hostname'] ?: 'Pilih Laptop' }}</span>
-                </button>
+                </button> -->
                 @auth
                     <a href="{{ url('/admin/dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
                         Dashboard Admin
@@ -89,7 +89,7 @@
             
             <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
                 <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                <p class="text-xs sm:text-sm text-slate-600 font-medium">Layanan respon cepat penanganan kendala IT dan Helpdesk MPTB.</p>
+                <p class="text-xs sm:text-sm text-slate-600 font-medium">Layanan respon cepat penanganan kendala IT</p>
             </div>
 
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
@@ -102,9 +102,9 @@
                                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span class="text-xs font-extrabold text-slate-700">Perangkat Terdeteksi di Database Inventaris</span>
                             </div>
-                            <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
+                            <!-- <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
                                 ✏️ Ganti / Pilih Laptop
-                            </button>
+                            </button> -->
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="bg-white p-3 rounded-xl border border-sky-100">
@@ -329,7 +329,7 @@
                                         </span>
                                         @if(!empty($asset->lokasi) || !empty($asset->department))
                                             <span class="text-slate-300">•</span>
-                                            <span class="truncate">📍 {{ $asset->lokasi ?? $asset->department }}</span>
+                                            <span class="truncate">{{ $asset->lokasi ?? $asset->department }}</span>
                                         @endif
                                     </div>
                                 </div>
