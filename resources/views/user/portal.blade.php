@@ -89,7 +89,7 @@
             
             <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
                 <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                <p class="text-xs sm:text-sm text-slate-600 font-medium">Layanan respon cepat penanganan kendala IT</p>
+                <p class="text-xs sm:text-sm text-slate-600 font-medium">Pilih kategori dan ceritakan keluhan anda</p>
             </div>
 
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
