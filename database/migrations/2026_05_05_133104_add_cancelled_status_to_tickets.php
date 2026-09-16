@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up()
     {
-        if (DB::getDriverName() === 'mysql') {
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
             DB::statement("ALTER TABLE tickets 
                 MODIFY status ENUM('open','on_progress','pending','closed','cancelled') 
                 NOT NULL DEFAULT 'open'");
@@ -20,8 +21,11 @@ return new class extends Migration
 
     public function down()
     {
-        DB::statement("ALTER TABLE tickets 
-            MODIFY status ENUM('open','on_progress','pending','closed') 
-            NOT NULL DEFAULT 'open'");
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            DB::statement("ALTER TABLE tickets 
+                MODIFY status ENUM('open','on_progress','pending','closed') 
+                NOT NULL DEFAULT 'open'");
+        }
     }
 };
