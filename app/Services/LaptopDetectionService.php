@@ -133,7 +133,15 @@ class LaptopDetectionService
                 return $netbiosName;
             }
 
-            // B. Fallback to DNS PTR lookup
+            // B. Fallback to Windows native nbtstat CLI on Windows OS
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                $nbtstatName = $this->queryNbtstatCommand($ip);
+                if (!empty($nbtstatName)) {
+                    return $nbtstatName;
+                }
+            }
+
+            // C. Fallback to DNS PTR lookup
             $dns = @gethostbyaddr($ip);
             if (!empty($dns) && $dns !== $ip) {
                 $clean = strtoupper(explode('.', $dns)[0] ?? $dns);
@@ -144,6 +152,22 @@ class LaptopDetectionService
 
             return null;
         });
+    }
+
+    /**
+     * Fallback query using Windows native nbtstat utility
+     */
+    protected function queryNbtstatCommand(string $ip): ?string
+    {
+        $escapedIp = escapeshellarg($ip);
+        $output = @shell_exec("nbtstat -A $escapedIp 2>&1");
+        if ($output && preg_match('/^\s*([A-Z0-9_\-]+)\s+<(?:00|20)>\s+UNIQUE/mi', $output, $matches)) {
+            $name = strtoupper(trim($matches[1]));
+            if (!empty($name) && $name !== 'UNKNOWN' && !filter_var($name, FILTER_VALIDATE_IP)) {
+                return $name;
+            }
+        }
+        return null;
     }
 
     /**
