@@ -74,6 +74,134 @@ class TicketController extends Controller
         ]);
     }
 
+    public function fetchTickets(Request $request)
+    {
+        $unreadCommentCountScope = function ($q) {
+            $q->where('is_admin', false)->whereNull('read_at');
+        };
+
+        $openTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->where('status', 'open')
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
+
+        $progressTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician')
+            ->where('status', 'on_progress')
+            ->orderBy('started_at', 'desc')
+            ->take(50)
+            ->get();
+
+        $pendingTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician')
+            ->where('status', 'pending')
+            ->orderBy('updated_at', 'desc')
+            ->take(50)
+            ->get();
+
+        $closedTickets = Ticket::with('technician')
+            ->where('status', 'closed')
+            ->orderBy('resolved_at', 'desc')
+            ->take(50)
+            ->get();
+
+        $cancelTickets = Ticket::where('status', 'cancelled')
+            ->latest()
+            ->take(50)
+            ->get();
+
+        $openCount = Ticket::where('status', 'open')->count();
+        $progressCount = Ticket::where('status', 'on_progress')->count();
+        $pendingCount = Ticket::where('status', 'pending')->count();
+        $closedCount = Ticket::where('status', 'closed')->count();
+        $cancelCount = Ticket::where('status', 'cancelled')->count();
+
+        $csrfToken = csrf_token();
+
+        return response()->json([
+            'counts' => [
+                'open'     => $openCount,
+                'progress' => $progressCount,
+                'pending'  => $pendingCount,
+                'closed'   => $closedCount,
+                'cancel'   => $cancelCount,
+            ],
+            'tickets' => [
+                'open' => $openTickets->map(function ($t, $idx) use ($csrfToken) {
+                    return [
+                        'iteration'             => $idx + 1,
+                        'id'                    => $t->id,
+                        'ticket_code'           => $t->ticket_code,
+                        'nama'                  => $t->nama,
+                        'nomor_laptop'          => $t->nomor_laptop,
+                        'ip_address'            => $t->ip_address,
+                        'kategori'              => strtoupper($t->kategori ?? 'General'),
+                        'deskripsi'             => $t->deskripsi,
+                        'created_at_formatted'  => $t->created_at ? $t->created_at->format('d M Y, H:i') : '-',
+                        'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
+                        'take_url'              => url('/admin/ticket/take/' . $t->id),
+                        'show_url'              => url('/admin/ticket/show/' . $t->id),
+                        'csrf_token'            => $csrfToken,
+                    ];
+                }),
+                'progress' => $progressTickets->map(function ($t, $idx) {
+                    return [
+                        'iteration'             => $idx + 1,
+                        'id'                    => $t->id,
+                        'ticket_code'           => $t->ticket_code,
+                        'nama'                  => $t->nama,
+                        'nomor_laptop'          => $t->nomor_laptop,
+                        'kategori'              => strtoupper($t->kategori ?? 'General'),
+                        'deskripsi'             => $t->deskripsi,
+                        'technician_name'       => $t->technician->name ?? '-',
+                        'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
+                        'show_url'              => url('/admin/ticket/show/' . $t->id),
+                    ];
+                }),
+                'pending' => $pendingTickets->map(function ($t, $idx) {
+                    return [
+                        'iteration'             => $idx + 1,
+                        'id'                    => $t->id,
+                        'ticket_code'           => $t->ticket_code,
+                        'nama'                  => $t->nama,
+                        'nomor_laptop'          => $t->nomor_laptop,
+                        'technician_name'       => $t->technician->name ?? '-',
+                        'deskripsi'             => $t->deskripsi,
+                        'reason_text'           => $t->reason_text,
+                        'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
+                        'show_url'              => url('/admin/ticket/show/' . $t->id),
+                    ];
+                }),
+                'closed' => $closedTickets->map(function ($t, $idx) {
+                    return [
+                        'iteration'       => $idx + 1,
+                        'id'              => $t->id,
+                        'ticket_code'     => $t->ticket_code,
+                        'nama'            => $t->nama,
+                        'nomor_laptop'    => $t->nomor_laptop,
+                        'technician_name' => $t->technician->name ?? '-',
+                        'durasi_menit'    => $t->durasi_menit ?? '-',
+                        'show_url'        => url('/admin/ticket/show/' . $t->id),
+                    ];
+                }),
+                'cancel' => $cancelTickets->map(function ($t, $idx) {
+                    return [
+                        'iteration'            => $idx + 1,
+                        'id'                   => $t->id,
+                        'ticket_code'          => $t->ticket_code,
+                        'nama'                 => $t->nama,
+                        'nomor_laptop'         => $t->nomor_laptop,
+                        'deskripsi'            => $t->deskripsi,
+                        'reason_text'          => $t->reason_text,
+                        'updated_at_formatted' => $t->updated_at ? $t->updated_at->format('d M Y, H:i') : '-',
+                        'show_url'             => url('/admin/ticket/show/' . $t->id),
+                    ];
+                }),
+            ],
+        ]);
+    }
+
     public function show($id)
     {
         $ticket = Ticket::with('histories','comments.user','timelines','mergedChildren')->findOrFail($id);
@@ -401,33 +529,6 @@ class TicketController extends Controller
                 'success',
                 'Ticket berhasil dibatalkan'
             );
-    }
-    
-
-    public function fetchTickets()
-    {
-        $tickets_open = Ticket::where('status', 'open')
-            ->latest()
-            ->get();
-
-        $tickets_progress = Ticket::where('status', 'on_progress')
-            ->latest()
-            ->get();
-
-        $tickets_pending = Ticket::where('status', 'pending')
-            ->latest()
-            ->get();
-
-        $tickets_closed = Ticket::where('status', 'closed')
-            ->latest()
-            ->get();
-
-        return response()->json([
-            'open' => $tickets_open,
-            'progress' => $tickets_progress,
-            'pending' => $tickets_pending,
-            'closed' => $tickets_closed,
-        ]);
     }
 
     public function mergeTicket(Request $request, $id)

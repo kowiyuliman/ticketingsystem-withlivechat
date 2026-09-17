@@ -85,3 +85,4 @@
         setInterval(fetchUnreadCount, 6000);
     });
 })();
+

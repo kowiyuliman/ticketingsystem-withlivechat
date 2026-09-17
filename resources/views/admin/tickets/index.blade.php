@@ -35,27 +35,27 @@
         <ul class="nav nav-pills" id="ticketTabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'open' ? 'active' : '' }} font-weight-bold" id="open-tab" data-toggle="pill" href="#open-tickets" role="tab">
-                    🔴 Open <span class="badge badge-danger ml-1">{{ $tickets_open->total() }}</span>
+                    🔴 Open <span id="badge-tab-open" class="badge badge-danger ml-1">{{ $tickets_open->total() }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'progress' ? 'active' : '' }} font-weight-bold" id="progress-tab" data-toggle="pill" href="#progress-tickets" role="tab">
-                    🔵 On Progress <span class="badge badge-primary ml-1">{{ $tickets_progress->total() }}</span>
+                    🔵 On Progress <span id="badge-tab-progress" class="badge badge-primary ml-1">{{ $tickets_progress->total() }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'pending' ? 'active' : '' }} font-weight-bold" id="pending-tab" data-toggle="pill" href="#pending-tickets" role="tab">
-                    🟡 Pending <span class="badge badge-warning text-dark ml-1">{{ $tickets_pending->total() }}</span>
+                    🟡 Pending <span id="badge-tab-pending" class="badge badge-warning text-dark ml-1">{{ $tickets_pending->total() }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'closed' ? 'active' : '' }} font-weight-bold" id="closed-tab" data-toggle="pill" href="#closed-tickets" role="tab">
-                    🟢 Closed <span class="badge badge-success ml-1">{{ $tickets_closed->total() }}</span>
+                    🟢 Closed <span id="badge-tab-closed" class="badge badge-success ml-1">{{ $tickets_closed->total() }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab == 'cancel' ? 'active' : '' }} font-weight-bold" id="cancel-tab" data-toggle="pill" href="#cancel-tickets" role="tab">
-                    ⚪ Cancelled <span class="badge badge-secondary ml-1">{{ count($tickets_cancel) }}</span>
+                    ⚪ Cancelled <span id="badge-tab-cancel" class="badge badge-secondary ml-1">{{ count($tickets_cancel) }}</span>
                 </a>
             </li>
         </ul>
@@ -445,16 +445,186 @@
             }
         };
 
-        $('#table-open').DataTable(tableConfig);
-        $('#table-progress').DataTable(tableConfig);
-        $('#table-pending').DataTable(tableConfig);
-        $('#table-closed').DataTable(tableConfig);
-        $('#table-cancel').DataTable(tableConfig);
+        const dtOpen = $('#table-open').DataTable(tableConfig);
+        const dtProgress = $('#table-progress').DataTable(tableConfig);
+        const dtPending = $('#table-pending').DataTable(tableConfig);
+        const dtClosed = $('#table-closed').DataTable(tableConfig);
+        const dtCancel = $('#table-cancel').DataTable(tableConfig);
 
         // Adjust DataTables on tab switch
         $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust().responsive.recalc();
         });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function refreshOpenTable(items) {
+            const rows = items.map((t, idx) => {
+                const unreadBadge = t.unread_comments_count > 0 
+                    ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
+                    : '';
+                return [
+                    `<div class="text-center">${idx + 1}</div>`,
+                    `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
+                    `<b>${escapeHtml(t.nama)}</b><div class="text-muted text-xs">💻 ${escapeHtml(t.nomor_laptop)} &bull; 🌐 ${escapeHtml(t.ip_address)}</div>`,
+                    `<span class="badge badge-warning uppercase font-weight-bold">${escapeHtml(t.kategori)}</span>`,
+                    `<span class="text-truncate d-inline-block" style="max-width: 200px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span>`,
+                    t.created_at_formatted,
+                    `<div class="text-center">
+                        <form action="${t.take_url}" method="POST" class="d-inline">
+                            <input type="hidden" name="_token" value="${t.csrf_token}">
+                            <button type="submit" class="btn btn-success btn-xs font-weight-bold shadow-2xs mr-1" title="Take Ticket">
+                                <i class="fas fa-hand-holding-medical"></i> Take
+                            </button>
+                        </form>
+                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                            <i class="fas fa-comments"></i> Live Chat
+                            ${unreadBadge}
+                        </a>
+                    </div>`
+                ];
+            });
+            dtOpen.clear().rows.add(rows).draw(false);
+        }
+
+        function refreshProgressTable(items) {
+            const rows = items.map((t, idx) => {
+                const unreadBadge = t.unread_comments_count > 0 
+                    ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
+                    : '';
+                return [
+                    `<div class="text-center">${idx + 1}</div>`,
+                    `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
+                    `<b>${escapeHtml(t.nama)}</b><div class="text-muted text-xs">💻 ${escapeHtml(t.nomor_laptop)}</div>`,
+                    `<span class="badge badge-warning uppercase font-weight-bold">${escapeHtml(t.kategori)}</span>`,
+                    `<span class="text-truncate d-inline-block" style="max-width: 200px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span>`,
+                    `<b>${escapeHtml(t.technician_name)}</b>`,
+                    `<div class="text-center">
+                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                            <i class="fas fa-comments"></i> Live Chat
+                            ${unreadBadge}
+                        </a>
+                    </div>`
+                ];
+            });
+            dtProgress.clear().rows.add(rows).draw(false);
+        }
+
+        function refreshPendingTable(items) {
+            const rows = items.map((t, idx) => {
+                const unreadBadge = t.unread_comments_count > 0 
+                    ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
+                    : '';
+                const reasonHtml = t.reason_text 
+                    ? `<span class="badge badge-warning text-dark text-wrap text-left font-weight-normal p-1.5" style="max-width: 220px; font-size: 11px;">⚠️ ${escapeHtml(t.reason_text)}</span>` 
+                    : `<span class="text-muted text-xs">-</span>`;
+                return [
+                    `<div class="text-center">${idx + 1}</div>`,
+                    `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
+                    `<b>${escapeHtml(t.nama)}</b> (${escapeHtml(t.nomor_laptop)})`,
+                    `<b>${escapeHtml(t.technician_name)}</b>`,
+                    `<span class="text-truncate d-inline-block" style="max-width: 180px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span>`,
+                    reasonHtml,
+                    `<div class="text-center">
+                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                            <i class="fas fa-comments"></i> Live Chat
+                            ${unreadBadge}
+                        </a>
+                    </div>`
+                ];
+            });
+            dtPending.clear().rows.add(rows).draw(false);
+        }
+
+        function refreshClosedTable(items) {
+            const rows = items.map((t, idx) => {
+                return [
+                    `<div class="text-center">${idx + 1}</div>`,
+                    `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
+                    `<b>${escapeHtml(t.nama)}</b> (${escapeHtml(t.nomor_laptop)})`,
+                    `<b>${escapeHtml(t.technician_name)}</b>`,
+                    `<span class="badge badge-success">${escapeHtml(t.durasi_menit)}</span>`,
+                    `<div class="text-center">
+                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                            <i class="fas fa-eye"></i> Detail & Chat
+                        </a>
+                    </div>`
+                ];
+            });
+            dtClosed.clear().rows.add(rows).draw(false);
+        }
+
+        function refreshCancelTable(items) {
+            const rows = items.map((t, idx) => {
+                const reasonHtml = t.reason_text 
+                    ? `<span class="badge badge-secondary text-wrap text-left font-weight-normal p-1.5" style="max-width: 220px; font-size: 11px;">🚫 ${escapeHtml(t.reason_text)}</span>` 
+                    : `<span class="text-muted text-xs">-</span>`;
+                return [
+                    `<div class="text-center">${idx + 1}</div>`,
+                    `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
+                    `<b>${escapeHtml(t.nama)}</b> (${escapeHtml(t.nomor_laptop)})`,
+                    `<span class="text-truncate d-inline-block" style="max-width: 180px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span>`,
+                    reasonHtml,
+                    t.updated_at_formatted,
+                    `<div class="text-center">
+                        <a href="${t.show_url}" class="btn btn-secondary btn-xs font-weight-bold shadow-2xs">
+                            <i class="fas fa-eye"></i> Lihat
+                        </a>
+                    </div>`
+                ];
+            });
+            dtCancel.clear().rows.add(rows).draw(false);
+        }
+
+        // REAL-TIME AUTO-REFRESH FOR ALL TICKET TABS
+        let isFetching = false;
+        function pollRealtimeTickets() {
+            if (isFetching) return;
+            isFetching = true;
+
+            fetch('/admin/ticket/fetch', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Network error');
+                return res.json();
+            })
+            .then(data => {
+                isFetching = false;
+                if (!data || !data.counts || !data.tickets) return;
+
+                // 1. Update Tab Badges
+                $('#badge-tab-open').text(data.counts.open);
+                $('#badge-tab-progress').text(data.counts.progress);
+                $('#badge-tab-pending').text(data.counts.pending);
+                $('#badge-tab-closed').text(data.counts.closed);
+                $('#badge-tab-cancel').text(data.counts.cancel);
+
+                // 2. Update Table Rows Seamlessly
+                refreshOpenTable(data.tickets.open || []);
+                refreshProgressTable(data.tickets.progress || []);
+                refreshPendingTable(data.tickets.pending || []);
+                refreshClosedTable(data.tickets.closed || []);
+                refreshCancelTable(data.tickets.cancel || []);
+            })
+            .catch(err => {
+                isFetching = false;
+            });
+        }
+
+        // Poll every 5 seconds
+        setInterval(pollRealtimeTickets, 5000);
     });
 </script>
 @stop

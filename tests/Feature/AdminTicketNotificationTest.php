@@ -156,4 +156,82 @@ class AdminTicketNotificationTest extends TestCase
             'unread_chats_count' => 0,
         ]);
     }
+
+    public function test_fetch_tickets_returns_all_realtime_status_categories(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        Ticket::create([
+            'ticket_code'  => 'HD-OPEN-001',
+            'user_id'      => $user->id,
+            'nama'         => 'Open User',
+            'nomor_laptop' => 'LAP-001',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Open issue',
+            'status'       => 'open',
+            'created_by'   => $user->id,
+        ]);
+
+        Ticket::create([
+            'ticket_code'  => 'SW-PROG-002',
+            'user_id'      => $user->id,
+            'nama'         => 'Progress User',
+            'nomor_laptop' => 'LAP-002',
+            'kategori'     => 'software',
+            'deskripsi'    => 'Progress issue',
+            'status'       => 'on_progress',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        Ticket::create([
+            'ticket_code'  => 'NW-PEND-003',
+            'user_id'      => $user->id,
+            'nama'         => 'Pending User',
+            'nomor_laptop' => 'LAP-003',
+            'kategori'     => 'network',
+            'deskripsi'    => 'Pending issue',
+            'status'       => 'pending',
+            'reason_text'  => 'Menunggu sparepart',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        Ticket::create([
+            'ticket_code'  => 'HD-CANC-004',
+            'user_id'      => $user->id,
+            'nama'         => 'Cancel User',
+            'nomor_laptop' => 'LAP-004',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Cancelled issue',
+            'status'       => 'cancelled',
+            'reason_text'  => 'Dibatalkan user',
+            'created_by'   => $user->id,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/admin/ticket/fetch');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'counts' => [
+                    'open'     => 1,
+                    'progress' => 1,
+                    'pending'  => 1,
+                    'closed'   => 0,
+                    'cancel'   => 1,
+                ],
+            ]);
+
+        $data = $response->json();
+        $this->assertCount(1, $data['tickets']['open']);
+        $this->assertCount(1, $data['tickets']['progress']);
+        $this->assertCount(1, $data['tickets']['pending']);
+        $this->assertCount(1, $data['tickets']['cancel']);
+        $this->assertEquals('HD-OPEN-001', $data['tickets']['open'][0]['ticket_code']);
+        $this->assertEquals('SW-PROG-002', $data['tickets']['progress'][0]['ticket_code']);
+        $this->assertEquals('NW-PEND-003', $data['tickets']['pending'][0]['ticket_code']);
+        $this->assertEquals('HD-CANC-004', $data['tickets']['cancel'][0]['ticket_code']);
+    }
 }
+
