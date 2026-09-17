@@ -88,6 +88,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
 
     //dashboard realtime
     Route::get('/dashboard/realtime', [DashboardController::class, 'realtime'])->name('admin.dashboard.realtime');
+    Route::get('/notifications/unread-count', [AdminTicketController::class, 'unreadCount'])->name('admin.notifications.unreadCount');
 
     // merge ticket
     Route::post('/ticket/mergeTicket/{id}', [AdminTicketController::class, 'mergeTicket']);

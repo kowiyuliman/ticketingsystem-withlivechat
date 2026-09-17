@@ -18,7 +18,7 @@ test('management role (boss) can access dashboard and view organization metrics'
 
     $response->assertOk();
     $response->assertSee('Dashboard IT Support');
-    $response->assertSee('Tren Tiket Harian');
+    $response->assertSee('Grafik Tiket Harian');
     $response->assertSee('Grafik Tiket Bulanan');
 });
 

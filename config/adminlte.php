@@ -495,6 +495,21 @@ return [
     */
 
     'plugins' => [
+        'TicketNotifications' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/admin-notifications.css',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/admin-notifications.js',
+                ],
+            ],
+        ],
         'Datatables' => [
             'active' => true,
             'files' => [

@@ -100,6 +100,9 @@
                                         </form>
                                         <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
                                             <i class="fas fa-comments"></i> Live Chat
+                                            @if(($ticket->unread_comments_count ?? 0) > 0)
+                                                <span class="badge badge-danger ml-1" title="{{ $ticket->unread_comments_count }} pesan baru"><i class="fas fa-circle text-xs"></i> {{ $ticket->unread_comments_count }}</span>
+                                            @endif
                                         </a>
                                     </td>
                                 </tr>
@@ -139,6 +142,9 @@
                                     <td class="text-center">
                                         <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
                                             <i class="fas fa-comments"></i> Live Chat
+                                            @if(($ticket->unread_comments_count ?? 0) > 0)
+                                                <span class="badge badge-danger ml-1" title="{{ $ticket->unread_comments_count }} pesan baru"><i class="fas fa-circle text-xs"></i> {{ $ticket->unread_comments_count }}</span>
+                                            @endif
                                         </a>
                                     </td>
                                 </tr>
@@ -183,6 +189,9 @@
                                     <td class="text-center">
                                         <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
                                             <i class="fas fa-comments"></i> Live Chat
+                                            @if(($ticket->unread_comments_count ?? 0) > 0)
+                                                <span class="badge badge-danger ml-1" title="{{ $ticket->unread_comments_count }} pesan baru"><i class="fas fa-circle text-xs"></i> {{ $ticket->unread_comments_count }}</span>
+                                            @endif
                                         </a>
                                     </td>
                                 </tr>

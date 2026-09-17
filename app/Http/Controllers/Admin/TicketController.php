@@ -19,27 +19,59 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $tickets_open = Ticket::where('status','open')
-        ->orderBy('created_at','desc')
-        ->paginate(20);
+        $unreadCommentCountScope = function ($q) {
+            $q->where('is_admin', false)->whereNull('read_at');
+        };
 
-        $tickets_progress = Ticket::where('status','on_progress')
-        ->orderBy('started_at','desc')
-        ->paginate(20);
+        $tickets_open = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->where('status','open')
+            ->orderBy('created_at','desc')
+            ->paginate(20);
 
-        $tickets_pending = Ticket::where('status','pending')
-        ->orderBy('updated_at','desc')
-        ->paginate(20);
+        $tickets_progress = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->where('status','on_progress')
+            ->orderBy('started_at','desc')
+            ->paginate(20);
+
+        $tickets_pending = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->where('status','pending')
+            ->orderBy('updated_at','desc')
+            ->paginate(20);
 
         $tickets_closed = Ticket::where('status','closed')
-        ->orderBy('resolved_at','desc')
-        ->paginate(20);
+            ->orderBy('resolved_at','desc')
+            ->paginate(20);
 
         $tickets_cancel = Ticket::where('status','cancelled')
-        ->latest()
-        ->get();
+            ->latest()
+            ->get();
 
         return view('admin.tickets.index', compact('tickets_open','tickets_progress','tickets_pending','tickets_closed','tickets_cancel'));
+    }
+
+    public function unreadCount(Request $request)
+    {
+        $openTicketsCount = Ticket::where('status', 'open')->count();
+        
+        $unreadChatsCount = TicketComment::where('is_admin', false)
+            ->whereNull('read_at')
+            ->count();
+
+        $unreadTicketIds = TicketComment::where('is_admin', false)
+            ->whereNull('read_at')
+            ->pluck('ticket_id')
+            ->unique()
+            ->values();
+
+        $totalUnread = $openTicketsCount + $unreadChatsCount;
+
+        return response()->json([
+            'has_unread'         => $totalUnread > 0,
+            'total_unread'       => $totalUnread,
+            'open_tickets_count' => $openTicketsCount,
+            'unread_chats_count' => $unreadChatsCount,
+            'unread_ticket_ids'  => $unreadTicketIds,
+        ]);
     }
 
     public function show($id)

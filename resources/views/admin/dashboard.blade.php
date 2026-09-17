@@ -186,7 +186,7 @@
             <div class="card card-outline card-primary shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        Tren Tiket Harian
+                        Grafik Tiket Harian
                     </h3>
                 </div>
                 <div class="card-body">
@@ -219,7 +219,7 @@
             <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
-                        Distribusi Kategori Kendala
+                        Chart Kategori Kendala
                     </h3>
                 </div>
                 <div class="card-body">
@@ -260,7 +260,7 @@
                         <thead class="bg-light">
                             <tr>
                                 <th>IT</th>
-                                <th class="text-center">Beban Tiket</th>
+                                <th class="text-center">Jumlah Tiket</th>
                             </tr>
                         </thead>
                         <tbody id="workload-table-tbody">
