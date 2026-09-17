@@ -89,7 +89,8 @@
             
             <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
                 <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                <p class="text-xs sm:text-sm text-slate-600 font-medium">Pilih kategori dan ceritakan keluhan anda</p>
+                <!-- <p class="text-xs sm:text-xl text-slate-600 font-medium font-bold">Pilih kategori dan ceritakan kendala anda </p> -->
+                <p class="text-xs sm:text-sm text-slate-600 font-small">Penting ojo curhat :)</p>
             </div>
 
             <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
@@ -181,7 +182,8 @@
                     <!-- Description -->
                     <div class="mb-8">
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ceritakan Kendala Anda <span class="text-rose-500">* (Wajib Isi)</span></label>
-                        <textarea name="deskripsi" id="ticket-deskripsi" rows="4" required class="w-full p-4 rounded-2xl border border-sky-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400" placeholder="Contoh: Layar monitor laptop bergaris / Printer tidak merespon saat print dokumen / Aplikasi error..."></textarea>
+                        <textarea name="deskripsi" id="ticket-deskripsi" rows="4" required class="w-full p-4 rounded-2xl border border-sky-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400" 
+                        placeholder="Contoh: Layar monitor laptop bergaris / microsip tidak bisa berdering / buka extensi chrome..."></textarea>
                     </div>
 
                     <!-- Submit Button -->
