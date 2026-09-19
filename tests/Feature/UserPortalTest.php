@@ -294,6 +294,14 @@ class UserPortalTest extends TestCase
 
     public function test_set_laptop_switches_session_and_cookie()
     {
+        \App\Models\Inventory::create([
+            'sn'        => 'LAP-0888',
+            'jenis'     => 'Laptop',
+            'merk'      => 'Asus',
+            'pengguna'  => 'User Test 888',
+            'status'    => 'Aktif',
+        ]);
+
         $response = $this->post('/set-laptop', [
             'nomor_laptop' => 'LAP-0888',
         ]);
@@ -301,6 +309,17 @@ class UserPortalTest extends TestCase
         $response->assertRedirect(route('portal', ['tab' => 'history']));
         $response->assertCookie('mptb_laptop_sn', 'LAP-0888');
         $response->assertSessionHas('mptb_laptop_sn', 'LAP-0888');
+    }
+
+    public function test_set_laptop_rejects_unregistered_laptop_number()
+    {
+        $response = $this->post('/set-laptop', [
+            'nomor_laptop' => 'LAP-999999-NOTFOUND',
+        ]);
+
+        $response->assertRedirect(route('portal', ['tab' => 'history']));
+        $response->assertSessionHas('error');
+        $this->assertNull(session('mptb_laptop_sn'));
     }
 
     public function test_fetch_comments_includes_realtime_status_and_metadata()

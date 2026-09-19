@@ -29,6 +29,13 @@ class TicketController extends Controller
         $hostname = $detection['hostname'];
         $ip = $detection['ip_address'];
 
+        // Automatically persist detected laptop in cookie, session & cache if recognized
+        if ($detection['is_detected'] && !empty($hostname) && !in_array($hostname, ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+            \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $hostname, 525600);
+            session(['mptb_laptop_sn' => $hostname]);
+            \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(365));
+        }
+
         // Get available laptop list from inventories for switching/selection
         $availableLaptops = \App\Models\Inventory::where(function ($q) {
             $q->where('sn', 'LIKE', 'LAP%')
@@ -102,20 +109,21 @@ class TicketController extends Controller
         $detectionService = new LaptopDetectionService();
         $inventory = $detectionService->findInventoryByDeviceName($inputSn);
 
-        if ($inventory) {
-            $sn = $inventory->sn;
-            $nama = $inventory->pengguna ?: $inventory->sn;
-            $msg = 'Perangkat berhasil disetel ke ' . $sn . ' (' . $nama . ')';
-        } else {
-            $normalized = $detectionService->normalizeLapCode($inputSn);
-            $sn = $normalized ?: strtoupper($inputSn);
-            $msg = 'Perangkat disetel ke ' . $sn;
+        if (!$inventory) {
+            return redirect()->route('portal', ['tab' => $tab])
+                ->with('error', 'Nomor laptop "' . $inputSn . '" tidak valid atau tidak terdaftar di database inventaris. Silakan periksa kembali nomor laptop Anda.');
         }
 
-        if ($sn) {
-            \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $sn, 525600);
-            session(['mptb_laptop_sn' => $sn]);
-        }
+        $sn = $inventory->sn;
+        $nama = $inventory->pengguna ?: $inventory->sn;
+        $msg = 'Perangkat berhasil disetel ke ' . $sn . ' (' . $nama . ')';
+
+        \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $sn, 525600);
+        session(['mptb_laptop_sn' => $sn]);
+
+        $rawIp = $request->ip();
+        $ip = str_replace('::ffff:', '', $rawIp);
+        \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ip}", $sn, now()->addDays(365));
 
         return redirect()->route('portal', ['tab' => $tab])
             ->withCookie(cookie()->forever('mptb_laptop_sn', $sn))
@@ -159,11 +167,16 @@ class TicketController extends Controller
         }
 
         $nomorLaptop = $rawNomorLaptop ?: $detection['hostname'];
-        if (in_array($nomorLaptop, ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+        if (in_array($nomorLaptop, ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN']) || empty($nomorLaptop)) {
             $nomorLaptop = 'LAP-UNKNOWN';
         } else {
             \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $nomorLaptop, 525600);
             session(['mptb_laptop_sn' => $nomorLaptop]);
+
+            $ipAddress = $request->input('ip_address') ?: $detection['ip_address'];
+            if ($ipAddress) {
+                \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ipAddress}", $nomorLaptop, now()->addDays(365));
+            }
         }
 
         $namaUser = Auth::check() ? Auth::user()->name : ($request->input('nama') ?: $detection['nama_user']);

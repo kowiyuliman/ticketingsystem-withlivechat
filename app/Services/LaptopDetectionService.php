@@ -40,29 +40,43 @@ class LaptopDetectionService
             $candidateNames[] = trim($savedSn);
         }
 
-        // 2. Priority 2: Automated Network Computer Name Detection (NetBIOS UDP 137 + DNS PTR)
+        // 2. Priority 2: Persistent IP-to-Laptop Cache Mapping
+        $cachedIpHost = Cache::get("laptop_ip_mapping_{$ip}");
+        if ($cachedIpHost && trim($cachedIpHost) !== '' && !in_array(strtoupper(trim($cachedIpHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+            $candidateNames[] = trim($cachedIpHost);
+        }
+
+        // 3. Priority 3: Automated Network Computer Name Detection (NetBIOS UDP 137 + DNS PTR + nbtstat)
         $networkHost = $this->resolveClientHostname($ip, $rawIp);
         if (!empty($networkHost) && !in_array(strtoupper($networkHost), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN', 'UNKNOWN'])) {
             $candidateNames[] = $networkHost;
         }
 
-        // 3. Priority 3: Memory from previous tickets submitted from this IP address
+        // 4. Priority 4: Assets Table IP mapping if exists
+        try {
+            $assetHost = \App\Models\Asset::where('ip_address', $ip)->whereNotNull('hostname')->value('hostname')
+                ?? \App\Models\Asset::where('ip_address', $ip)->whereNotNull('serial_number')->value('serial_number');
+            if ($assetHost && !in_array(strtoupper(trim($assetHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+                $candidateNames[] = trim($assetHost);
+            }
+        } catch (\Throwable $e) {
+            // Safe fallback if column doesn't exist
+        }
+
+        // 5. Priority 5: Memory from previous tickets submitted from this IP address
         if (empty($candidateNames)) {
             $prevTicket = Ticket::where('ip_address', $ip)
                 ->whereNotNull('nomor_laptop')
-                ->where(function ($q) {
-                    $q->where('nomor_laptop', 'LIKE', 'LAP%')
-                      ->orWhere('nomor_laptop', 'LIKE', '%LAP%');
-                })
+                ->whereNotIn('nomor_laptop', ['LAP-UNKNOWN', 'BELUM DIPILIH', 'BELUM TERDETEKSI', ''])
                 ->latest()
                 ->first();
 
-            if ($prevTicket && $prevTicket->nomor_laptop && !in_array($prevTicket->nomor_laptop, ['LAP-UNKNOWN', 'BELUM DIPILIH', 'BELUM TERDETEKSI'])) {
+            if ($prevTicket && $prevTicket->nomor_laptop) {
                 $candidateNames[] = $prevTicket->nomor_laptop;
             }
         }
 
-        // 4. Match candidates against `inventories`
+        // 6. Match candidates against `inventories`
         $inventory = null;
         $hostname = null;
 
@@ -80,6 +94,9 @@ class LaptopDetectionService
             $department = $inventory->department ?? '-';
             $noWhatsapp = $inventory->kontak ?? '-';
             $isDetected = true;
+
+            // Cache IP-to-Laptop mapping for 365 days
+            Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(365));
         } else {
             $firstCandidate = !empty($candidateNames) ? $candidateNames[0] : null;
             if ($firstCandidate && !filter_var($firstCandidate, FILTER_VALIDATE_IP)) {
@@ -89,6 +106,9 @@ class LaptopDetectionService
                 $department = '-';
                 $noWhatsapp = '-';
                 $isDetected = false;
+
+                // Cache IP-to-Laptop candidate mapping
+                Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(30));
             } else {
                 $hostname = null;
                 $namaUser = 'Pengguna Baru';
@@ -239,7 +259,7 @@ class LaptopDetectionService
             str_replace(['-', '_', ' '], '', $cleanName),
         ];
 
-        // Try LAP regex extraction: LAP[-_ ]?(\d+) or UP-LAP[-_ ]?(\d+)
+        // Try LAP regex extraction: LAP[-_ ]?(\d+) or UP-LAP[-_ ]?(\d+) or pure digits (e.g. 303, 0303)
         if (preg_match('/(?:UP-)?LAP[-_ ]?(\d+)/i', $cleanName, $matches)) {
             $digits = $matches[1];
             $isUp = str_starts_with($cleanName, 'UP-') || str_contains($cleanName, 'UP-LAP');
@@ -253,6 +273,11 @@ class LaptopDetectionService
             $variations[] = $prefix . (int)$digits;
             // Without hyphen (e.g. LAP0303)
             $variations[] = str_replace('-', '', $prefix) . str_pad($digits, 4, '0', STR_PAD_LEFT);
+        } elseif (ctype_digit($cleanName) && strlen($cleanName) <= 5) {
+            $variations[] = 'LAP-' . str_pad($cleanName, 4, '0', STR_PAD_LEFT);
+            $variations[] = 'LAP-' . str_pad($cleanName, 3, '0', STR_PAD_LEFT);
+            $variations[] = 'UP-LAP-' . str_pad($cleanName, 4, '0', STR_PAD_LEFT);
+            $variations[] = 'UP-LAP-' . str_pad($cleanName, 3, '0', STR_PAD_LEFT);
         }
 
         $variations = array_unique(array_filter($variations));

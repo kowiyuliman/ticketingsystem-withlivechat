@@ -364,13 +364,19 @@
             <!-- Modal Body -->
             <div class="p-6 overflow-y-auto space-y-4">
                 <!-- Custom Input Option -->
-                <form action="{{ route('laptop.set') }}" method="POST" class="space-y-2">
+                <form action="{{ route('laptop.set') }}" method="POST" class="space-y-2" onsubmit="return handleSetLaptopSubmit(this)">
                     @csrf
                     <input type="hidden" name="tab" value="{{ $activeTab }}">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Ketik Nomor Laptop / SN</label>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Ketik Nomor Laptop</label>
                     <div class="flex items-center gap-2">
-                        <input type="text" name="nomor_laptop" id="modal-custom-laptop" placeholder="Contoh: LAP-0303" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all uppercase font-bold" required>
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
+                        <div class="flex-1 flex items-center bg-slate-50 border border-sky-200 rounded-xl overflow-hidden focus-within:border-sky-500 focus-within:bg-white transition-all">
+                            <span class="bg-sky-100 text-sky-800 font-extrabold text-xs sm:text-sm px-3.5 py-2.5 border-r border-sky-200 select-none">
+                                LAP-
+                            </span>
+                            <input type="text" id="modal-lap-number" placeholder="Contoh: 0303" class="flex-1 bg-transparent px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none uppercase" autocomplete="off" required>
+                            <input type="hidden" name="nomor_laptop" id="modal-full-laptop-sn">
+                        </div>
+                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
                             Setel
                         </button>
                     </div>
@@ -414,6 +420,24 @@
     </div>
 
     <script>
+        function handleSetLaptopSubmit(form) {
+            const numInput = document.getElementById('modal-lap-number');
+            const fullInput = document.getElementById('modal-full-laptop-sn');
+            if (!numInput || !numInput.value.trim()) {
+                alert('Silakan masukkan nomor laptop Anda.');
+                return false;
+            }
+            let val = numInput.value.trim().toUpperCase();
+            if (val.startsWith('LAP-')) {
+                fullInput.value = val;
+            } else if (val.startsWith('LAP')) {
+                fullInput.value = 'LAP-' + val.substring(3).replace(/^[-\s]+/, '');
+            } else {
+                fullInput.value = 'LAP-' + val;
+            }
+            return true;
+        }
+
         function openLaptopModal() {
             const modal = document.getElementById('laptop-modal');
             if (modal) {
@@ -489,7 +513,8 @@
 
         function handleFormSubmit(form) {
             const laptopInput = form.querySelector('input[name="nomor_laptop"]');
-            if (!laptopInput || !laptopInput.value || laptopInput.value.trim() === '') {
+            const laptopVal = laptopInput ? laptopInput.value.trim() : '';
+            if (!laptopVal || laptopVal === 'BELUM TERDETEKSI' || laptopVal === 'BELUM DIPILIH' || laptopVal === 'LAP-UNKNOWN') {
                 alert('Silakan pilih nomor laptop Anda terlebih dahulu.');
                 openLaptopModal();
                 return false;
@@ -541,6 +566,24 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            @if($detection['is_detected'] && !empty($detection['hostname']) && !in_array($detection['hostname'], ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN']))
+                try {
+                    localStorage.setItem('mptb_laptop_sn', '{{ $detection['hostname'] }}');
+                } catch (e) {}
+            @else
+                try {
+                    const localSn = localStorage.getItem('mptb_laptop_sn');
+                    if (localSn && localSn.trim() !== '') {
+                        const currentUrl = new URL(window.location.href);
+                        if (!currentUrl.searchParams.has('laptop_sn')) {
+                            currentUrl.searchParams.set('laptop_sn', localSn.trim());
+                            window.location.replace(currentUrl.toString());
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            @endif
+
             const descEl = document.getElementById('ticket-deskripsi');
             if (descEl) {
                 descEl.addEventListener('input', validateForm);
@@ -548,7 +591,7 @@
             }
             validateForm();
 
-            @if(!$detection['is_detected'] && empty($detection['hostname']))
+            @if(session('error') || (!$detection['is_detected'] && (empty($detection['hostname']) || in_array($detection['hostname'], ['BELUM TERDETEKSI', 'BELUM DIPILIH', 'LAP-UNKNOWN']))))
                 setTimeout(function() {
                     openLaptopModal();
                 }, 350);
