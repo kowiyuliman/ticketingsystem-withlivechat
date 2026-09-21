@@ -86,7 +86,14 @@
                                     <td><span class="badge badge-light border font-weight-bold">{{ $ticket->ticket_code }}</span></td>
                                     <td>
                                         <b>{{ $ticket->nama }}</b>
-                                        <div class="text-muted text-xs">💻 {{ $ticket->nomor_laptop }} &bull; 🌐 {{ $ticket->ip_address }}</div>
+                                        <div class="text-muted text-xs">
+                                            💻 {{ $ticket->nomor_laptop }} &bull; 
+                                            @if(!empty($ticket->ip_address) && $ticket->ip_address !== '-' && $ticket->ip_address !== '127.0.0.1')
+                                                <a href="vnc://{{ $ticket->ip_address }}" onclick="event.preventDefault(); launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (Sekali Klik Langsung Buka)">🌐 {{ $ticket->ip_address }}</a>
+                                            @else
+                                                <span>🌐 {{ $ticket->ip_address ?? '-' }}</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td><span class="badge badge-warning uppercase font-weight-bold">{{ strtoupper($ticket->kategori ?? 'General') }}</span></td>
                                     <td><span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ $ticket->deskripsi }}">{{ $ticket->deskripsi }}</span></td>
@@ -228,9 +235,16 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                                        <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs mr-1">
                                             <i class="fas fa-eye"></i> Detail & Chat
                                         </a>
+                                        <form action="{{ url('/admin/ticket/delete/' . $ticket->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #{{ $ticket->ticket_code }}?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Tiket">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach
@@ -471,10 +485,13 @@
                 const unreadBadge = t.unread_comments_count > 0 
                     ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
                     : '';
+                const ipDisplay = (t.ip_address && t.ip_address !== '-' && t.ip_address !== '127.0.0.1')
+                    ? `<a href="vnc://${escapeHtml(t.ip_address)}" onclick="event.preventDefault(); launchTightVNC('${t.id}', '${escapeHtml(t.ip_address)}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (Sekali Klik Langsung Buka)">🌐 ${escapeHtml(t.ip_address)}</a>`
+                    : `🌐 ${escapeHtml(t.ip_address || '-')}`;
                 return [
                     `<div class="text-center">${idx + 1}</div>`,
                     `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
-                    `<b>${escapeHtml(t.nama)}</b><div class="text-muted text-xs">💻 ${escapeHtml(t.nomor_laptop)} &bull; 🌐 ${escapeHtml(t.ip_address)}</div>`,
+                    `<b>${escapeHtml(t.nama)}</b><div class="text-muted text-xs">💻 ${escapeHtml(t.nomor_laptop)} &bull; ${ipDisplay}</div>`,
                     `<span class="badge badge-warning uppercase font-weight-bold">${escapeHtml(t.kategori)}</span>`,
                     `<span class="text-truncate d-inline-block" style="max-width: 200px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span>`,
                     t.created_at_formatted,
@@ -553,9 +570,16 @@
                     `<b>${escapeHtml(t.technician_name)}</b>`,
                     `<span class="badge badge-success">${escapeHtml(t.durasi_menit)}</span>`,
                     `<div class="text-center">
-                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs">
+                        <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs mr-1">
                             <i class="fas fa-eye"></i> Detail & Chat
                         </a>
+                        <form action="${t.delete_url}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #${escapeHtml(t.ticket_code)}?')">
+                            <input type="hidden" name="_token" value="${t.csrf_token}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Tiket">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                     </div>`
                 ];
             });
@@ -626,5 +650,39 @@
         // Poll every 5 seconds
         setInterval(pollRealtimeTickets, 5000);
     });
+
+    window.launchTightVNC = function(ticketId, ip) {
+        if (!ip || ip === '-' || ip === '127.0.0.1') {
+            if (window.toastr) { toastr.warning('IP Address tidak valid untuk remote TightVNC'); }
+            else { alert('IP Address tidak valid'); }
+            return;
+        }
+
+        if (window.toastr) {
+            toastr.info('🚀 Menghubungkan ke TightVNC (' + ip + ')...');
+        }
+
+        fetch('{{ url("/admin/ticket") }}/' + ticketId + '/launch-vnc', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success && data.launched) {
+                if (window.toastr) {
+                    toastr.success('✅ TightVNC Viewer aktif untuk ' + ip);
+                }
+            } else {
+                window.location.href = 'vnc://' + ip;
+            }
+        })
+        .catch(function(err) {
+            window.location.href = 'vnc://' + ip;
+        });
+    };
 </script>
 @stop

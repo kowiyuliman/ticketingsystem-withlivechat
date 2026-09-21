@@ -61,7 +61,20 @@
                     </tr>
                     <tr>
                         <td class="text-muted font-weight-bold">IP Address:</td>
-                        <td><span class="badge bg-light border">🌐 {{ $ticket->ip_address ?? '-' }}</span></td>
+                        <td>
+                            @if(!empty($ticket->ip_address) && $ticket->ip_address !== '-' && $ticket->ip_address !== '127.0.0.1')
+                                <div class="d-inline-flex align-items-center">
+                                    <a href="vnc://{{ $ticket->ip_address }}" onclick="event.preventDefault(); launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}')" class="btn btn-xs btn-outline-info font-weight-bold shadow-2xs mr-1" title="Remote Desktop via TightVNC">
+                                        🌐 {{ $ticket->ip_address }} <i class="fas fa-desktop ml-1 text-xs"></i>
+                                    </a>
+                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $ticket->ip_address }}'); if(window.toastr){ toastr.success('IP Address disalin: {{ $ticket->ip_address }}'); } else { alert('IP Address disalin: {{ $ticket->ip_address }}'); }" class="btn btn-xs btn-light border shadow-2xs" title="Salin IP Address">
+                                        <i class="fas fa-copy text-muted"></i>
+                                    </button>
+                                </div>
+                            @else
+                                <span class="badge bg-light border">🌐 {{ $ticket->ip_address ?? '-' }}</span>
+                            @endif
+                        </td>
                     </tr>
                     <tr>
                         <td class="text-muted font-weight-bold">Kategori:</td>
@@ -112,13 +125,20 @@
                     @csrf
                     <div class="form-group mb-2">
                         <label class="text-xs font-weight-bold text-muted">UBAH STATUS TIKET:</label>
-                        <select name="status" id="status-select" class="form-control form-control-sm font-weight-bold" onchange="handleStatusSelectChange(this)">
-                            <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>🔴 Open (Menunggu Teknisi)</option>
-                            <option value="on_progress" {{ $ticket->status == 'on_progress' ? 'selected' : '' }}>🔵 On Progress (Sedang Dikerjakan)</option>
-                            <option value="pending" {{ $ticket->status == 'pending' ? 'selected' : '' }}>🟡 Pending</option>
-                            <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai)</option>
-                            <option value="cancelled" {{ $ticket->status == 'cancelled' ? 'selected' : '' }}>⚪ Cancelled (Dibatalkan)</option>
-                        </select>
+                        @if($ticket->status === 'closed')
+                            <select name="status" id="status-select" class="form-control form-control-sm font-weight-bold bg-light text-muted cursor-not-allowed" disabled style="cursor: not-allowed;">
+                                <option value="closed" selected>🟢 Closed (Selesai)</option>
+                            </select>
+                            <input type="hidden" name="status" value="closed">
+                        @else
+                            <select name="status" id="status-select" class="form-control form-control-sm font-weight-bold" onchange="handleStatusSelectChange(this)">
+                                <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>🔴 Open (Menunggu Teknisi)</option>
+                                <option value="on_progress" {{ $ticket->status == 'on_progress' ? 'selected' : '' }}>🔵 On Progress (Sedang Dikerjakan)</option>
+                                <option value="pending" {{ $ticket->status == 'pending' ? 'selected' : '' }}>🟡 Pending</option>
+                                <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>🟢 Closed (Selesai)</option>
+                                <option value="cancelled" {{ $ticket->status == 'cancelled' ? 'selected' : '' }}>⚪ Cancelled (Dibatalkan)</option>
+                            </select>
+                        @endif
                     </div>
 
                     <!-- Dynamic Keterangan Input Field for Pending / Cancelled Statuses -->
@@ -272,28 +292,36 @@
 
             <!-- Real-Time Chat Form Input (Zero Page Refresh) -->
             <div class="card-footer bg-white border-top p-2.5">
-                <form id="admin-chat-form" action="{{ url('admin/ticket/comment/' . $ticket->id) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="attachment_base64" id="attachment_base64">
-                    <input type="file" id="attachment_file" name="attachment" accept="image/*" class="d-none" onchange="handleFileSelect(event)">
-
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" title="Lampirkan Foto / Screenshot">
-                                📷
-                            </button>
-                        </div>
-                        <input type="text" id="admin-comment-input" name="comment" autocomplete="off" class="form-control" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot...">
-                        <div class="input-group-append">
-                            <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4">
-                                Kirim 🚀
-                            </button>
-                        </div>
+                @if($ticket->status === 'closed')
+                    <div class="d-flex align-items-center justify-content-between p-2.5 bg-light rounded border text-muted">
+                        <span class="text-xs font-weight-bold">
+                            <i class="fas fa-lock mr-1 text-secondary"></i> Tiket telah ditutup (Closed). Percakapan telah diarsipkan.
+                        </span>
                     </div>
-                    <small class="text-muted d-block mt-1" style="font-size: 10px;">
-                        💡 <span class="font-weight-bold text-primary">Tips:</span> Anda bisa menekan <kbd>Ctrl + V</kbd> untuk menempelkan gambar screenshot langsung ke kolom chat ini.
-                    </small>
-                </form>
+                @else
+                    <form id="admin-chat-form" action="{{ url('admin/ticket/comment/' . $ticket->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="attachment_base64" id="attachment_base64">
+                        <input type="file" id="attachment_file" name="attachment" accept="image/*" class="d-none" onchange="handleFileSelect(event)">
+
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" title="Lampirkan Foto / Screenshot">
+                                    📷
+                                </button>
+                            </div>
+                            <input type="text" id="admin-comment-input" name="comment" autocomplete="off" class="form-control" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot...">
+                            <div class="input-group-append">
+                                <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4">
+                                    Kirim
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-1" style="font-size: 10px;">
+                            💡 <span class="font-weight-bold text-primary">Tips:</span> Anda bisa menekan <kbd>Ctrl + V</kbd> untuk menempelkan gambar screenshot langsung ke kolom chat ini.
+                        </small>
+                    </form>
+                @endif
             </div>
 
         </div>
@@ -356,18 +384,20 @@
     }
 
     // Ctrl + V Clipboard Paste
-    commentInput.addEventListener('paste', function (e) {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let index in items) {
-            const item = items[index];
-            if (item.kind === 'file' && item.type.startsWith('image/')) {
-                const blob = item.getAsFile();
-                compressAndPreviewImage(blob);
-                e.preventDefault();
-                break;
+    if (commentInput) {
+        commentInput.addEventListener('paste', function (e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    compressAndPreviewImage(blob);
+                    e.preventDefault();
+                    break;
+                }
             }
-        }
-    });
+        });
+    }
 
     function handleFileSelect(e) {
         const files = e.target.files;
@@ -419,54 +449,60 @@
     }
 
     // Real-Time Chat Submission (Zero Page Refresh)
-    adminChatForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        
-        const commentText = commentInput.value.trim();
-        const base64Data = hiddenBase64Input.value;
-        const fileData = attachmentFileInput.files[0];
+    if (adminChatForm) {
+        adminChatForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const commentText = commentInput ? commentInput.value.trim() : '';
+            const base64Data = hiddenBase64Input ? hiddenBase64Input.value : '';
+            const fileData = attachmentFileInput ? attachmentFileInput.files[0] : null;
 
-        if (!commentText && !base64Data && !fileData) {
-            return;
-        }
-
-        const formData = new FormData(adminChatForm);
-
-        try {
-            const btnSubmit = document.getElementById('btn-send-admin-chat');
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '⏳ Mengirim...';
-
-            const response = await fetch(adminChatForm.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: formData
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                commentInput.value = '';
-                clearAttachedImage();
-
-                if (data.comment && !knownCommentIds.has(data.comment.id)) {
-                    knownCommentIds.add(data.comment.id);
-                    appendCommentBubble(data.comment);
-                    scrollToBottom();
-                }
-            } else {
-                console.error('Error sending comment');
+            if (!commentText && !base64Data && !fileData) {
+                return;
             }
-        } catch (err) {
-            console.error('AJAX Submit Error:', err);
-        } finally {
-            const btnSubmit = document.getElementById('btn-send-admin-chat');
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = 'Kirim 🚀';
-        }
-    });
+
+            const formData = new FormData(adminChatForm);
+
+            try {
+                const btnSubmit = document.getElementById('btn-send-admin-chat');
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = '⏳ Mengirim...';
+                }
+
+                const response = await fetch(adminChatForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (commentInput) commentInput.value = '';
+                    clearAttachedImage();
+
+                    if (data.comment && !knownCommentIds.has(data.comment.id)) {
+                        knownCommentIds.add(data.comment.id);
+                        appendCommentBubble(data.comment);
+                        scrollToBottom();
+                    }
+                } else {
+                    console.error('Error sending comment');
+                }
+            } catch (err) {
+                console.error('AJAX Submit Error:', err);
+            } finally {
+                const btnSubmit = document.getElementById('btn-send-admin-chat');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = 'Kirim 🚀';
+                }
+            }
+        });
+    }
 
     function appendCommentBubble(c) {
         const emptyMsg = document.getElementById('empty-admin-chat');
@@ -635,6 +671,40 @@
         if (statusSelect && statusSelect.value !== 'pending' && statusSelect.value !== 'cancelled') {
             statusSelect.form.submit();
         }
+    };
+
+    window.launchTightVNC = function(ticketId, ip) {
+        if (!ip || ip === '-' || ip === '127.0.0.1') {
+            if (window.toastr) { toastr.warning('IP Address tidak valid untuk remote TightVNC'); }
+            else { alert('IP Address tidak valid'); }
+            return;
+        }
+
+        if (window.toastr) {
+            toastr.info('Menghubungkan ke TightVNC (' + ip + ')...');
+        }
+
+        fetch('{{ url("/admin/ticket") }}/' + ticketId + '/launch-vnc', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success && data.launched) {
+                if (window.toastr) {
+                    toastr.success('✅ TightVNC Viewer aktif untuk ' + ip);
+                }
+            } else {
+                window.location.href = 'vnc://' + ip;
+            }
+        })
+        .catch(function(err) {
+            window.location.href = 'vnc://' + ip;
+        });
     };
 </script>
 @stop

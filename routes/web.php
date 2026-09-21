@@ -39,6 +39,8 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
     Route::get('/tickets', [AdminTicketController::class,'index']);
     Route::get('/TicketAdmin', [AdminTicketController::class,'TicketAdmin']);
     Route::get('/ticket/show/{id}', [AdminTicketController::class,'show']);
+    Route::get('/ticket/{id}/vnc', [AdminTicketController::class, 'downloadVncConfig']);
+    Route::match(['GET', 'POST'], '/ticket/{id}/launch-vnc', [AdminTicketController::class, 'launchVnc']);
     Route::get('/ticket/edit/{id}', [AdminTicketController::class,'edit']);
     Route::post('/ticket/update/{id}', [AdminTicketController::class,'update']);
     Route::post('/ticket/comment/{id}', [AdminTicketController::class,'comment']);

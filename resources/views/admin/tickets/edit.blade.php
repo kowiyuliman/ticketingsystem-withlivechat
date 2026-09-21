@@ -85,15 +85,22 @@
                     </div>
                     <div class="form-group">
                         <label>Status</label>
-                        <select name="status" id="statusSelect" class="form-control" required>
-                            <option value="open" {{ $ticket->status=='open'?'selected':'' }}> Open </option>
-                            <option value="on_progress" {{ $ticket->status=='on_progress'?'selected':'' }}> On Progress </option>
-                            <option value="pending" {{ $ticket->status=='pending'?'selected':'' }}> Pending </option>
-                            <option value="closed" {{ $ticket->status=='closed'?'selected':'' }}> Closed </option>
-                            <option value="merged" {{ $ticket->status=='merged'?'selected':'' }}>
-                                Merge Ticket
-                            </option>
-                        </select>
+                        @if($ticket->status === 'closed')
+                            <select name="status" id="statusSelect" class="form-control bg-light text-muted" disabled style="cursor: not-allowed;">
+                                <option value="closed" selected> Closed </option>
+                            </select>
+                            <input type="hidden" name="status" value="closed">
+                        @else
+                            <select name="status" id="statusSelect" class="form-control" required>
+                                <option value="open" {{ $ticket->status=='open'?'selected':'' }}> Open </option>
+                                <option value="on_progress" {{ $ticket->status=='on_progress'?'selected':'' }}> On Progress </option>
+                                <option value="pending" {{ $ticket->status=='pending'?'selected':'' }}> Pending </option>
+                                <option value="closed" {{ $ticket->status=='closed'?'selected':'' }}> Closed </option>
+                                <option value="merged" {{ $ticket->status=='merged'?'selected':'' }}>
+                                    Merge Ticket
+                                </option>
+                            </select>
+                        @endif
                     </div>
                 </div>
                 <div class="card-footer text-right">

@@ -142,10 +142,12 @@ class TicketController extends Controller
                         'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
                         'take_url'              => url('/admin/ticket/take/' . $t->id),
                         'show_url'              => url('/admin/ticket/show/' . $t->id),
+                        'vnc_url'               => 'vnc://' . $t->ip_address,
+                        'delete_url'            => url('/admin/ticket/delete/' . $t->id),
                         'csrf_token'            => $csrfToken,
                     ];
                 }),
-                'progress' => $progressTickets->map(function ($t, $idx) {
+                'progress' => $progressTickets->map(function ($t, $idx) use ($csrfToken) {
                     return [
                         'iteration'             => $idx + 1,
                         'id'                    => $t->id,
@@ -157,9 +159,11 @@ class TicketController extends Controller
                         'technician_name'       => $t->technician->name ?? '-',
                         'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
                         'show_url'              => url('/admin/ticket/show/' . $t->id),
+                        'delete_url'            => url('/admin/ticket/delete/' . $t->id),
+                        'csrf_token'            => $csrfToken,
                     ];
                 }),
-                'pending' => $pendingTickets->map(function ($t, $idx) {
+                'pending' => $pendingTickets->map(function ($t, $idx) use ($csrfToken) {
                     return [
                         'iteration'             => $idx + 1,
                         'id'                    => $t->id,
@@ -171,9 +175,11 @@ class TicketController extends Controller
                         'reason_text'           => $t->reason_text,
                         'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
                         'show_url'              => url('/admin/ticket/show/' . $t->id),
+                        'delete_url'            => url('/admin/ticket/delete/' . $t->id),
+                        'csrf_token'            => $csrfToken,
                     ];
                 }),
-                'closed' => $closedTickets->map(function ($t, $idx) {
+                'closed' => $closedTickets->map(function ($t, $idx) use ($csrfToken) {
                     return [
                         'iteration'       => $idx + 1,
                         'id'              => $t->id,
@@ -183,9 +189,11 @@ class TicketController extends Controller
                         'technician_name' => $t->technician->name ?? '-',
                         'durasi_menit'    => $t->durasi_menit ?? '-',
                         'show_url'        => url('/admin/ticket/show/' . $t->id),
+                        'delete_url'      => url('/admin/ticket/delete/' . $t->id),
+                        'csrf_token'      => $csrfToken,
                     ];
                 }),
-                'cancel' => $cancelTickets->map(function ($t, $idx) {
+                'cancel' => $cancelTickets->map(function ($t, $idx) use ($csrfToken) {
                     return [
                         'iteration'            => $idx + 1,
                         'id'                   => $t->id,
@@ -196,6 +204,8 @@ class TicketController extends Controller
                         'reason_text'          => $t->reason_text,
                         'updated_at_formatted' => $t->updated_at ? $t->updated_at->format('d M Y, H:i') : '-',
                         'show_url'             => url('/admin/ticket/show/' . $t->id),
+                        'delete_url'           => url('/admin/ticket/delete/' . $t->id),
+                        'csrf_token'           => $csrfToken,
                     ];
                 }),
             ],
@@ -257,7 +267,7 @@ class TicketController extends Controller
         }
 
         $oldStatus = $ticket->status;
-        $newStatus = $request->input('status', $ticket->status);
+        $newStatus = ($oldStatus === 'closed') ? 'closed' : $request->input('status', $ticket->status);
         $keteranganInput = trim($request->input('keterangan', ''));
 
         $oldKategori = $ticket->kategori;
@@ -346,12 +356,12 @@ class TicketController extends Controller
             $ticket->user->notify(new TicketUpdateNotification($ticket));
         }
 
-        // Redirect back to Admin Tickets List if ticket is CLOSED
-        if ($newStatus === 'closed') {
+        // Redirect back to Admin Tickets List if ticket just transitioned to CLOSED
+        if ($oldStatus !== 'closed' && $newStatus === 'closed') {
             return redirect('/admin/tickets')->with('success', 'Tiket #' . $ticket->ticket_code . ' berhasil ditutup.');
         }
 
-        // Stay on current Live Chat page for other status updates (on_progress, pending, open, cancelled)
+        // Stay on current Live Chat page for category updates on closed ticket or other status updates
         return redirect()->back()->with('success', 'Status tiket berhasil diupdate menjadi ' . $statusLabel . ($kategoriChanged ? ' & nomor tiket diperbarui menjadi #' . $newTicketCode : ''));
     }
 
@@ -381,6 +391,13 @@ class TicketController extends Controller
         ]);
 
         $ticket = Ticket::findOrFail($id);
+
+        if ($ticket->status === 'closed') {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Tiket telah ditutup. Percakapan telah diarsipkan.'], 422);
+            }
+            return back()->with('error', 'Tiket telah ditutup. Percakapan telah diarsipkan.');
+        }
         $attachmentPath = null;
 
         if ($request->hasFile('attachment')) {
@@ -430,6 +447,42 @@ class TicketController extends Controller
         }
 
         return back();
+    }
+
+    public function destroy($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        $ticketCode = $ticket->ticket_code;
+
+        // Delete comments and attachments
+        foreach ($ticket->comments as $comment) {
+            if ($comment->attachment && \Illuminate\Support\Facades\Storage::disk('public')->exists($comment->attachment)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($comment->attachment);
+            }
+            $comment->delete();
+        }
+
+        // Delete screenshot if exists
+        if ($ticket->screenshot && \Illuminate\Support\Facades\Storage::disk('public')->exists($ticket->screenshot)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($ticket->screenshot);
+        }
+
+        // Delete histories and timelines
+        TicketHistory::where('ticket_id', $ticket->id)->delete();
+        TicketTimeline::where('ticket_id', $ticket->id)->delete();
+
+        $ticket->delete();
+
+        \Illuminate\Support\Facades\Cache::flush();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tiket #' . $ticketCode . ' berhasil dihapus.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Tiket #' . $ticketCode . ' berhasil dihapus.');
     }
 
 
@@ -604,14 +657,80 @@ class TicketController extends Controller
         return response()->json($tickets);
     }
 
-
-    public function destroy($id)
+    public function downloadVncConfig($id)
     {
         $ticket = Ticket::findOrFail($id);
-        $ticket->delete();
-        \Illuminate\Support\Facades\Cache::flush();
-        return redirect('/admin/tickets')
-        ->with('success','Ticket berhasil dihapus');
+        $ip = trim($ticket->ip_address ?? '');
+
+        if (empty($ip) || $ip === '-' || $ip === '127.0.0.1') {
+            return redirect()->back()->with('error', 'IP Address pengguna tidak valid untuk remote TightVNC');
+        }
+
+        $vncContent = "[Connection]\r\n"
+            . "Host={$ip}\r\n"
+            . "Port=5900\r\n"
+            . "[Options]\r\n"
+            . "UseLocalCursor=1\r\n"
+            . "UseDesktopResize=1\r\n"
+            . "FullScreen=0\r\n";
+
+        $cleanLaptop = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ticket->nomor_laptop ?? 'LAPTOP');
+        $fileName = "remote_{$cleanLaptop}_{$ip}.vnc";
+
+        return response($vncContent, 200, [
+            'Content-Type'        => 'application/x-vnc',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ]);
     }
 
+    public function launchVnc($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        $ip = trim($ticket->ip_address ?? '');
+
+        if (empty($ip) || $ip === '-' || $ip === '127.0.0.1') {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'IP Address pengguna tidak valid untuk remote TightVNC.'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'IP Address pengguna tidak valid untuk remote TightVNC.');
+        }
+
+        $tvnPath = 'C:\\Program Files\\TightVNC\\tvnviewer.exe';
+        if (!file_exists($tvnPath)) {
+            $tvnPath = 'C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe';
+        }
+
+        $launched = false;
+        if (file_exists($tvnPath)) {
+            try {
+                $cmd = 'start "" "' . $tvnPath . '" -host=' . escapeshellarg($ip);
+                pclose(popen($cmd, 'r'));
+                $launched = true;
+            } catch (\Throwable $e) {
+                $launched = false;
+            }
+        }
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success'      => true,
+                'launched'     => $launched,
+                'ip'           => $ip,
+                'vnc_url'      => 'vnc://' . $ip,
+                'download_url' => url('/admin/ticket/' . $ticket->id . '/vnc'),
+                'message'      => $launched 
+                    ? "Membuka TightVNC ke {$ip}..." 
+                    : "Mengarahkan ke TightVNC...",
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Perintah remote TightVNC ke {$ip} telah dijalankan.");
+    }
 }
+

@@ -1,0 +1,16 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\vnc]
+@="URL:TightVNC Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\DefaultIcon]
+@="\"C:\\Program Files\\TightVNC\\tvnviewer.exe\",0"
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell]
+@="open"
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell\open]
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell\open\command]
+@="\"C:\\Windows\\System32\\wscript.exe\" \"C:\\laragon\\www\\ticketingsystem-withlivechat\\vnc_launcher.vbs\" \"%1\""
