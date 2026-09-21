@@ -6,7 +6,8 @@
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6%20%7C%205-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **Sistem Manajemen Tiket Kendala IT, Inventaris Aset, dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
+> **Sistem Manajemen Tiket Kendala IT, dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
+> **Berkolaborasi dengan Inventory Management** fitur ini dibuat untuk mempermudah menampilkan aset apa saja yang dimiliki user dan data di ambil langsung dari database inventory (ReadOnly) .
 
 ---
 
