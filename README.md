@@ -52,11 +52,6 @@
 - **Role User / Karyawan**: Pembuatan tiket kendala operasional, tracking status mandiri, dan komunikasi live chat.
 - **Menu Kelola Admin**: Manajemen akun administrator secara mandiri dengan perlindungan anti-hapus akun sendiri (*self-delete protection*).
 
-### 4. 💻 Manajemen Inventaris Aset IT
-- **Pencatatan Aset Menyeluruh**: Mendata Laptop, Desktop PC, Monitor, Printer, dan Periferal.
-- **Riwayat Perangkat**: Integrasi otomatis antara nomor aset dengan tiket kerusakan yang pernah dilaporkan.
-- **Manajemen Siklus Aset**: Pemantauan peminjaman aset (*Loans*), perbaikan (*Repairs*), dan kerusakan (*Damages*).
-
 ---
 
 ## 🌟 Keunggulan Aplikasi
