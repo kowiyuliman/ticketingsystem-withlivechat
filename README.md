@@ -1,4 +1,4 @@
-# 🚀 IT Helpdesk & Ticketing System with Live Chat
+# IT Helpdesk & Ticketing System with Live Chat
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
@@ -10,7 +10,7 @@
 
 ---
 
-## 📌 Daftar Isi
+## Daftar Isi
 - [Tentang Aplikasi](#-tentang-aplikasi)
 - [Fitur Utama](#-fitur-utama)
 - [Keunggulan Aplikasi](#-keunggulan-aplikasi)
@@ -28,7 +28,7 @@
 
 ---
 
-## ✨ Fitur Utama
+## Fitur Utama
 
 ### 1. 💬 User Portal & Instant Ticketing
 - **Pengajuan Tiket Cepat**: Pelaporan kendala tanpa proses login yang rumit; otomatis mendeteksi identitas pengguna berdasarkan *Serial Number* (SN) / No. Laptop.
@@ -37,7 +37,7 @@
 - **Lampiran Gambar & Screenshot Paste**: Mendukung unggah foto bukti kendala atau langsung *paste* screenshot dari clipboard.
 - **Pelacakan Status Real-Time**: Status tiket transparan (*Open*, *On Progress*, *Pending*, *Closed*, *Cancelled*) beserta alasan penundaan/pending.
 
-### 2. 📊 Real-Time Admin & Executive Dashboard
+### 2. Real-Time Admin & Executive Dashboard
 - **Auto-Sync Metrik Real-Time**: Data tiket dan statistik diperbarui otomatis di latar belakang tanpa reload halaman.
 - **Smart Resource Throttling**: Mengoptimalkan konsumsi sumber daya server dengan mengatur interval request saat browser diminimize/tidak aktif.
 - **Kartu Indikator Interaktif**: Badge metrik (*Open, On Progress, Pending, Close, Cancel*) dapat diklik untuk langsung membuka filter tiket yang sesuai.
@@ -46,7 +46,7 @@
   - Distribusi kategori kendala (*Hardware, Software, Network, Other*).
   - Statistik beban kerja teknisi dan riwayat tiket per perangkat laptop.
 
-### 3. 👥 Manajemen Pengguna & Hak Akses (Multi-Role)
+### 3. Manajemen Pengguna & Hak Akses (Multi-Role)
 - **Role Khusus Management (Bos)**: Mode monitoring dashboard eksekutif secara *read-only* tanpa opsi mengubah tiket/data aset.
 - **Role Admin / IT Support**: Akses penuh penanganan tiket, manajemen inventaris, dan konfigurasi sistem.
 - **Role User / Karyawan**: Pembuatan tiket kendala operasional, tracking status mandiri, dan komunikasi live chat.
@@ -54,24 +54,24 @@
 
 ---
 
-## 🌟 Keunggulan Aplikasi
+## Keunggulan Aplikasi
 
 | Keunggulan | Deskripsi |
 |---|---|
-| ⚡ **Zero-Friction Submission** | User tidak perlu mengingat username/password akun untuk lapor kendala. |
-| 🔄 **Live Sync Tanpa Refresh** | Percakapan live chat dan metrik statistik diperbarui otomatis secara instan. |
-| 🛡️ **Role-Based Security** | Akses dibatasi ketat menggunakan Middleware & Authorization Gates Laravel. |
-| 📈 **Executive Visibility** | Pimpinan dapat memantau produktivitas dan kepuasan layanan IT kapan saja secara real-time. |
-| 🧪 **High Reliability** | Dilengkapi dengan pengujian otomatis (*Automated Feature Tests*) untuk menjamin kestabilan sistem. |
+| **Zero-Friction Submission** | User tidak perlu mengingat username/password akun untuk lapor kendala. |
+| **Live Sync Tanpa Refresh** | Percakapan live chat dan metrik statistik diperbarui otomatis secara instan. |
+| **Role-Based Security** | Akses dibatasi ketat menggunakan Middleware & Authorization Gates Laravel. |
+| **Executive Visibility** | Pimpinan dapat memantau produktivitas dan kepuasan layanan IT kapan saja secara real-time. |
+| **High Reliability** | Dilengkapi dengan pengujian otomatis (*Automated Feature Tests*) untuk menjamin kestabilan sistem. |
 
 ---
 
-## 🔐 Struktur Hak Akses & Role
+## Struktur Hak Akses & Role
 
 ```mermaid
 flowchart TD
-    A[Sistem IT Management] --> B[🛡️ Admin / IT Support]
-    A --> C[👔 Management / Bos]
+    A[Sistem IT Management] --> B[Admin / IT Support]
+    A --> C[Management / Bos]
     A --> D[👤 User / Karyawan]
 
     B --> B1[Kelola & Proses Tiket]
@@ -90,17 +90,17 @@ flowchart TD
 
 ---
 
-## 👥 Detail Role & Akun Pengguna
+## Detail Role & Akun Pengguna
 
 | Role | Deskripsi Hak Akses | Area / URL Utama |
 |---|---|---|
-| **🛡️ Admin** | Akses penuh: manajemen tiket, update status, live chat admin, modul inventaris aset, kelola user, dan kelola admin. | `/admin/dashboard`<br>`/admin/tickets`<br>`/admin/inventory`<br>`/admin/users`<br>`/admin/admins` |
-| **👔 Management** | Monitoring performa dan analitik eksekutif secara *read-only*. Tidak memiliki akses untuk memodifikasi tiket maupun data aset. | `/admin/dashboard`<br>`/admin/dashboard/realtime` |
-| **👤 User** | Akses portal pelaporan tiket kendala mandiri, live chat dengan teknisi, serta riwayat tiket pribadi. | `/portal`<br>`/ticket/{id}`<br>`/my-tickets` |
+| **Admin** | Akses penuh: manajemen tiket, update status, live chat admin, modul inventaris aset, kelola user, dan kelola admin. | `/admin/dashboard`<br>`/admin/tickets`<br>`/admin/inventory`<br>`/admin/users`<br>`/admin/admins` |
+| **Management** | Monitoring performa dan analitik eksekutif secara *read-only*. Tidak memiliki akses untuk memodifikasi tiket maupun data aset. | `/admin/dashboard`<br>`/admin/dashboard/realtime` |
+| **User** | Akses portal pelaporan tiket kendala mandiri, live chat dengan teknisi, serta riwayat tiket pribadi. | `/portal`<br>`/ticket/{id}`<br>`/my-tickets` |
 
 ---
 
-## 🛠️ Spesifikasi Teknologi
+## Spesifikasi Teknologi
 
 - **Backend Framework**: [Laravel 12](https://laravel.com)
 - **Bahasa Pemrograman**: [PHP 8.2+](https://php.net)
@@ -113,7 +113,7 @@ flowchart TD
 
 ---
 
-## 🚀 Panduan Instalasi
+## Panduan Instalasi
 
 ### 1. Prasyarat Sistem
 Pastikan perangkat Anda telah terpasang:
@@ -172,13 +172,10 @@ Aplikasi dapat diakses melalui browser di: `http://127.0.0.1:8000`
 
 ---
 
-## 🧪 Menjalankan Automated Testing
+## Menjalankan Automated Testing
 Untuk memverifikasi seluruh modul berjalan tanpa error:
 ```bash
 php artisan test --filter="UserManagementTest|AdminManagementTest|AdminDashboardTest|ManagementRoleTest|UserPortalTest"
 ```
 
 ---
-
-## 📄 Lisensi
-Aplikasi ini dirilis di bawah lisensi [MIT License](LICENSE).
