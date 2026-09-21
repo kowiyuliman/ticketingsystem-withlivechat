@@ -1,3 +1,16 @@
+## ☕ Dukung Proyek Ini (Donate)
+
+Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapat berdonasi melalui:
+
+[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/KowiyulIman)
+
+<br>
+
+![SeaBank](https://img.shields.io/badge/SeaBank-FF7300?style=for-the-badge)
+**No. Rekening:** 901026104664
+**Atas Nama:** Kowiyul Iman
+
+
 # IT Helpdesk & Ticketing System with Live Chat
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
