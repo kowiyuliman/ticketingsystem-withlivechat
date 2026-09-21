@@ -7,7 +7,9 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
 <br>
 
 ![SeaBank](https://img.shields.io/badge/SeaBank-FF7300?style=for-the-badge)
+<br>
 **No. Rekening:** 901026104664
+<br>
 **Atas Nama:** Kowiyul Iman
 
 
