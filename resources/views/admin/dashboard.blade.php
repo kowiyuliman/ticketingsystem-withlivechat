@@ -6,9 +6,109 @@
 <div class="d-flex justify-content-between align-items-center mb-2">
     <div>
         <h1 class="m-0 font-weight-bold text-dark">Dashboard IT Support</h1>
-        <p class="text-muted text-sm mb-0">Overview performa penanganan tiket & statistik keluhan IT</p>
+        <p class="text-muted text-sm mb-0">Overview performa penanganan tiket</p>
     </div>
 </div>
+@stop
+
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+
+<style>
+    /* DataTables Bottom & Pagination Controls */
+    .dataTables_wrapper {
+        padding-top: 8px;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 16px !important;
+        font-size: 0.875rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 14px !important;
+        padding-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    /* Tombol Angka Pagination */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 8px !important;
+        padding: 6px 14px !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        cursor: pointer !important;
+        margin: 0 4px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 38px !important;
+        text-align: center !important;
+    }
+
+    /* Jarak Khusus untuk Tombol Previous dan Next */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.previous {
+        margin-right: 14px !important;
+        padding: 6px 16px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+        margin-left: 14px !important;
+        padding: 6px 16px !important;
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    /* Hover State */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Active / Current Page */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+    }
+
+    /* Disabled State */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
+        background: #f1f5f9 !important;
+        border-color: #e2e8f0 !important;
+        color: #94a3b8 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
+        opacity: 0.65;
+    }
+</style>
 @stop
 
 @section('content')
@@ -52,7 +152,7 @@
             <div class="card card-outline card-warning shadow-sm">
                 <div class="card-header border-0 d-flex justify-content-between align-items-center w-100">
                     <h3 class="card-title font-weight-bold text-dark mb-0" style="float: none;">
-                        Tiket Open Terbaru (Perlu Ditangani)
+                        Tiket Open Terbaru
                     </h3>
                     @if(!$isManagement)
                     <div class="card-tools ml-auto">
@@ -217,10 +317,11 @@
     <div class="row">
         <div class="col-lg-6 col-12 mb-3">
             <div class="card card-outline card-warning shadow-sm">
-                <div class="card-header">
-                    <h3 class="card-title font-weight-bold">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold mb-0" style="float: none;">
                         Chart Kategori Kendala
                     </h3>
+                    <small class="text-muted ml-auto font-weight-normal"><i class="fas fa-hand-pointer mr-1"></i> Klik kategori untuk detail</small>
                 </div>
                 <div class="card-body">
                     <div class="chart-container">
@@ -329,7 +430,18 @@
             order: [[4, 'desc']],
             columnDefs: [
                 { targets: [0, 4, 5, 6, 7, 8], className: 'text-center' }
-            ]
+            ],
+            language: {
+                search: "Cari Data:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ perangkat",
+                infoEmpty: "Menampilkan 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                paginate: {
+                    previous: "<i class='fas fa-chevron-left mr-1'></i> Previous",
+                    next: "Next <i class='fas fa-chevron-right ml-1'></i>"
+                }
+            }
         });
 
         // DAILY CHART (14-Day Continuous Line)
@@ -425,8 +537,30 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: function(evt, elements) {
+                        if (elements && elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = kategoriChart.data.labels[index];
+                            if (label) {
+                                const categoryKey = label.toLowerCase().trim();
+                                window.location.href = `{{ url('/admin/tickets/category') }}/${categoryKey}`;
+                            }
+                        }
+                    },
+                    onHover: function(evt, elements) {
+                        if (evt && evt.native && evt.native.target) {
+                            evt.native.target.style.cursor = (elements && elements.length > 0) ? 'pointer' : 'default';
+                        }
+                    },
                     plugins: {
-                        legend: { position: 'bottom' }
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function() {
+                                    return '👆 Klik untuk lihat daftar tiket';
+                                }
+                            }
+                        }
                     }
                 }
             }

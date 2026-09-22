@@ -49,6 +49,54 @@ class TicketController extends Controller
         return view('admin.tickets.index', compact('tickets_open','tickets_progress','tickets_pending','tickets_closed','tickets_cancel'));
     }
 
+    public function categoryTickets(Request $request, $kategori)
+    {
+        $kategoriKey = strtolower(trim($kategori));
+        
+        $validCategories = ['software', 'hardware', 'network', 'other'];
+        if (!in_array($kategoriKey, $validCategories)) {
+            $kategoriKey = 'software';
+        }
+
+        $unreadCommentCountScope = function ($q) {
+            $q->where('is_admin', false)->whereNull('read_at');
+        };
+
+        $tickets = Ticket::with(['technician', 'user'])
+            ->withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->whereRaw('LOWER(kategori) = ?', [$kategoriKey])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $stats = [
+            'total'     => $tickets->count(),
+            'open'      => $tickets->where('status', 'open')->count(),
+            'progress'  => $tickets->where('status', 'on_progress')->count(),
+            'pending'   => $tickets->where('status', 'pending')->count(),
+            'closed'    => $tickets->where('status', 'closed')->count(),
+            'cancelled' => $tickets->where('status', 'cancelled')->count(),
+        ];
+
+        $categoryNames = [
+            'software' => 'Software',
+            'hardware' => 'Hardware',
+            'network'  => 'Network',
+            'other'    => 'Other',
+        ];
+
+        $categoryIcons = [
+            'software' => 'fas fa-laptop-code text-warning',
+            'hardware' => 'fas fa-microchip text-info',
+            'network'  => 'fas fa-network-wired text-success',
+            'other'    => 'fas fa-question-circle text-secondary',
+        ];
+
+        $categoryName = $categoryNames[$kategoriKey] ?? ucfirst($kategoriKey);
+        $categoryIcon = $categoryIcons[$kategoriKey] ?? 'fas fa-tag text-primary';
+
+        return view('admin.tickets.category', compact('tickets', 'kategoriKey', 'categoryName', 'categoryIcon', 'stats'));
+    }
+
     public function unreadCount(Request $request)
     {
         $openTicketsCount = Ticket::where('status', 'open')->count();
@@ -686,6 +734,41 @@ class TicketController extends Controller
         ]);
     }
 
+    public function downloadVncSetup()
+    {
+        $regContent = "Windows Registry Editor Version 5.00\r\n\r\n"
+            . "[HKEY_CURRENT_USER\\Software\\Classes\\vnc]\r\n"
+            . "@=\"URL:TightVNC Protocol\"\r\n"
+            . "\"URL Protocol\"=\"\"\r\n\r\n"
+            . "[HKEY_CURRENT_USER\\Software\\Classes\\vnc\\DefaultIcon]\r\n"
+            . "@=\"\\\"C:\\\\Program Files\\\\TightVNC\\\\tvnviewer.exe\\\",0\"\r\n\r\n"
+            . "[HKEY_CURRENT_USER\\Software\\Classes\\vnc\\shell]\r\n"
+            . "@=\"open\"\r\n\r\n"
+            . "[HKEY_CURRENT_USER\\Software\\Classes\\vnc\\shell\\open]\r\n\r\n"
+            . "[HKEY_CURRENT_USER\\Software\\Classes\\vnc\\shell\\open\\command]\r\n"
+            . "@=\"\\\"C:\\\\Windows\\\\System32\\\\cmd.exe\\\" /c powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command \\\"& { \$ip = \$args[0] -replace 'vnc://','' -replace 'vnc:','' -replace '/',''; if (Test-Path 'C:\\\\Program Files\\\\TightVNC\\\\tvnviewer.exe') { Start-Process 'C:\\\\Program Files\\\\TightVNC\\\\tvnviewer.exe' \$ip } elseif (Test-Path 'C:\\\\Program Files (x86)\\\\TightVNC\\\\tvnviewer.exe') { Start-Process 'C:\\\\Program Files (x86)\\\\TightVNC\\\\tvnviewer.exe' \$ip } }\\\" \\\"%1\\\"\"\r\n";
+
+        return response($regContent, 200, [
+            'Content-Type'        => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="setup_tightvnc_protocol.reg"',
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+            'Pragma'              => 'no-cache',
+            'Expires'             => '0',
+        ]);
+    }
+
+    public function downloadVncInstaller()
+    {
+        $zipPath = public_path('TightVNC_Setup_Laptop.zip');
+        if (!file_exists($zipPath)) {
+            return redirect()->back()->with('error', 'File installer tidak ditemukan.');
+        }
+
+        return response()->download($zipPath, 'TightVNC_Setup_Laptop.zip', [
+            'Content-Type' => 'application/zip',
+        ]);
+    }
+
     public function launchVnc($id)
     {
         $ticket = Ticket::findOrFail($id);
@@ -706,10 +789,13 @@ class TicketController extends Controller
             $tvnPath = 'C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe';
         }
 
+        $clientIp = request()->ip();
+        $isLocalServer = in_array($clientIp, ['127.0.0.1', '::1', 'localhost']);
+
         $launched = false;
-        if (file_exists($tvnPath)) {
+        if ($isLocalServer && file_exists($tvnPath)) {
             try {
-                $cmd = 'start "" "' . $tvnPath . '" -host=' . escapeshellarg($ip);
+                $cmd = 'cmd /c start "" "' . $tvnPath . '" ' . escapeshellarg($ip);
                 pclose(popen($cmd, 'r'));
                 $launched = true;
             } catch (\Throwable $e) {

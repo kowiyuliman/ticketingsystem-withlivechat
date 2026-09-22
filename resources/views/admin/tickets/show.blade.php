@@ -52,22 +52,25 @@
                 @endif
                 <table class="table table-borderless table-sm mb-0">
                     <tr>
-                        <td width="35%" class="text-muted font-weight-bold">Pengguna / User:</td>
-                        <td><b>{{ $ticket->nama }}</b></td>
+                        <td style="width: 140px; white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">Pengguna / User</td>
+                        <td style="width: 15px;" class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle"><b>{{ $ticket->nama }}</b></td>
                     </tr>
                     <tr>
-                        <td class="text-muted font-weight-bold">Nomor Laptop:</td>
-                        <td><span class="badge bg-info px-2.5 py-1">💻 {{ $ticket->nomor_laptop ?? '-' }}</span></td>
+                        <td style="white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">Nomor Laptop</td>
+                        <td class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle"><span class="badge bg-info px-2.5 py-1">💻 {{ $ticket->nomor_laptop ?? '-' }}</span></td>
                     </tr>
                     <tr>
-                        <td class="text-muted font-weight-bold">IP Address:</td>
-                        <td>
+                        <td style="white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">IP Address</td>
+                        <td class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle">
                             @if(!empty($ticket->ip_address) && $ticket->ip_address !== '-' && $ticket->ip_address !== '127.0.0.1')
                                 <div class="d-inline-flex align-items-center">
-                                    <a href="vnc://{{ $ticket->ip_address }}" onclick="event.preventDefault(); launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}')" class="btn btn-xs btn-outline-info font-weight-bold shadow-2xs mr-1" title="Remote Desktop via TightVNC">
+                                    <a href="vnc://{{ $ticket->ip_address }}" onclick="launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}', event, '{{ $ticket->nomor_laptop }}', '{{ $ticket->nama }}')" class="btn btn-xs btn-outline-info font-weight-bold shadow-2xs mr-1" title="Remote Desktop via TightVNC (vnc://{{ $ticket->ip_address }})">
                                         🌐 {{ $ticket->ip_address }} <i class="fas fa-desktop ml-1 text-xs"></i>
                                     </a>
-                                    <button type="button" onclick="navigator.clipboard.writeText('{{ $ticket->ip_address }}'); if(window.toastr){ toastr.success('IP Address disalin: {{ $ticket->ip_address }}'); } else { alert('IP Address disalin: {{ $ticket->ip_address }}'); }" class="btn btn-xs btn-light border shadow-2xs" title="Salin IP Address">
+                                    <button type="button" onclick="copyIpAddress('{{ $ticket->ip_address }}', this)" class="btn btn-xs btn-light border shadow-2xs" title="Salin IP Address">
                                         <i class="fas fa-copy text-muted"></i>
                                     </button>
                                 </div>
@@ -77,8 +80,9 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-muted font-weight-bold">Kategori:</td>
-                        <td><span class="badge bg-warning text-dark uppercase font-weight-bold">
+                        <td style="white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">Kategori</td>
+                        <td class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle"><span class="badge bg-warning text-dark uppercase font-weight-bold">
                             @if($ticket->kategori == 'software') 💻 Software
                             @elseif($ticket->kategori == 'hardware') 🔌 Hardware
                             @elseif($ticket->kategori == 'network') 🌐 Network
@@ -86,12 +90,14 @@
                         </span></td>
                     </tr>
                     <tr>
-                        <td class="text-muted font-weight-bold">Waktu Buat:</td>
-                        <td>{{ $ticket->created_at->format('d M Y, H:i') }}</td>
+                        <td style="white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">Waktu Buat</td>
+                        <td class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle">{{ $ticket->created_at->format('d M Y, H:i') }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted font-weight-bold">Dikerjakan oleh:</td>
-                        <td><b>{{ $ticket->technician?->name ?? '-' }}</b></td>
+                        <td style="white-space: nowrap;" class="text-muted font-weight-bold py-1.5 align-middle">Dikerjakan oleh</td>
+                        <td class="text-center font-weight-bold text-muted py-1.5 align-middle">:</td>
+                        <td class="py-1.5 align-middle"><b>{{ $ticket->technician?->name ?? '-' }}</b></td>
                     </tr>
                 </table>
 
@@ -672,39 +678,13 @@
             statusSelect.form.submit();
         }
     };
-
-    window.launchTightVNC = function(ticketId, ip) {
-        if (!ip || ip === '-' || ip === '127.0.0.1') {
-            if (window.toastr) { toastr.warning('IP Address tidak valid untuk remote TightVNC'); }
-            else { alert('IP Address tidak valid'); }
-            return;
-        }
-
-        if (window.toastr) {
-            toastr.info('Menghubungkan ke TightVNC (' + ip + ')...');
-        }
-
-        fetch('{{ url("/admin/ticket") }}/' + ticketId + '/launch-vnc', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.success && data.launched) {
-                if (window.toastr) {
-                    toastr.success('✅ TightVNC Viewer aktif untuk ' + ip);
-                }
-            } else {
-                window.location.href = 'vnc://' + ip;
-            }
-        })
-        .catch(function(err) {
+    window.launchTightVNC = function(ticketId, ip, event, laptop, user) {
+        if (event && event.preventDefault) event.preventDefault();
+        if (window.openVncModal) {
+            window.openVncModal(ticketId, ip, laptop || '{{ $ticket->nomor_laptop ?? "-" }}', user || '{{ $ticket->nama ?? "-" }}');
+        } else {
             window.location.href = 'vnc://' + ip;
-        });
+        }
     };
 </script>
 @stop

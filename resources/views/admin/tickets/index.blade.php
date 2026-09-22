@@ -86,10 +86,9 @@
                                     <td><span class="badge badge-light border font-weight-bold">{{ $ticket->ticket_code }}</span></td>
                                     <td>
                                         <b>{{ $ticket->nama }}</b>
-                                        <div class="text-muted text-xs">
                                             💻 {{ $ticket->nomor_laptop }} &bull; 
                                             @if(!empty($ticket->ip_address) && $ticket->ip_address !== '-' && $ticket->ip_address !== '127.0.0.1')
-                                                <a href="vnc://{{ $ticket->ip_address }}" onclick="event.preventDefault(); launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (Sekali Klik Langsung Buka)">🌐 {{ $ticket->ip_address }}</a>
+                                                <a href="vnc://{{ $ticket->ip_address }}" onclick="launchTightVNC('{{ $ticket->id }}', '{{ $ticket->ip_address }}', event, '{{ $ticket->nomor_laptop }}', '{{ $ticket->nama }}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (vnc://{{ $ticket->ip_address }})">🌐 {{ $ticket->ip_address }}</a>
                                             @else
                                                 <span>🌐 {{ $ticket->ip_address ?? '-' }}</span>
                                             @endif
@@ -130,7 +129,7 @@
                                 <th>Pelapor / Laptop</th>
                                 <th>Kategori</th>
                                 <th>Deskripsi Kendala</th>
-                                <th>Teknisi IT</th>
+                                <th>Dikerjakan Oleh</th>
                                 <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -170,7 +169,7 @@
                                 <th>No</th>
                                 <th>Kode Tiket</th>
                                 <th>Pelapor / Laptop</th>
-                                <th>Teknisi IT</th>
+                                <th>Dikerjakan Oleh</th>
                                 <th>Deskripsi Kendala</th>
                                 <th>Alasan Pending</th>
                                 <th class="text-center">Aksi</th>
@@ -217,7 +216,7 @@
                                 <th>No</th>
                                 <th>Kode Tiket</th>
                                 <th>Pelapor / Laptop</th>
-                                <th>Teknisi IT</th>
+                                <th>Dikerjakan Oleh</th>
                                 <th>Durasi Pengerjaan</th>
                                 <th class="text-center">Aksi</th>
                             </tr>
@@ -486,7 +485,7 @@
                     ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
                     : '';
                 const ipDisplay = (t.ip_address && t.ip_address !== '-' && t.ip_address !== '127.0.0.1')
-                    ? `<a href="vnc://${escapeHtml(t.ip_address)}" onclick="event.preventDefault(); launchTightVNC('${t.id}', '${escapeHtml(t.ip_address)}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (Sekali Klik Langsung Buka)">🌐 ${escapeHtml(t.ip_address)}</a>`
+                    ? `<a href="vnc://${escapeHtml(t.ip_address)}" onclick="launchTightVNC('${t.id}', '${escapeHtml(t.ip_address)}', event, '${escapeHtml(t.nomor_laptop)}', '${escapeHtml(t.nama)}')" class="text-info font-weight-bold" title="Remote Desktop via TightVNC (vnc://${escapeHtml(t.ip_address)})">🌐 ${escapeHtml(t.ip_address)}</a>`
                     : `🌐 ${escapeHtml(t.ip_address || '-')}`;
                 return [
                     `<div class="text-center">${idx + 1}</div>`,
@@ -651,38 +650,13 @@
         setInterval(pollRealtimeTickets, 5000);
     });
 
-    window.launchTightVNC = function(ticketId, ip) {
-        if (!ip || ip === '-' || ip === '127.0.0.1') {
-            if (window.toastr) { toastr.warning('IP Address tidak valid untuk remote TightVNC'); }
-            else { alert('IP Address tidak valid'); }
-            return;
-        }
-
-        if (window.toastr) {
-            toastr.info('🚀 Menghubungkan ke TightVNC (' + ip + ')...');
-        }
-
-        fetch('{{ url("/admin/ticket") }}/' + ticketId + '/launch-vnc', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.success && data.launched) {
-                if (window.toastr) {
-                    toastr.success('✅ TightVNC Viewer aktif untuk ' + ip);
-                }
-            } else {
-                window.location.href = 'vnc://' + ip;
-            }
-        })
-        .catch(function(err) {
+    window.launchTightVNC = function(ticketId, ip, event, laptop, user) {
+        if (event && event.preventDefault) event.preventDefault();
+        if (window.openVncModal) {
+            window.openVncModal(ticketId, ip, laptop, user);
+        } else {
             window.location.href = 'vnc://' + ip;
-        });
+        }
     };
 </script>
 @stop

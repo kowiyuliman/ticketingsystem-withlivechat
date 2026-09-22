@@ -450,6 +450,67 @@ class AdminTicketNotificationTest extends TestCase
             'ip'      => '192.168.200.55',
         ]);
     }
+
+    public function test_admin_can_view_category_tickets_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $swTicket = Ticket::create([
+            'ticket_code'  => 'SW-CAT-001',
+            'user_id'      => $user->id,
+            'nama'         => 'Software User',
+            'nomor_laptop' => 'LAP-SW-01',
+            'ip_address'   => '192.168.200.11',
+            'kategori'     => 'software',
+            'deskripsi'    => 'Kendala software excel crash',
+            'status'       => 'open',
+            'created_by'   => $user->id,
+        ]);
+
+        $hwTicket = Ticket::create([
+            'ticket_code'  => 'HD-CAT-002',
+            'user_id'      => $user->id,
+            'nama'         => 'Hardware User',
+            'nomor_laptop' => 'LAP-HW-02',
+            'ip_address'   => '192.168.200.12',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Kendala hardware mouse rusak',
+            'status'       => 'on_progress',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/tickets/category/software');
+
+        $response->assertStatus(200);
+        $response->assertSee('Tiket Kategori: Software');
+        $response->assertSee('SW-CAT-001');
+        $response->assertSee('Kendala software excel crash');
+        $response->assertDontSee('HD-CAT-002');
+    }
+
+    public function test_admin_can_download_vnc_setup_registry_file(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get('/admin/vnc/setup');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Disposition', 'attachment; filename="setup_tightvnc_protocol.reg"');
+        $this->assertStringContainsString('URL:TightVNC Protocol', $response->getContent());
+        $this->assertStringContainsString('tvnviewer.exe', $response->getContent());
+    }
+
+    public function test_admin_can_download_vnc_installer_zip(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get('/admin/vnc/installer');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Disposition', 'attachment; filename=TightVNC_Setup_Laptop.zip');
+    }
 }
 
 

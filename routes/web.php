@@ -37,9 +37,12 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
 
     //route tiket
     Route::get('/tickets', [AdminTicketController::class,'index']);
+    Route::get('/tickets/category/{kategori}', [AdminTicketController::class, 'categoryTickets']);
     Route::get('/TicketAdmin', [AdminTicketController::class,'TicketAdmin']);
     Route::get('/ticket/show/{id}', [AdminTicketController::class,'show']);
     Route::get('/ticket/{id}/vnc', [AdminTicketController::class, 'downloadVncConfig']);
+    Route::get('/vnc/setup', [AdminTicketController::class, 'downloadVncSetup'])->name('admin.vnc.setup');
+    Route::get('/vnc/installer', [AdminTicketController::class, 'downloadVncInstaller'])->name('admin.vnc.installer');
     Route::match(['GET', 'POST'], '/ticket/{id}/launch-vnc', [AdminTicketController::class, 'launchVnc']);
     Route::get('/ticket/edit/{id}', [AdminTicketController::class,'edit']);
     Route::post('/ticket/update/{id}', [AdminTicketController::class,'update']);

@@ -1,0 +1,17 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\vnc]
+@="URL:TightVNC Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\DefaultIcon]
+@="\"C:\\Program Files\\TightVNC\\tvnviewer.exe\",0"
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell]
+@="open"
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell\open]
+
+[HKEY_CURRENT_USER\Software\Classes\vnc\shell\open\command]
+@="\"C:\\Windows\\System32\\cmd.exe\" /c powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -Command \"& { $ip = $args[0] -replace 'vnc://','' -replace 'vnc:','' -replace '/',''; if (Test-Path 'C:\\Program Files\\TightVNC\\tvnviewer.exe') { Start-Process 'C:\\Program Files\\TightVNC\\tvnviewer.exe' $ip } elseif (Test-Path 'C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe') { Start-Process 'C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe' $ip } }\" \"%1\""
+
