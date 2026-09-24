@@ -720,6 +720,50 @@ class UserPortalTest extends TestCase
         $response->assertSessionHas('mptb_laptop_sn', 'LAP-0227');
         $response->assertCookie('mptb_laptop_sn', 'LAP-0227');
     }
+
+    public function test_cloudflare_connecting_ip_header_is_detected_accurately()
+    {
+        $detectionService = new \App\Services\LaptopDetectionService();
+
+        // Simulate incoming request with Cloudflare header
+        request()->headers->set('CF-Connecting-IP', '103.145.22.88');
+
+        $detection = $detectionService->detect();
+
+        $this->assertEquals('103.145.22.88', $detection['ip_address']);
+    }
+
+    public function test_public_ip_does_not_falsely_auto_bind_laptop_to_different_devices()
+    {
+        $detectionService = new \App\Services\LaptopDetectionService();
+
+        // Create inventory
+        \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'HP Pavilion',
+            'sn'        => 'LAP-0077',
+            'pengguna'  => 'Sambayu Kris Antoni',
+            'department'=> 'Operational',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        // Simulate User 1 setting laptop on public IP
+        request()->headers->set('CF-Connecting-IP', '103.145.22.88');
+        $this->post(route('laptop.set'), ['nomor_laptop' => 'LAP-0077']);
+
+        // Clear cookies to simulate a NEW DIFFERENT device (like a new phone on the same WiFi)
+        request()->cookies->remove('mptb_laptop_sn');
+        request()->headers->remove('X-Laptop-SN');
+        session()->forget('mptb_laptop_sn');
+
+        $detection = $detectionService->detect();
+
+        // The new phone must NOT be falsely auto-assigned to Sambayu Kris Antoni
+        $this->assertNull($detection['inventory']);
+        $this->assertEquals('Pengguna Baru', $detection['nama_user']);
+        $this->assertFalse($detection['is_detected']);
+    }
 }
 
 

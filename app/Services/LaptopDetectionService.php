@@ -15,10 +15,13 @@ class LaptopDetectionService
      */
     public function detect(?string $overrideHostname = null): array
     {
-        $rawIp = Request::ip();
+        $rawIp = request()->header('CF-Connecting-IP') ?? Request::ip();
+        if ($rawIp && str_contains($rawIp, ',')) {
+            $rawIp = trim(explode(',', $rawIp)[0]);
+        }
         
         // Strip IPv6 mapped IPv4 prefix (e.g. ::ffff:192.168.200.50 -> 192.168.200.50)
-        $ip = str_replace('::ffff:', '', $rawIp);
+        $ip = str_replace('::ffff:', '', $rawIp ?: '127.0.0.1');
 
         // Convert IPv6 localhost to IPv4 localhost or local LAN IPv4
         if ($ip === '::1' || $ip === '127.0.0.1') {
@@ -26,9 +29,10 @@ class LaptopDetectionService
             $ip = filter_var($lanIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? $lanIp : '127.0.0.1';
         }
 
+        $isPrivateLan = $this->isPrivateLanIp($ip);
         $candidateNames = [];
 
-        // 1. Priority 1: Explicit Override / URL Query / Cookie / Session / Header
+        // 1. Priority 1: Explicit Override / URL Query / Cookie / Session / Header (Device Specific)
         $savedSn = $overrideHostname 
             ?? request()->query('laptop_sn') 
             ?? request()->cookie('mptb_laptop_sn') 
@@ -40,39 +44,43 @@ class LaptopDetectionService
             $candidateNames[] = trim($savedSn);
         }
 
-        // 2. Priority 2: Persistent IP-to-Laptop Cache Mapping
-        $cachedIpHost = Cache::get("laptop_ip_mapping_{$ip}");
-        if ($cachedIpHost && trim($cachedIpHost) !== '' && !in_array(strtoupper(trim($cachedIpHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
-            $candidateNames[] = trim($cachedIpHost);
-        }
-
-        // 3. Priority 3: Automated Network Computer Name Detection (NetBIOS UDP 137 + DNS PTR + nbtstat)
-        $networkHost = $this->resolveClientHostname($ip, $rawIp);
-        if (!empty($networkHost) && !in_array(strtoupper($networkHost), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN', 'UNKNOWN'])) {
-            $candidateNames[] = $networkHost;
-        }
-
-        // 4. Priority 4: Assets Table IP mapping if exists
-        try {
-            $assetHost = \App\Models\Asset::where('ip_address', $ip)->whereNotNull('hostname')->value('hostname')
-                ?? \App\Models\Asset::where('ip_address', $ip)->whereNotNull('serial_number')->value('serial_number');
-            if ($assetHost && !in_array(strtoupper(trim($assetHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
-                $candidateNames[] = trim($assetHost);
+        // IP-based candidates (Priority 2, 3, 4, 5) ONLY run on dedicated private LAN IPs
+        // Never auto-bind public or shared proxy IPs (e.g. Cloudflare or 192.168.200.6) to prevent cross-device collision!
+        if (empty($candidateNames) && $isPrivateLan) {
+            // 2. Priority 2: Persistent IP-to-Laptop Cache Mapping
+            $cachedIpHost = Cache::get("laptop_ip_mapping_{$ip}");
+            if ($cachedIpHost && trim($cachedIpHost) !== '' && !in_array(strtoupper(trim($cachedIpHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+                $candidateNames[] = trim($cachedIpHost);
             }
-        } catch (\Throwable $e) {
-            // Safe fallback if column doesn't exist
-        }
 
-        // 5. Priority 5: Memory from previous tickets submitted from this IP address
-        if (empty($candidateNames)) {
-            $prevTicket = Ticket::where('ip_address', $ip)
-                ->whereNotNull('nomor_laptop')
-                ->whereNotIn('nomor_laptop', ['LAP-UNKNOWN', 'BELUM DIPILIH', 'BELUM TERDETEKSI', ''])
-                ->latest()
-                ->first();
+            // 3. Priority 3: Automated Network Computer Name Detection (NetBIOS UDP 137 + DNS PTR + nbtstat)
+            $networkHost = $this->resolveClientHostname($ip, $rawIp);
+            if (!empty($networkHost) && !in_array(strtoupper($networkHost), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN', 'UNKNOWN'])) {
+                $candidateNames[] = $networkHost;
+            }
 
-            if ($prevTicket && $prevTicket->nomor_laptop) {
-                $candidateNames[] = $prevTicket->nomor_laptop;
+            // 4. Priority 4: Assets Table IP mapping if exists
+            try {
+                $assetHost = \App\Models\Asset::where('ip_address', $ip)->whereNotNull('hostname')->value('hostname')
+                    ?? \App\Models\Asset::where('ip_address', $ip)->whereNotNull('serial_number')->value('serial_number');
+                if ($assetHost && !in_array(strtoupper(trim($assetHost)), ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN'])) {
+                    $candidateNames[] = trim($assetHost);
+                }
+            } catch (\Throwable $e) {
+                // Safe fallback if column doesn't exist
+            }
+
+            // 5. Priority 5: Memory from previous tickets submitted from this IP address
+            if (empty($candidateNames)) {
+                $prevTicket = Ticket::where('ip_address', $ip)
+                    ->whereNotNull('nomor_laptop')
+                    ->whereNotIn('nomor_laptop', ['LAP-UNKNOWN', 'BELUM DIPILIH', 'BELUM TERDETEKSI', ''])
+                    ->latest()
+                    ->first();
+
+                if ($prevTicket && $prevTicket->nomor_laptop) {
+                    $candidateNames[] = $prevTicket->nomor_laptop;
+                }
             }
         }
 
@@ -95,8 +103,10 @@ class LaptopDetectionService
             $noWhatsapp = $inventory->kontak ?? '-';
             $isDetected = true;
 
-            // Cache IP-to-Laptop mapping for 365 days
-            Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(365));
+            // Cache IP-to-Laptop mapping for 365 days ONLY on dedicated private LAN IP
+            if ($isPrivateLan) {
+                Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(365));
+            }
         } else {
             $firstCandidate = !empty($candidateNames) ? $candidateNames[0] : null;
             if ($firstCandidate && !filter_var($firstCandidate, FILTER_VALIDATE_IP)) {
@@ -107,8 +117,10 @@ class LaptopDetectionService
                 $noWhatsapp = '-';
                 $isDetected = false;
 
-                // Cache IP-to-Laptop candidate mapping
-                Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(30));
+                // Cache IP-to-Laptop candidate mapping ONLY on private LAN IP
+                if ($isPrivateLan) {
+                    Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(30));
+                }
             } else {
                 $hostname = null;
                 $namaUser = 'Pengguna Baru';
@@ -138,12 +150,29 @@ class LaptopDetectionService
     }
 
     /**
+     * Determine if an IP is a dedicated private LAN IPv4 address (RFC 1918)
+     */
+    public function isPrivateLanIp(string $ip): bool
+    {
+        if (in_array($ip, ['127.0.0.1', '::1', '192.168.200.6'])) {
+            return false;
+        }
+
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
+            && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+    }
+
+    /**
      * Resolve Windows Computer Name via NetBIOS (UDP 137) or DNS PTR with short timeout & caching
      */
     public function resolveClientHostname(string $ip, ?string $rawIp = null): ?string
     {
         if ($ip === '127.0.0.1' || $rawIp === '127.0.0.1' || $rawIp === '::1') {
             return gethostname();
+        }
+
+        if (!$this->isPrivateLanIp($ip)) {
+            return null;
         }
 
         return Cache::remember("laptop_host_{$ip}", 300, function () use ($ip) {

@@ -236,6 +236,9 @@
                                     <td class="text-center">
                                         <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs mr-1">
                                             <i class="fas fa-eye"></i> Detail & Chat
+                                            @if(($ticket->unread_comments_count ?? 0) > 0)
+                                                <span class="badge badge-danger ml-1" title="{{ $ticket->unread_comments_count }} pesan baru"><i class="fas fa-circle text-xs"></i> {{ $ticket->unread_comments_count }}</span>
+                                            @endif
                                         </a>
                                         <form action="{{ url('/admin/ticket/delete/' . $ticket->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #{{ $ticket->ticket_code }}?')">
                                             @csrf
@@ -562,6 +565,9 @@
 
         function refreshClosedTable(items) {
             const rows = items.map((t, idx) => {
+                const unreadBadge = t.unread_comments_count > 0 
+                    ? `<span class="badge badge-danger ml-1" title="${t.unread_comments_count} pesan baru"><i class="fas fa-circle text-xs"></i> ${t.unread_comments_count}</span>` 
+                    : '';
                 return [
                     `<div class="text-center">${idx + 1}</div>`,
                     `<span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span>`,
@@ -571,6 +577,7 @@
                     `<div class="text-center">
                         <a href="${t.show_url}" class="btn btn-primary btn-xs font-weight-bold shadow-2xs mr-1">
                             <i class="fas fa-eye"></i> Detail & Chat
+                            ${unreadBadge}
                         </a>
                         <form action="${t.delete_url}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #${escapeHtml(t.ticket_code)}?')">
                             <input type="hidden" name="_token" value="${t.csrf_token}">

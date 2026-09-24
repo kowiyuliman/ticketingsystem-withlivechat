@@ -511,6 +511,126 @@ class AdminTicketNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Disposition', 'attachment; filename=TightVNC_Setup_Laptop.zip');
     }
+
+    public function test_unread_count_excludes_closed_and_cancelled_tickets(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $closedTicket = Ticket::create([
+            'ticket_code'  => 'HD-CLS-UNREAD',
+            'user_id'      => $user->id,
+            'nama'         => 'Closed User',
+            'nomor_laptop' => 'LAP-CLS',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Closed ticket with unread message',
+            'status'       => 'closed',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        TicketComment::create([
+            'ticket_id' => $closedTicket->id,
+            'user_id'   => $user->id,
+            'is_admin'  => false,
+            'comment'   => 'Unread comment on closed ticket',
+            'read_at'   => null,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/admin/notifications/unread-count');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'has_unread'         => false,
+                'total_unread'       => 0,
+                'unread_chats_count' => 0,
+            ]);
+    }
+
+    public function test_closing_ticket_marks_unread_user_comments_as_read(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $ticket = Ticket::create([
+            'ticket_code'  => 'SW-PROG-CLS',
+            'user_id'      => $user->id,
+            'nama'         => 'Prog User',
+            'nomor_laptop' => 'LAP-PROG',
+            'kategori'     => 'software',
+            'deskripsi'    => 'Prog ticket to be closed',
+            'status'       => 'on_progress',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        $comment = TicketComment::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $user->id,
+            'is_admin'  => false,
+            'comment'   => 'Unread user reply before closing',
+            'read_at'   => null,
+        ]);
+
+        $this->assertNull($comment->read_at);
+
+        $response = $this->actingAs($admin)
+            ->post("/admin/ticket/update/{$ticket->id}", [
+                'status'   => 'closed',
+                'kategori' => 'software',
+            ]);
+
+        $response->assertRedirect('/admin/tickets');
+
+        $comment->refresh();
+        $this->assertNotNull($comment->read_at);
+        $this->assertEquals('read', $comment->read_status);
+
+        $unreadResponse = $this->actingAs($admin)->getJson('/admin/notifications/unread-count');
+        $unreadResponse->assertJson([
+            'has_unread'         => false,
+            'total_unread'       => 0,
+            'unread_chats_count' => 0,
+        ]);
+    }
+
+    public function test_closed_tickets_tab_shows_unread_comments_badge_and_fetch(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $closedTicket = Ticket::create([
+            'ticket_code'  => 'HD-CLS-BADGE',
+            'user_id'      => $user->id,
+            'nama'         => 'Closed Badge User',
+            'nomor_laptop' => 'LAP-CLS-01',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Closed badge test',
+            'status'       => 'closed',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        TicketComment::create([
+            'ticket_id' => $closedTicket->id,
+            'user_id'   => $user->id,
+            'is_admin'  => false,
+            'comment'   => 'Unread comment on closed ticket badge',
+            'read_at'   => null,
+        ]);
+
+        // Check Blade view
+        $indexResponse = $this->actingAs($admin)->get('/admin/tickets?tab=closed');
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('HD-CLS-BADGE');
+        $indexResponse->assertSee('1 pesan baru');
+
+        // Check fetch API
+        $fetchResponse = $this->actingAs($admin)->getJson('/admin/ticket/fetch');
+        $fetchResponse->assertStatus(200);
+        $fetchData = $fetchResponse->json();
+        $this->assertEquals(1, $fetchData['tickets']['closed'][0]['unread_comments_count']);
+    }
 }
 
 

@@ -121,9 +121,16 @@ class TicketController extends Controller
         \Illuminate\Support\Facades\Cookie::queue('mptb_laptop_sn', $sn, 525600);
         session(['mptb_laptop_sn' => $sn]);
 
-        $rawIp = $request->ip();
-        $ip = str_replace('::ffff:', '', $rawIp);
-        \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ip}", $sn, now()->addDays(365));
+        $rawIp = $request->header('CF-Connecting-IP') ?? $request->ip();
+        if ($rawIp && str_contains($rawIp, ',')) {
+            $rawIp = trim(explode(',', $rawIp)[0]);
+        }
+        $ip = str_replace('::ffff:', '', $rawIp ?: '127.0.0.1');
+
+        $detectionService = new \App\Services\LaptopDetectionService();
+        if ($detectionService->isPrivateLanIp($ip)) {
+            \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ip}", $sn, now()->addDays(365));
+        }
 
         return redirect()->route('portal', ['tab' => $tab])
             ->withCookie(cookie()->forever('mptb_laptop_sn', $sn))

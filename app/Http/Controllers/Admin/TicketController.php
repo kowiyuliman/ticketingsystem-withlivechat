@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\TicketHistory;
 use App\Models\TicketComment;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Notifications\TicketUpdateNotification;
 use App\Models\TicketTimeline;
 use Carbon\Carbon;
@@ -38,7 +39,8 @@ class TicketController extends Controller
             ->orderBy('updated_at','desc')
             ->paginate(20);
 
-        $tickets_closed = Ticket::where('status','closed')
+        $tickets_closed = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->where('status','closed')
             ->orderBy('resolved_at','desc')
             ->paginate(20);
 
@@ -103,10 +105,16 @@ class TicketController extends Controller
         
         $unreadChatsCount = TicketComment::where('is_admin', false)
             ->whereNull('read_at')
+            ->whereHas('ticket', function ($q) {
+                $q->whereNotIn('status', ['closed', 'cancelled']);
+            })
             ->count();
 
         $unreadTicketIds = TicketComment::where('is_admin', false)
             ->whereNull('read_at')
+            ->whereHas('ticket', function ($q) {
+                $q->whereNotIn('status', ['closed', 'cancelled']);
+            })
             ->pluck('ticket_id')
             ->unique()
             ->values();
@@ -148,7 +156,8 @@ class TicketController extends Controller
             ->take(50)
             ->get();
 
-        $closedTickets = Ticket::with('technician')
+        $closedTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician')
             ->where('status', 'closed')
             ->orderBy('resolved_at', 'desc')
             ->take(50)
@@ -229,16 +238,17 @@ class TicketController extends Controller
                 }),
                 'closed' => $closedTickets->map(function ($t, $idx) use ($csrfToken) {
                     return [
-                        'iteration'       => $idx + 1,
-                        'id'              => $t->id,
-                        'ticket_code'     => $t->ticket_code,
-                        'nama'            => $t->nama,
-                        'nomor_laptop'    => $t->nomor_laptop,
-                        'technician_name' => $t->technician->name ?? '-',
-                        'durasi_menit'    => $t->durasi_menit ?? '-',
-                        'show_url'        => url('/admin/ticket/show/' . $t->id),
-                        'delete_url'      => url('/admin/ticket/delete/' . $t->id),
-                        'csrf_token'      => $csrfToken,
+                        'iteration'             => $idx + 1,
+                        'id'                    => $t->id,
+                        'ticket_code'           => $t->ticket_code,
+                        'nama'                  => $t->nama,
+                        'nomor_laptop'          => $t->nomor_laptop,
+                        'technician_name'       => $t->technician->name ?? '-',
+                        'durasi_menit'          => $t->durasi_menit ?? '-',
+                        'unread_comments_count' => (int)($t->unread_comments_count ?? 0),
+                        'show_url'              => url('/admin/ticket/show/' . $t->id),
+                        'delete_url'            => url('/admin/ticket/delete/' . $t->id),
+                        'csrf_token'            => $csrfToken,
                     ];
                 }),
                 'cancel' => $cancelTickets->map(function ($t, $idx) use ($csrfToken) {
@@ -406,6 +416,16 @@ class TicketController extends Controller
 
         // Redirect back to Admin Tickets List if ticket just transitioned to CLOSED
         if ($oldStatus !== 'closed' && $newStatus === 'closed') {
+            TicketComment::where('ticket_id', $ticket->id)
+                ->where('is_admin', false)
+                ->whereNull('delivered_at')
+                ->update(['delivered_at' => now()]);
+
+            TicketComment::where('ticket_id', $ticket->id)
+                ->where('is_admin', false)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+
             return redirect('/admin/tickets')->with('success', 'Tiket #' . $ticket->ticket_code . ' berhasil ditutup.');
         }
 
