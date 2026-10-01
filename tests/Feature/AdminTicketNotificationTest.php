@@ -375,7 +375,7 @@ class AdminTicketNotificationTest extends TestCase
         $this->assertDatabaseMissing('ticket_comments', ['id' => $comment->id]);
     }
 
-    public function test_admin_tickets_index_shows_delete_action_only_for_closed_tickets(): void
+    public function test_admin_tickets_index_shows_delete_action_for_closed_and_cancelled_tickets(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create(['role' => 'user']);
@@ -403,11 +403,24 @@ class AdminTicketNotificationTest extends TestCase
             'created_by'   => $user->id,
         ]);
 
+        $cancelTicket = Ticket::create([
+            'ticket_code'  => 'HD-CANCEL-TEST',
+            'user_id'      => $user->id,
+            'nama'         => 'Cancel User',
+            'nomor_laptop' => 'LAP-0102',
+            'kategori'     => 'hardware',
+            'deskripsi'    => 'Cancel action test',
+            'status'       => 'cancelled',
+            'created_by'   => $user->id,
+        ]);
+
         $response = $this->actingAs($admin)->get('/admin/tickets');
 
         $response->assertStatus(200);
         // Closed ticket has delete form
         $response->assertSee('/admin/ticket/delete/' . $closedTicket->id, false);
+        // Cancel ticket has delete form
+        $response->assertSee('/admin/ticket/delete/' . $cancelTicket->id, false);
         // Open ticket does NOT have delete form
         $response->assertDontSee('/admin/ticket/delete/' . $openTicket->id, false);
     }

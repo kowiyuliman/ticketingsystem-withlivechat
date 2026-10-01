@@ -36,13 +36,15 @@ class TicketController extends Controller
             \Illuminate\Support\Facades\Cache::put("laptop_ip_mapping_{$ip}", $hostname, now()->addDays(365));
         }
 
-        // Get available laptop list from inventories for switching/selection
-        $availableLaptops = \App\Models\Inventory::where(function ($q) {
-            $q->where('sn', 'LIKE', 'LAP%')
-              ->orWhere('jenis', 'LIKE', '%laptop%');
-        })
-        ->orderBy('sn')
-        ->get(['id', 'sn', 'pengguna', 'department', 'merk', 'lokasi']);
+        // Get available laptop list from inventories for switching/selection (cached for fast portal loads)
+        $availableLaptops = Cache::remember('portal_available_laptops', 600, function () {
+            return \App\Models\Inventory::where(function ($q) {
+                $q->where('sn', 'LIKE', 'LAP%')
+                  ->orWhere('jenis', 'LIKE', '%laptop%');
+            })
+            ->orderBy('sn')
+            ->get(['id', 'sn', 'pengguna', 'department', 'merk', 'lokasi']);
+        });
 
         // Query tickets STRICTLY for this specific laptop SN (if valid)
         $tickets = collect();
@@ -276,7 +278,9 @@ class TicketController extends Controller
      */
     public function fetchComments($id)
     {
-        $ticket = Ticket::with(['comments.user', 'technician'])->findOrFail($id);
+        $ticket = Ticket::with(['technician:id,name'])->select([
+            'id', 'ticket_code', 'status', 'status_reason', 'kategori', 'assigned_to', 'nama'
+        ])->findOrFail($id);
 
         $isAdminRequester = Auth::check() && in_array(Auth::user()->role, ['admin', 'technician']);
 
@@ -319,6 +323,11 @@ class TicketController extends Controller
                 ]);
         }
 
+        $comments = $ticket->comments()
+            ->with(['user:id,name'])
+            ->select(['id', 'ticket_id', 'user_id', 'is_admin', 'comment', 'attachment', 'created_at', 'delivered_at', 'read_at'])
+            ->get();
+
         return response()->json([
             'ticket_code'          => $ticket->ticket_code,
             'status'               => $ticket->status,
@@ -329,7 +338,7 @@ class TicketController extends Controller
             'is_closed'            => in_array($ticket->status, ['closed', 'cancelled']),
             'is_admin_active'      => (bool)$isAdminActive,
             'admin_last_seen_text' => $adminLastSeen ? \Carbon\Carbon::parse($adminLastSeen)->format('H:i') : null,
-            'comments'             => $ticket->comments()->with('user')->get()->map(function ($comment) use ($ticket) {
+            'comments'             => $comments->map(function ($comment) use ($ticket) {
                 $isAdmin = (bool)$comment->is_admin;
                 $isUser = !$isAdmin;
                 $senderName = $isAdmin ? ($comment->user?->name ?? 'Admin IT') : ($ticket->nama ?: 'Pengguna');

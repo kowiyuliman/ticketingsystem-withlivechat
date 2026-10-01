@@ -764,6 +764,39 @@ class UserPortalTest extends TestCase
         $this->assertEquals('Pengguna Baru', $detection['nama_user']);
         $this->assertFalse($detection['is_detected']);
     }
+
+    public function test_user_portal_caches_available_laptops_and_invalidates_on_inventory_change()
+    {
+        \Illuminate\Support\Facades\Cache::forget('portal_available_laptops');
+
+        $inv1 = \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'Dell Vostro',
+            'sn'        => 'LAP-0888',
+            'pengguna'  => 'User Test 1',
+            'department'=> 'Operational',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        $response = $this->get('/portal');
+        $response->assertStatus(200);
+        $this->assertTrue(\Illuminate\Support\Facades\Cache::has('portal_available_laptops'));
+
+        // Creating or updating an inventory should invalidate cache automatically
+        $inv2 = \App\Models\Inventory::create([
+            'jenis'     => 'Laptop',
+            'merk'      => 'Lenovo ThinkPad',
+            'sn'        => 'LAP-0999',
+            'pengguna'  => 'User Test 2',
+            'department'=> 'Finance',
+            'kondisi'   => 'Baik',
+            'status'    => 'Aktif',
+        ]);
+
+        $this->assertFalse(\Illuminate\Support\Facades\Cache::has('portal_available_laptops'));
+    }
 }
+
 
 

@@ -287,7 +287,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <img id="image-preview-thumb" src="" class="rounded border" style="width: 42px; height: 42px; object-fit: cover;">
                     <div>
-                        <small class="font-weight-bold text-dark d-block">Foto siap dikirim 📷</small>
+                        <small class="font-weight-bold text-dark d-block">Foto siap dikirim</small>
                         <small class="text-muted" style="font-size: 10px;">Terkompresi otomatis & siap terlampir</small>
                     </div>
                 </div>
@@ -504,7 +504,7 @@
                 const btnSubmit = document.getElementById('btn-send-admin-chat');
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = 'Kirim 🚀';
+                    btnSubmit.innerHTML = 'Kirim';
                 }
             }
         });
@@ -601,13 +601,24 @@
 
     scrollToBottom();
 
-    // Polling Comments Every 3 Seconds
+    let adminChatPollInterval = null;
+
+    // Polling Comments
     async function fetchNewComments() {
         try {
             const response = await fetch(`/ticket/comments/${ticketId}`);
             if (!response.ok) return;
 
             const data = await response.json();
+
+            // Stop polling immediately if ticket is closed or cancelled
+            if (data.is_closed || data.status === 'closed' || data.status === 'cancelled') {
+                if (adminChatPollInterval) {
+                    clearInterval(adminChatPollInterval);
+                    adminChatPollInterval = null;
+                }
+            }
+
             let hasNewMessage = false;
 
             if (data.comments && data.comments.length > 0) {
@@ -647,7 +658,10 @@
         return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    setInterval(fetchNewComments, 4000);
+    // Only poll for open / in-progress / pending tickets (Zero polling on closed/cancelled)
+    @if(!in_array($ticket->status, ['closed', 'cancelled']))
+        adminChatPollInterval = setInterval(fetchNewComments, 4000);
+    @endif
 
     // Handle Status Select Dropdown Changes (Pending / Cancelled Reason Input)
     window.handleStatusSelectChange = function(selectElem) {

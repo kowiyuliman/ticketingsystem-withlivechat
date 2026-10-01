@@ -103,9 +103,9 @@
                                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 <span class="text-xs font-extrabold text-slate-700">Perangkat Terdeteksi di Database Inventaris</span>
                             </div>
-                            <!-- <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
-                                ✏️ Ganti / Pilih Laptop
-                            </button> -->
+                            <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
+                                Ganti / Pilih Laptop
+                            </button>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="bg-white p-3 rounded-xl border border-sky-100">

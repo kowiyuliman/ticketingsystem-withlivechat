@@ -708,6 +708,8 @@
         // Scroll down initially
         scrollToBottom();
 
+        let liveChatPollInterval = null;
+
         // Polling function for real-time Live Chat updates
         async function fetchNewComments() {
             try {
@@ -718,6 +720,14 @@
                 
                 // Real-time status badge, Presence & Back Button sync
                 updateTicketRealtimeStatus(data);
+
+                // Stop polling immediately if ticket is closed or cancelled
+                if (data.is_closed || data.status === 'closed' || data.status === 'cancelled') {
+                    if (liveChatPollInterval) {
+                        clearInterval(liveChatPollInterval);
+                        liveChatPollInterval = null;
+                    }
+                }
 
                 let hasNewMessage = false;
 
@@ -757,8 +767,10 @@
             return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // Poll every 3 seconds for snappy real-time responsiveness
-        setInterval(fetchNewComments, 3000);
+        // Only poll for open / in-progress / pending tickets (Zero polling on closed/cancelled)
+        @if(!in_array($ticket->status, ['closed', 'cancelled']))
+            liveChatPollInterval = setInterval(fetchNewComments, 3000);
+        @endif
 
         // Play chime on page load if coming from form submit
         @if(session('success'))

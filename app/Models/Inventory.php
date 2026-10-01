@@ -16,6 +16,16 @@ class Inventory extends Model
 
     protected $table = 'inventories';
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('portal_available_laptops');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('portal_available_laptops');
+        });
+    }
+
     protected $fillable = [
         'jenis',
         'merk',

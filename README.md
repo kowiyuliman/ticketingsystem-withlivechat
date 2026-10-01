@@ -19,16 +19,18 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
 [![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![AdminLTE](https://img.shields.io/badge/AdminLTE-3.x-3c8dbc?style=for-the-badge&logo=adminlte&logoColor=white)](https://adminlte.io)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6%20%7C%205-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
+[![Tests](https://img.shields.io/badge/Tests-70%20Passed-brightgreen?style=for-the-badge&logo=php)](https://phpunit.de)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **Sistem Manajemen Tiket Kendala IT, dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
-> **Berkolaborasi dengan Inventory Management** fitur ini dibuat untuk mempermudah menampilkan aset apa saja yang dimiliki user dan data di ambil langsung dari database inventory (ReadOnly) .
+> **Sistem Manajemen Tiket Kendala IT dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
+> **Terintegrasi dengan Inventory Management** untuk menampilkan aset perangkat yang digunakan oleh pengguna secara instan (*read-only*).
 
 ---
 
 ## Daftar Isi
 - [Tentang Aplikasi](#-tentang-aplikasi)
 - [Fitur Utama](#-fitur-utama)
+- [Optimasi Performa Skala Tinggi (500-1000 User)](#-optimasi-performa-skala-tinggi-500-1000-user)
 - [Keunggulan Aplikasi](#-keunggulan-aplikasi)
 - [Struktur Hak Akses & Role](#-struktur-hak-akses--role)
 - [Detail Role & Akun Pengguna](#-detail-role--akun-pengguna)
@@ -52,10 +54,11 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
 - **Tanda Pesan Terbaca (Read Receipts)**: Dilengkapi status centang dua (abu-abu = terkirim, biru = sudah dibaca oleh admin/user).
 - **Lampiran Gambar & Screenshot Paste**: Mendukung unggah foto bukti kendala atau langsung *paste* screenshot dari clipboard.
 - **Pelacakan Status Real-Time**: Status tiket transparan (*Open*, *On Progress*, *Pending*, *Closed*, *Cancelled*) beserta alasan penundaan/pending.
+- **Manajemen Riwayat & Aset Personal**: Menampilkan daftar tiket aktif serta seluruh aset inventaris (laptop, charger, mouse, headset, LAN extender) yang sedang digunakan.
 
 ### 2. Real-Time Admin & Executive Dashboard
 - **Auto-Sync Metrik Real-Time**: Data tiket dan statistik diperbarui otomatis di latar belakang tanpa reload halaman.
-- **Smart Resource Throttling**: Mengoptimalkan konsumsi sumber daya server dengan mengatur interval request saat browser diminimize/tidak aktif.
+- **Pembersihan & Penghapusan Tiket**: Tombol hapus tiket pada tab *Closed* dan *Cancelled* yang membersihkan database, riwayat, timeline, serta file lampiran fisik secara aman (*cascade delete*).
 - **Kartu Indikator Interaktif**: Badge metrik (*Open, On Progress, Pending, Close, Cancel*) dapat diklik untuk langsung membuka filter tiket yang sesuai.
 - **Grafik Analitik Interaktif**:
   - Tren tiket harian (14 hari terakhir).
@@ -70,15 +73,30 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
 
 ---
 
+## ⚡ Optimasi Performa Skala Tinggi (500-1000 User)
+
+Sistem telah dioptimasi secara arsitektural untuk menangani lonjakan ratusan hingga ribuan request polling secara simultan:
+
+1. **Zero-Polling pada Tiket Selesai**: Tiket berstatus `closed` atau `cancelled` menghentikan polling background secara total ($0\text{ request}$ background), menghemat ribuan request server.
+2. **Database Composite Indexing**:
+   - `tickets`: Index khusus pada `nomor_laptop`, `(nomor_laptop, created_at)`, `(status, created_at)`, `(status, started_at)`, `(status, resolved_at)`, dan `(status, updated_at)`.
+   - `ticket_comments`: Composite index pada `ticket_id`, `(ticket_id, created_at)`, `(is_admin, read_at)`, dan `(ticket_id, is_admin, read_at)`.
+3. **Smart Model Lifecycle Caching**: Dropdown daftar 500+ nomor laptop inventaris di-cache (`portal_available_laptops`) dan di-refresh otomatis saat ada perubahan data via model event `booted()`.
+4. **Optimasi Query & Lean Payload JSON**: Mengonsolidasi subquery unread notifikasi admin dan membatasi proyeksi kolom SQL (*selective column selection*) untuk meminimalkan beban RAM database dan transfer data jaringan.
+5. **High-Throughput File Session/Cache Driver**: Menghilangkan *table lock* pada database MariaDB dengan menggunakan driver file yang cepat dan ringan.
+
+---
+
 ## Keunggulan Aplikasi
 
 | Keunggulan | Deskripsi |
 |---|---|
 | **Zero-Friction Submission** | User tidak perlu mengingat username/password akun untuk lapor kendala. |
+| **High Concurrency Ready** | Dioptimasi khusus untuk 500-1000+ pengguna simultan dengan composite indexing dan smart caching. |
 | **Live Sync Tanpa Refresh** | Percakapan live chat dan metrik statistik diperbarui otomatis secara instan. |
 | **Role-Based Security** | Akses dibatasi ketat menggunakan Middleware & Authorization Gates Laravel. |
 | **Executive Visibility** | Pimpinan dapat memantau produktivitas dan kepuasan layanan IT kapan saja secara real-time. |
-| **High Reliability** | Dilengkapi dengan pengujian otomatis (*Automated Feature Tests*) untuk menjamin kestabilan sistem. |
+| **High Reliability** | Dilengkapi dengan 70 pengujian otomatis (*Automated Tests*) yang lulus 100%. |
 
 ---
 
@@ -124,7 +142,7 @@ flowchart TD
 - **Template & UI Admin**: [AdminLTE 3](https://adminlte.io) berbasis [Bootstrap 4](https://getbootstrap.com) & FontAwesome 6
 - **Frontend Portal User**: Modern Responsive UI berbasis Bootstrap 5 & FontAwesome 6
 - **Visualisasi Data**: [Chart.js](https://www.chartjs.org)
-- **Real-Time Polling Engine**: Optimized AJAX dynamic background poller dengan Page Visibility API
+- **Real-Time Polling Engine**: Optimized dynamic background poller dengan composite database indexing
 - **Testing Framework**: [Pest PHP](https://pestphp.com) & [PHPUnit](https://phpunit.de)
 
 ---
@@ -163,6 +181,8 @@ DB_PORT=3306
 DB_DATABASE=mptb_it-management
 DB_USERNAME=root
 DB_PASSWORD=
+SESSION_DRIVER=file
+CACHE_STORE=file
 ```
 
 ### 5. Generate Application Key & Migrasi Database
@@ -189,9 +209,12 @@ Aplikasi dapat diakses melalui browser di: `http://127.0.0.1:8000`
 ---
 
 ## Menjalankan Automated Testing
-Untuk memverifikasi seluruh modul berjalan tanpa error:
+Untuk memverifikasi seluruh modul berjalan tanpa error (70 passed tests):
 ```bash
-php artisan test --filter="UserManagementTest|AdminManagementTest|AdminDashboardTest|ManagementRoleTest|UserPortalTest"
+php artisan test
 ```
 
 ---
+
+## 📄 Lisensi
+Proyek ini didistribusikan di bawah lisensi [MIT License](LICENSE).

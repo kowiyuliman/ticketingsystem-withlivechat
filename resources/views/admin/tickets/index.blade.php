@@ -288,9 +288,16 @@
                                     </td>
                                     <td>{{ $ticket->updated_at->format('d M Y, H:i') }}</td>
                                     <td class="text-center">
-                                        <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-secondary btn-xs font-weight-bold shadow-2xs">
+                                        <a href="{{ url('/admin/ticket/show/' . $ticket->id) }}" class="btn btn-secondary btn-xs font-weight-bold shadow-2xs mr-1">
                                             <i class="fas fa-eye"></i> Lihat
                                         </a>
+                                        <form action="{{ url('/admin/ticket/delete/' . $ticket->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #{{ $ticket->ticket_code }}?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Tiket">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach
@@ -605,9 +612,16 @@
                     reasonHtml,
                     t.updated_at_formatted,
                     `<div class="text-center">
-                        <a href="${t.show_url}" class="btn btn-secondary btn-xs font-weight-bold shadow-2xs">
+                        <a href="${t.show_url}" class="btn btn-secondary btn-xs font-weight-bold shadow-2xs mr-1">
                             <i class="fas fa-eye"></i> Lihat
                         </a>
+                        <form action="${t.delete_url}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tiket #${escapeHtml(t.ticket_code)}?')">
+                            <input type="hidden" name="_token" value="${t.csrf_token}">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Tiket">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                     </div>`
                 ];
             });

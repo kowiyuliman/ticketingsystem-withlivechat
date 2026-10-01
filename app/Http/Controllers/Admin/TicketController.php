@@ -103,21 +103,15 @@ class TicketController extends Controller
     {
         $openTicketsCount = Ticket::where('status', 'open')->count();
         
-        $unreadChatsCount = TicketComment::where('is_admin', false)
+        $unreadTicketIdsCollection = TicketComment::where('is_admin', false)
             ->whereNull('read_at')
             ->whereHas('ticket', function ($q) {
                 $q->whereNotIn('status', ['closed', 'cancelled']);
             })
-            ->count();
+            ->pluck('ticket_id');
 
-        $unreadTicketIds = TicketComment::where('is_admin', false)
-            ->whereNull('read_at')
-            ->whereHas('ticket', function ($q) {
-                $q->whereNotIn('status', ['closed', 'cancelled']);
-            })
-            ->pluck('ticket_id')
-            ->unique()
-            ->values();
+        $unreadChatsCount = $unreadTicketIdsCollection->count();
+        $unreadTicketIds = $unreadTicketIdsCollection->unique()->values();
 
         $totalUnread = $openTicketsCount + $unreadChatsCount;
 
@@ -136,34 +130,39 @@ class TicketController extends Controller
             $q->where('is_admin', false)->whereNull('read_at');
         };
 
-        $openTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+        $openTickets = Ticket::select(['id', 'ticket_code', 'nama', 'nomor_laptop', 'ip_address', 'kategori', 'deskripsi', 'created_at', 'status'])
+            ->withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
             ->take(50)
             ->get();
 
-        $progressTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
-            ->with('technician')
+        $progressTickets = Ticket::select(['id', 'ticket_code', 'nama', 'nomor_laptop', 'kategori', 'deskripsi', 'assigned_to', 'status', 'started_at'])
+            ->withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician:id,name')
             ->where('status', 'on_progress')
             ->orderBy('started_at', 'desc')
             ->take(50)
             ->get();
 
-        $pendingTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
-            ->with('technician')
+        $pendingTickets = Ticket::select(['id', 'ticket_code', 'nama', 'nomor_laptop', 'deskripsi', 'status_reason', 'assigned_to', 'status', 'updated_at'])
+            ->withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician:id,name')
             ->where('status', 'pending')
             ->orderBy('updated_at', 'desc')
             ->take(50)
             ->get();
 
-        $closedTickets = Ticket::withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
-            ->with('technician')
+        $closedTickets = Ticket::select(['id', 'ticket_code', 'nama', 'nomor_laptop', 'assigned_to', 'status', 'started_at', 'resolved_at'])
+            ->withCount(['comments as unread_comments_count' => $unreadCommentCountScope])
+            ->with('technician:id,name')
             ->where('status', 'closed')
             ->orderBy('resolved_at', 'desc')
             ->take(50)
             ->get();
 
-        $cancelTickets = Ticket::where('status', 'cancelled')
+        $cancelTickets = Ticket::select(['id', 'ticket_code', 'nama', 'nomor_laptop', 'deskripsi', 'status_reason', 'status', 'updated_at', 'created_at'])
+            ->where('status', 'cancelled')
             ->latest()
             ->take(50)
             ->get();
