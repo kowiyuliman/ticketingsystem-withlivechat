@@ -24,6 +24,33 @@
 </div>
 @stop
 
+@section('css')
+<style>
+    .quick-tpl-btn {
+        background-color: #ffffff !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 12px !important;
+        font-size: 11px !important;
+        padding: 4px 12px !important;
+        transition: all 0.15s ease !important;
+    }
+    .quick-tpl-btn:hover {
+        background-color: #f0f7ff !important;
+        color: #007bff !important;
+        border-color: #b8daff !important;
+        transform: translateY(-1px);
+    }
+    .quick-tpl-btn.active {
+        background-color: #007bff !important;
+        color: #ffffff !important;
+        border-color: #007bff !important;
+        box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
+        font-weight: 700 !important;
+    }
+</style>
+@stop
+
 @section('content')
 
 @include('partials.floating_toast')
@@ -318,9 +345,9 @@
                                 </span>
                                 @foreach($chatTemplates as $tpl)
                                     <button type="button" 
-                                            class="btn btn-xs {{ $tpl->category === $ticket->status ? 'btn-primary' : 'btn-outline-secondary' }} font-weight-bold text-nowrap shadow-2xs flex-shrink-0"
-                                            style="border-radius: 12px; font-size: 11px; padding: 3px 10px;"
-                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }})"
+                                            class="btn btn-xs quick-tpl-btn font-weight-bold text-nowrap shadow-2xs flex-shrink-0"
+                                            data-tpl-id="{{ $tpl->id }}"
+                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }}, this)"
                                             title="{{ $tpl->message }}">
                                         {{ $tpl->title }}
                                     </button>
@@ -338,7 +365,7 @@
                             </div>
 
                             <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold shadow-2xs d-flex align-items-center justify-content-center px-3.5 flex-shrink-0" style="height: 40px; border-radius: 10px; font-size: 13px;">
-                                <i class="fas fa-paper-plane mr-1.5"></i> Kirim
+                                <i class="fas fa-paper-plane mr-1.5"></i>
                             </button>
                         </div>
                         <small class="text-muted d-block mt-1" style="font-size: 10px;">
@@ -403,7 +430,7 @@
                                 </div>
                                 <div>
                                     <button type="button" class="btn btn-primary btn-xs font-weight-bold shadow-2xs" 
-                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }}); $('#modal-all-chat-templates').modal('hide');">
+                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }}, document.querySelector('.quick-tpl-btn[data-tpl-id=\'{{ $tpl->id }}\']')); $('#modal-all-chat-templates').modal('hide');">
                                         <i class="fas fa-check mr-1"></i> Gunakan
                                     </button>
                                 </div>
@@ -461,8 +488,14 @@
     }
 
     // Apply Quick Chat Template with Auto-Variable Replacement
-    window.applyChatTemplate = function(rawMessage) {
+    window.applyChatTemplate = function(rawMessage, btnElement) {
         if (!rawMessage) return;
+
+        // Reset all quick template buttons to default (white), activate the clicked button (blue)
+        document.querySelectorAll('.quick-tpl-btn').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
 
         const ticketData = {
             user_name: @json($ticket->nama ?: 'Pengguna'),
@@ -614,6 +647,7 @@
                         commentInput.value = '';
                         autoResizeAdminInput();
                     }
+                    document.querySelectorAll('.quick-tpl-btn').forEach(btn => btn.classList.remove('active'));
                     clearAttachedImage();
 
                     if (data.comment && !knownCommentIds.has(data.comment.id)) {

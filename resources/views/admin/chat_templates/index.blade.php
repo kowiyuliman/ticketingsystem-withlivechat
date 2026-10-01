@@ -116,26 +116,26 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'on_progress' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'on_progress']) }}">
-                    <i class="fas fa-spinner mr-1.5"></i> On Progress 
-                    <span class="badge badge-count ml-1">{{ $counts['on_progress'] }}</span>
+                    On Progress 
+                    
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'pending' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'pending']) }}">
-                    <i class="fas fa-clock mr-1.5"></i> Pending 
-                    <span class="badge badge-count ml-1">{{ $counts['pending'] }}</span>
+                     Pending 
+                    
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'closed' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'closed']) }}">
-                    <i class="fas fa-check-circle mr-1.5"></i> Closed 
-                    <span class="badge badge-count ml-1">{{ $counts['closed'] }}</span>
+                     Closed 
+                    
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'general' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'general']) }}">
-                    <i class="fas fa-comment-alt mr-1.5"></i> Umum 
-                    <span class="badge badge-count ml-1">{{ $counts['general'] }}</span>
+                    Umum 
+                    
                 </a>
             </li>
         </ul>
@@ -167,19 +167,19 @@
                         <td class="text-center">
                             @if($template->category === 'on_progress')
                                 <span class="badge badge-primary px-2.5 py-1 text-uppercase font-weight-bold">
-                                    <i class="fas fa-spinner mr-1"></i> On Progress
+                                    On Progress
                                 </span>
                             @elseif($template->category === 'pending')
                                 <span class="badge badge-info px-2.5 py-1 text-uppercase font-weight-bold">
-                                    <i class="fas fa-clock mr-1"></i> Pending
+                                    Pending
                                 </span>
                             @elseif($template->category === 'closed')
                                 <span class="badge badge-secondary px-2.5 py-1 text-uppercase font-weight-bold" style="background-color: #0284c7;">
-                                    <i class="fas fa-check-circle mr-1"></i> Closed
+                                    Closed
                                 </span>
                             @else
                                 <span class="badge badge-light border text-dark px-2.5 py-1 text-uppercase font-weight-bold">
-                                    <i class="fas fa-comment-dots mr-1 text-primary"></i> Umum
+                                    Umum
                                 </span>
                             @endif
                         </td>
