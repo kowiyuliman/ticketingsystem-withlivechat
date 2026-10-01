@@ -328,18 +328,18 @@
                             </div>
                         @endif
 
-                        <div class="input-group align-items-end">
-                            <div class="input-group-prepend">
-                                <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" style="height: 38px; border-radius: 4px 0 0 4px;" title="Lampirkan Foto / Screenshot">
-                                    📷
-                                </button>
+                        <div class="d-flex align-items-end" style="gap: 10px;">
+                            <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-primary font-weight-bold shadow-2xs d-flex align-items-center justify-content-center flex-shrink-0" style="height: 40px; width: 44px; border-radius: 10px; border-color: #b8daff; background-color: #f8fbff; font-size: 16px;" title="Lampirkan Foto / Screenshot">
+                                📷
+                            </button>
+                            
+                            <div class="flex-grow-1 position-relative">
+                                <textarea id="admin-comment-input" name="comment" rows="1" class="form-control shadow-2xs" placeholder="Ketik pesan atau klik template di atas..." style="resize: none; min-height: 40px; max-height: 160px; overflow-y: hidden; line-height: 1.45; padding: 8px 14px; border-radius: 10px; border-color: #ced4da; font-size: 13px;"></textarea>
                             </div>
-                            <textarea id="admin-comment-input" name="comment" rows="1" class="form-control" placeholder="Ketik pesan atau klik template di atas..." style="resize: none; min-height: 38px; max-height: 160px; overflow-y: hidden; line-height: 1.45; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                            <div class="input-group-append">
-                                <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4" style="height: 38px; border-radius: 0 4px 4px 0;">
-                                    Kirim
-                                </button>
-                            </div>
+
+                            <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold shadow-2xs d-flex align-items-center justify-content-center px-3.5 flex-shrink-0" style="height: 40px; border-radius: 10px; font-size: 13px;">
+                                <i class="fas fa-paper-plane mr-1.5"></i> Kirim
+                            </button>
                         </div>
                         <small class="text-muted d-block mt-1" style="font-size: 10px;">
                             💡 <span class="font-weight-bold text-primary">Tips:</span> Tekan <kbd>Enter</kbd> untuk kirim, <kbd>Shift + Enter</kbd> untuk baris baru, atau <kbd>Ctrl + V</kbd> untuk menempelkan screenshot.
@@ -455,7 +455,7 @@
             commentInput.style.height = maxHeight + 'px';
             commentInput.style.overflowY = 'auto';
         } else {
-            commentInput.style.height = Math.max(scrollH, 38) + 'px';
+            commentInput.style.height = Math.max(scrollH, 40) + 'px';
             commentInput.style.overflowY = 'hidden';
         }
     }
@@ -596,7 +596,7 @@
                 const btnSubmit = document.getElementById('btn-send-admin-chat');
                 if (btnSubmit) {
                     btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = '⏳ Mengirim...';
+                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Mengirim...';
                 }
 
                 const response = await fetch(adminChatForm.action, {
@@ -630,7 +630,7 @@
                 const btnSubmit = document.getElementById('btn-send-admin-chat');
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = 'Kirim';
+                    btnSubmit.innerHTML = '<i class="fas fa-paper-plane mr-1.5"></i> Kirim';
                 }
             }
         });

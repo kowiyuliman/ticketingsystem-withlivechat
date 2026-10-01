@@ -263,13 +263,13 @@
                         <input type="hidden" name="attachment_base64" id="attachment_base64">
                         <input type="file" id="attachment_file" name="attachment" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
                         
-                        <div class="flex items-end space-x-2">
+                        <div class="flex items-end gap-2.5 sm:gap-3">
                             <!-- Image Attachment Button -->
-                            <button type="button" onclick="document.getElementById('attachment_file').click()" title="Lampirkan Foto / Screenshot" class="p-2.5 rounded-xl border border-sky-200 text-sky-700 hover:bg-sky-50 transition-all text-sm font-semibold flex items-center justify-center flex-shrink-0 h-[42px] w-[42px]">
+                            <button type="button" onclick="document.getElementById('attachment_file').click()" title="Lampirkan Foto / Screenshot" class="p-2.5 rounded-xl border border-sky-200 bg-sky-50/70 text-sky-700 hover:bg-sky-100 hover:border-sky-300 transition-all text-sm font-semibold flex items-center justify-center flex-shrink-0 h-[42px] w-[42px] shadow-2xs">
                                 📷
                             </button>
 
-                            <textarea id="comment-input" name="comment" rows="1" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all placeholder:text-slate-400 resize-none min-h-[42px] max-h-[160px] leading-relaxed" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot..."></textarea>
+                            <textarea id="comment-input" name="comment" rows="1" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all placeholder:text-slate-400 resize-none min-h-[42px] max-h-[160px] leading-relaxed shadow-2xs" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot..."></textarea>
 
                             <button type="submit" id="btn-submit-comment" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-5 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-1.5 flex-shrink-0 h-[42px]">
                                 <span>Kirim</span>
