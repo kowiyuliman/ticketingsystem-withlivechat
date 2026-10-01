@@ -20,12 +20,12 @@
 
 @section('css')
 <style>
-    /* White & Blue Theme Custom Styling */
+    /* Scope strictly to template tabs and cards to avoid touching sidebar menu */
     .template-card {
         border-top: 3px solid #007bff !important;
         border-radius: 8px;
     }
-    .nav-pills .nav-link {
+    #template-tabs.nav-pills .nav-link {
         border-radius: 6px;
         color: #495057;
         font-weight: 600;
@@ -36,22 +36,22 @@
         margin-bottom: 4px;
         transition: all 0.2s ease;
     }
-    .nav-pills .nav-link:hover {
+    #template-tabs.nav-pills .nav-link:hover {
         background-color: #f0f7ff;
         color: #007bff;
         border-color: #b8daff;
     }
-    .nav-pills .nav-link.active {
+    #template-tabs.nav-pills .nav-link.active {
         background-color: #007bff !important;
         color: #ffffff !important;
         border-color: #007bff !important;
         box-shadow: 0 2px 4px rgba(0, 123, 255, 0.25);
     }
-    .nav-pills .nav-link .badge-count {
+    #template-tabs.nav-pills .nav-link .badge-count {
         background-color: rgba(0, 0, 0, 0.08);
         color: inherit;
     }
-    .nav-pills .nav-link.active .badge-count {
+    #template-tabs.nav-pills .nav-link.active .badge-count {
         background-color: rgba(255, 255, 255, 0.25);
         color: #ffffff;
     }
