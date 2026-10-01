@@ -226,7 +226,7 @@
                             <div style="max-width: 75%;">
                                 <div class="p-3 rounded-2 shadow-2xs text-sm bg-white border text-dark" style="border-radius: 14px;">
                                     @if($comment->comment)
-                                        <div>{{ $comment->comment }}</div>
+                                        <div style="white-space: pre-wrap; word-break: break-word;">{{ $comment->comment }}</div>
                                     @endif
 
                                     @if($comment->attachment)
@@ -245,7 +245,7 @@
                             <div style="max-width: 75%;">
                                 <div class="p-3 rounded-2 shadow-2xs text-sm bg-primary text-white" style="border-radius: 14px;">
                                     @if($comment->comment)
-                                        <div>{{ $comment->comment }}</div>
+                                        <div style="white-space: pre-wrap; word-break: break-word;">{{ $comment->comment }}</div>
                                     @endif
 
                                     @if($comment->attachment)
@@ -325,27 +325,24 @@
                                         {{ $tpl->title }}
                                     </button>
                                 @endforeach
-                                <button type="button" class="btn btn-xs btn-light border font-weight-bold text-nowrap shadow-2xs flex-shrink-0" style="border-radius: 12px; font-size: 11px; padding: 3px 10px;" data-toggle="modal" data-target="#modal-all-chat-templates">
-                                    <i class="fas fa-ellipsis-h text-muted"></i> Semua
-                                </button>
                             </div>
                         @endif
 
-                        <div class="input-group">
+                        <div class="input-group align-items-end">
                             <div class="input-group-prepend">
-                                <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" title="Lampirkan Foto / Screenshot">
+                                <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" style="height: 38px; border-radius: 4px 0 0 4px;" title="Lampirkan Foto / Screenshot">
                                     📷
                                 </button>
                             </div>
-                            <input type="text" id="admin-comment-input" name="comment" autocomplete="off" class="form-control" placeholder="Ketik pesan atau klik template di atas...">
+                            <textarea id="admin-comment-input" name="comment" rows="1" class="form-control" placeholder="Ketik pesan atau klik template di atas..." style="resize: none; min-height: 38px; max-height: 160px; overflow-y: hidden; line-height: 1.45; padding-top: 8px; padding-bottom: 8px;"></textarea>
                             <div class="input-group-append">
-                                <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4">
+                                <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4" style="height: 38px; border-radius: 0 4px 4px 0;">
                                     Kirim
                                 </button>
                             </div>
                         </div>
                         <small class="text-muted d-block mt-1" style="font-size: 10px;">
-                            💡 <span class="font-weight-bold text-primary">Tips:</span> Klik tombol template di atas untuk pesan otomatis, atau tekan <kbd>Ctrl + V</kbd> untuk menempelkan screenshot.
+                            💡 <span class="font-weight-bold text-primary">Tips:</span> Tekan <kbd>Enter</kbd> untuk kirim, <kbd>Shift + Enter</kbd> untuk baris baru, atau <kbd>Ctrl + V</kbd> untuk menempelkan screenshot.
                         </small>
                     </form>
                 @endif
@@ -449,6 +446,20 @@
         knownCommentIds.add(parseInt(el.getAttribute('data-comment-id')));
     });
 
+    function autoResizeAdminInput() {
+        if (!commentInput) return;
+        commentInput.style.height = 'auto';
+        const scrollH = commentInput.scrollHeight;
+        const maxHeight = 160;
+        if (scrollH > maxHeight) {
+            commentInput.style.height = maxHeight + 'px';
+            commentInput.style.overflowY = 'auto';
+        } else {
+            commentInput.style.height = Math.max(scrollH, 38) + 'px';
+            commentInput.style.overflowY = 'hidden';
+        }
+    }
+
     // Apply Quick Chat Template with Auto-Variable Replacement
     window.applyChatTemplate = function(rawMessage) {
         if (!rawMessage) return;
@@ -471,6 +482,7 @@
 
         if (commentInput) {
             commentInput.value = parsed;
+            autoResizeAdminInput();
             commentInput.focus();
             commentInput.setSelectionRange(commentInput.value.length, commentInput.value.length);
         }
@@ -487,8 +499,20 @@
         $('#image-modal').modal('hide');
     }
 
-    // Ctrl + V Clipboard Paste
+    // Dynamic Textarea Auto-Expansion & Keyboard Listeners
     if (commentInput) {
+        commentInput.addEventListener('input', autoResizeAdminInput);
+
+        commentInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (adminChatForm) {
+                    adminChatForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
+        // Ctrl + V Clipboard Paste
         commentInput.addEventListener('paste', function (e) {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             for (let index in items) {
@@ -500,6 +524,7 @@
                     break;
                 }
             }
+            setTimeout(autoResizeAdminInput, 0);
         });
     }
 
@@ -585,7 +610,10 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    if (commentInput) commentInput.value = '';
+                    if (commentInput) {
+                        commentInput.value = '';
+                        autoResizeAdminInput();
+                    }
                     clearAttachedImage();
 
                     if (data.comment && !knownCommentIds.has(data.comment.id)) {
@@ -616,7 +644,7 @@
         div.className = `d-flex mb-3 ${c.is_user ? 'justify-content-start' : 'justify-content-end'}`;
         div.setAttribute('data-comment-id', c.id);
 
-        let textHtml = c.comment ? `<div>${escapeHtml(c.comment)}</div>` : '';
+        let textHtml = c.comment ? `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(c.comment)}</div>` : '';
         let imgHtml = c.attachment_url ? `
             <div class="${c.comment ? 'mt-2 pt-2 border-top border-white-50' : ''}">
                 <button type="button" onclick="openImageModal('${c.attachment_url}')" class="btn p-0 border-0 text-left d-block overflow-hidden" style="max-width: 220px; border-radius: 12px;">

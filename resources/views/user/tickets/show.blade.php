@@ -196,7 +196,7 @@
                             <div class="max-w-xs sm:max-w-md">
                                 <div class="p-3.5 rounded-2xl text-xs sm:text-sm shadow-2xs bg-sky-600 text-white rounded-tl-none font-medium">
                                     @if($comment->comment)
-                                        <div>{{ $comment->comment }}</div>
+                                        <div style="white-space: pre-wrap; word-break: break-word;">{{ $comment->comment }}</div>
                                     @endif
 
                                     @if($comment->attachment)
@@ -263,20 +263,20 @@
                         <input type="hidden" name="attachment_base64" id="attachment_base64">
                         <input type="file" id="attachment_file" name="attachment" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
                         
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-end space-x-2">
                             <!-- Image Attachment Button -->
-                            <button type="button" onclick="document.getElementById('attachment_file').click()" title="Lampirkan Foto / Screenshot" class="p-2.5 rounded-xl border border-sky-200 text-sky-700 hover:bg-sky-50 transition-all text-sm font-semibold flex items-center justify-center">
+                            <button type="button" onclick="document.getElementById('attachment_file').click()" title="Lampirkan Foto / Screenshot" class="p-2.5 rounded-xl border border-sky-200 text-sky-700 hover:bg-sky-50 transition-all text-sm font-semibold flex items-center justify-center flex-shrink-0 h-[42px] w-[42px]">
                                 📷
                             </button>
 
-                            <input type="text" id="comment-input" name="comment" autocomplete="off" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all placeholder:text-slate-400" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot...">
+                            <textarea id="comment-input" name="comment" rows="1" class="flex-1 bg-slate-50 border border-sky-200 rounded-xl px-4 py-2 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all placeholder:text-slate-400 resize-none min-h-[42px] max-h-[160px] leading-relaxed" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot..."></textarea>
 
-                            <button type="submit" id="btn-submit-comment" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center gap-1.5">
+                            <button type="submit" id="btn-submit-comment" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-5 rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-1.5 flex-shrink-0 h-[42px]">
                                 <span>Kirim</span>
                             </button>
                         </div>
                         <div class="text-[10px] text-slate-400 pl-1">
-                            💡 <span class="font-medium text-sky-700">Tips:</span> Anda bisa langsung tekan <kbd class="px-1 py-0.5 bg-slate-100 border rounded text-[9px] font-bold text-slate-700">Ctrl + V</kbd> di kolom ini untuk menempelkan foto screenshot Snipping Tool.
+                            💡 <span class="font-medium text-sky-700">Tips:</span> Tekan <kbd class="px-1 py-0.5 bg-slate-100 border rounded text-[9px] font-bold text-slate-700">Enter</kbd> untuk kirim, <kbd class="px-1 py-0.5 bg-slate-100 border rounded text-[9px] font-bold text-slate-700">Shift + Enter</kbd> untuk baris baru, atau <kbd class="px-1 py-0.5 bg-slate-100 border rounded text-[9px] font-bold text-slate-700">Ctrl + V</kbd> untuk screenshot.
                         </div>
                     </form>
                 </div>
@@ -355,19 +355,47 @@
             }
         });
 
-        // Listen for Clipboard Paste Event (Ctrl + V)
-        commentInput.addEventListener('paste', function (e) {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && item.type.startsWith('image/')) {
-                    const blob = item.getAsFile();
-                    compressAndPreviewImage(blob);
-                    e.preventDefault();
-                    break;
-                }
+        function autoResizeUserInput() {
+            if (!commentInput) return;
+            commentInput.style.height = 'auto';
+            const scrollH = commentInput.scrollHeight;
+            const maxHeight = 160;
+            if (scrollH > maxHeight) {
+                commentInput.style.height = maxHeight + 'px';
+                commentInput.style.overflowY = 'auto';
+            } else {
+                commentInput.style.height = Math.max(scrollH, 42) + 'px';
+                commentInput.style.overflowY = 'hidden';
             }
-        });
+        }
+
+        if (commentInput) {
+            commentInput.addEventListener('input', autoResizeUserInput);
+
+            commentInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (chatForm) {
+                        chatForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                }
+            });
+
+            // Listen for Clipboard Paste Event (Ctrl + V)
+            commentInput.addEventListener('paste', function (e) {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        const blob = item.getAsFile();
+                        compressAndPreviewImage(blob);
+                        e.preventDefault();
+                        break;
+                    }
+                }
+                setTimeout(autoResizeUserInput, 0);
+            });
+        }
 
         // Handle File Select Input
         function handleFileSelect(e) {
@@ -600,7 +628,7 @@
             div.className = `flex items-start ${c.is_user ? 'justify-end' : 'justify-start'} space-x-2`;
             div.setAttribute('data-comment-id', c.id);
 
-            let textHtml = c.comment ? `<div>${escapeHtml(c.comment)}</div>` : '';
+            let textHtml = c.comment ? `<div style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(c.comment)}</div>` : '';
             let imgHtml = c.attachment_url ? `
                  <div class="${c.comment ? 'mt-2 pt-2 border-t border-sky-100/40' : ''}">
                      <button type="button" onclick="openImageModal('${c.attachment_url}')" class="block text-left group relative max-w-[220px]">
@@ -688,6 +716,7 @@
                             fetchNewComments();
                         }
                         commentInput.value = '';
+                        autoResizeUserInput();
                         clearAttachedImage();
                     } else {
                         const errData = await response.json().catch(() => null);
