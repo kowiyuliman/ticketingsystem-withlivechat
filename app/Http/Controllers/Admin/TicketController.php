@@ -438,7 +438,7 @@ class TicketController extends Controller
 
         // hanya boleh ambil jika belum diambil orang lain
         if ($ticket->status != 'open' && $ticket->assigned_to && $ticket->assigned_to != Auth::id()) {
-            return redirect()->back()->with('error', 'Ticket sudah diambil oleh teknisi lain');
+            return redirect('/admin/ticket/show/' . $ticket->id)->with('error', 'Ticket sudah diambil oleh teknisi lain');
         }
 
         $ticket->update([
@@ -447,7 +447,23 @@ class TicketController extends Controller
             'started_at'  => $ticket->started_at ?? now()
         ]);
 
-        return redirect()->back()->with('success', 'Ticket berhasil diambil & mulai dikerjakan');
+        TicketTimeline::create([
+            'ticket_id'   => $ticket->id,
+            'status'      => 'on_progress',
+            'description' => 'Ticket diambil & mulai dikerjakan oleh ' . Auth::user()->name,
+            'user_id'     => Auth::id(),
+        ]);
+
+        TicketHistory::create([
+            'ticket_id'  => $ticket->id,
+            'status'     => 'on_progress',
+            'keterangan' => 'Admin ' . Auth::user()->name . ' mengambil tiket & status menjadi On Progress',
+            'updated_by' => Auth::id(),
+        ]);
+
+        \Illuminate\Support\Facades\Cache::flush();
+
+        return redirect('/admin/ticket/show/' . $ticket->id)->with('success', 'Tiket #' . $ticket->ticket_code . ' berhasil diambil. Anda langsung terhubung ke Live Chat!');
     }
 
     public function comment(Request $request, $id)

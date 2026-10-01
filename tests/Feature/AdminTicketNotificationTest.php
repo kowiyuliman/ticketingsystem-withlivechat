@@ -644,7 +644,34 @@ class AdminTicketNotificationTest extends TestCase
         $fetchData = $fetchResponse->json();
         $this->assertEquals(1, $fetchData['tickets']['closed'][0]['unread_comments_count']);
     }
+
+    public function test_admin_take_ticket_redirects_directly_to_ticket_show_live_chat()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $openTicket = Ticket::create([
+            'ticket_code'  => 'HD-OPEN-TAKE-TEST',
+            'user_id'      => $user->id,
+            'nama'         => 'Open Take Tester',
+            'nomor_laptop' => 'LAP-0333',
+            'kategori'     => 'software',
+            'deskripsi'    => 'Open ticket to be taken',
+            'status'       => 'open',
+            'created_by'   => $user->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/ticket/take/' . $openTicket->id);
+
+        $response->assertRedirect('/admin/ticket/show/' . $openTicket->id);
+        $response->assertSessionHas('success');
+
+        $openTicket->refresh();
+        $this->assertEquals('on_progress', $openTicket->status);
+        $this->assertEquals($admin->id, $openTicket->assigned_to);
+    }
 }
+
 
 
 
