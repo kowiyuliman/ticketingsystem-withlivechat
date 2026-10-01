@@ -196,10 +196,9 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group">
-                                <button type="button" class="btn btn-outline-primary btn-xs font-weight-bold mr-1 shadow-2xs" 
-                                        onclick="openEditModal({{ json_encode($template) }})" title="Edit Template">
+                                <a href="{{ route('admin.chat-templates.edit', $template->id) }}" class="btn btn-outline-primary btn-xs font-weight-bold mr-1 shadow-2xs" title="Edit Template">
                                     <i class="fas fa-edit mr-1"></i> Edit
-                                </button>
+                                </a>
                                 <form action="{{ route('admin.chat-templates.destroy', $template->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template \'{{ $template->title }}\'?');">
                                     @csrf
                                     @method('DELETE')
@@ -314,90 +313,6 @@
     </div>
 </div>
 
-<!-- Modal Edit Template (Clean White & Blue) -->
-<div class="modal fade" id="modal-edit-template" tabindex="-1" role="dialog" aria-labelledby="modalEditTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow">
-            <form id="form-edit-template" method="POST">
-                @csrf
-                @method('PUT')
-                <div class="modal-header bg-primary text-white py-3">
-                    <h5 class="modal-title font-weight-bold" id="modalEditTitle">
-                        <i class="fas fa-edit mr-2"></i>Edit Template Chat
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body p-4 bg-white">
-                    <div class="row">
-                        <div class="col-md-7 form-group">
-                            <label class="font-weight-bold text-dark">Judul Template <span class="text-danger">*</span></label>
-                            <input type="text" name="title" id="edit-title" class="form-control border-light shadow-2xs" required maxlength="100">
-                        </div>
-                        <div class="col-md-5 form-group">
-                            <label class="font-weight-bold text-dark">Kategori Status <span class="text-danger">*</span></label>
-                            <select name="category" id="edit-category" class="form-control font-weight-bold border-light shadow-2xs" required>
-                                <option value="on_progress">🔵 On Progress</option>
-                                <option value="pending">🟡 Pending</option>
-                                <option value="closed">🟢 Closed</option>
-                                <option value="general">⚪ Umum / General</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="font-weight-bold text-dark d-flex justify-content-between align-items-center">
-                            <span>Isi Pesan Template <span class="text-danger">*</span></span>
-                            <small class="text-muted font-weight-normal">Klik tombol di bawah untuk menyisipkan variabel:</small>
-                        </label>
-                        
-                        <!-- Variable Helper Chips -->
-                        <div class="mb-2 d-flex flex-wrap" style="gap: 6px;">
-                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{user_name}')">
-                                + {user_name}
-                            </button>
-                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{nomor_laptop}')">
-                                + {nomor_laptop}
-                            </button>
-                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{ticket_code}')">
-                                + {ticket_code}
-                            </button>
-                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{admin_name}')">
-                                + {admin_name}
-                            </button>
-                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{kategori}')">
-                                + {kategori}
-                            </button>
-                        </div>
-
-                        <textarea name="message" id="edit-message-input" rows="4" class="form-control border-light shadow-2xs" required></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 form-group mb-0">
-                            <label class="font-weight-bold text-dark">Urutan Tampilan</label>
-                            <input type="number" name="order_index" id="edit-order-index" class="form-control border-light shadow-2xs" min="0">
-                        </div>
-                        <div class="col-md-6 form-group mb-0 d-flex align-items-center pt-3">
-                            <div class="custom-control custom-switch">
-                                <input type="checkbox" name="is_active" class="custom-control-input" id="edit-is-active" value="1">
-                                <label class="custom-control-label font-weight-bold text-dark" for="edit-is-active">Status Aktif</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light py-2.5">
-                    <button type="button" class="btn btn-outline-secondary font-weight-bold" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
-                        <i class="fas fa-save mr-1"></i> Perbarui Template
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @stop
 
 @section('js')
@@ -413,19 +328,6 @@
         textarea.value = text.substring(0, start) + variableTag + text.substring(end);
         textarea.focus();
         textarea.selectionStart = textarea.selectionEnd = start + variableTag.length;
-    }
-
-    function openEditModal(template) {
-        const form = document.getElementById('form-edit-template');
-        form.action = `/admin/chat-templates/${template.id}`;
-        
-        document.getElementById('edit-title').value = template.title || '';
-        document.getElementById('edit-category').value = template.category || 'general';
-        document.getElementById('edit-message-input').value = template.message || '';
-        document.getElementById('edit-order-index').value = template.order_index ?? 0;
-        document.getElementById('edit-is-active').checked = !!template.is_active;
-
-        $('#modal-edit-template').modal('show');
     }
 </script>
 @stop

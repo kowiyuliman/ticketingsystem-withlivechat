@@ -84,6 +84,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
         // Route Management Template Chat
         Route::get('/chat-templates', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'index'])->name('admin.chat-templates.index');
         Route::post('/chat-templates', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'store'])->name('admin.chat-templates.store');
+        Route::get('/chat-templates/{id}/edit', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'edit'])->name('admin.chat-templates.edit');
         Route::put('/chat-templates/{id}', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'update'])->name('admin.chat-templates.update');
         Route::delete('/chat-templates/{id}', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'destroy'])->name('admin.chat-templates.destroy');
         Route::post('/chat-templates/{id}/toggle', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'toggleStatus'])->name('admin.chat-templates.toggle');

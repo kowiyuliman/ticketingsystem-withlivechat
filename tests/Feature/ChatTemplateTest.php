@@ -96,6 +96,27 @@ class ChatTemplateTest extends TestCase
         $this->assertEquals(5, $template->order_index);
     }
 
+    public function test_admin_can_view_edit_chat_template_page()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $template = ChatTemplate::create([
+            'title'       => 'Edit Page Test Template',
+            'category'    => 'pending',
+            'message'     => 'Message for edit page test',
+            'order_index' => 1,
+            'is_active'   => true,
+            'created_by'  => $admin->id,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.chat-templates.edit', $template->id));
+
+        $response->assertStatus(200);
+        $response->assertSee('Edit Template Chat');
+        $response->assertSee('Edit Page Test Template');
+        $response->assertSee('Message for edit page test');
+    }
+
     public function test_admin_can_delete_chat_template()
     {
         $admin = User::factory()->create(['role' => 'admin']);

@@ -74,6 +74,15 @@ class ChatTemplateController extends Controller
     }
 
     /**
+     * Show the form for editing the specified chat template
+     */
+    public function edit($id)
+    {
+        $template = ChatTemplate::findOrFail($id);
+        return view('admin.chat_templates.edit', compact('template'));
+    }
+
+    /**
      * Update existing chat template
      */
     public function update(Request $request, $id)
