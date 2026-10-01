@@ -310,13 +310,34 @@
                         <input type="hidden" name="attachment_base64" id="attachment_base64">
                         <input type="file" id="attachment_file" name="attachment" accept="image/*" class="d-none" onchange="handleFileSelect(event)">
 
+                        <!-- Quick Template Pills Bar -->
+                        @if(isset($chatTemplates) && $chatTemplates->count() > 0)
+                            <div class="mb-2 d-flex align-items-center flex-nowrap overflow-auto py-1" style="gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin;">
+                                <span class="badge badge-light border text-secondary font-weight-bold flex-shrink-0" style="font-size: 11px; padding: 5px 8px;">
+                                    ⚡ Template:
+                                </span>
+                                @foreach($chatTemplates as $tpl)
+                                    <button type="button" 
+                                            class="btn btn-xs {{ $tpl->category === $ticket->status ? 'btn-primary' : 'btn-outline-secondary' }} font-weight-bold text-nowrap shadow-2xs flex-shrink-0"
+                                            style="border-radius: 12px; font-size: 11px; padding: 3px 10px;"
+                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }})"
+                                            title="{{ $tpl->message }}">
+                                        {{ $tpl->title }}
+                                    </button>
+                                @endforeach
+                                <button type="button" class="btn btn-xs btn-light border font-weight-bold text-nowrap shadow-2xs flex-shrink-0" style="border-radius: 12px; font-size: 11px; padding: 3px 10px;" data-toggle="modal" data-target="#modal-all-chat-templates">
+                                    <i class="fas fa-ellipsis-h text-muted"></i> Semua
+                                </button>
+                            </div>
+                        @endif
+
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <button type="button" onclick="document.getElementById('attachment_file').click()" class="btn btn-outline-secondary font-weight-bold" title="Lampirkan Foto / Screenshot">
                                     📷
                                 </button>
                             </div>
-                            <input type="text" id="admin-comment-input" name="comment" autocomplete="off" class="form-control" placeholder="Ketik pesan atau paste (Ctrl+V) screenshot...">
+                            <input type="text" id="admin-comment-input" name="comment" autocomplete="off" class="form-control" placeholder="Ketik pesan atau klik template di atas...">
                             <div class="input-group-append">
                                 <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold px-4">
                                     Kirim
@@ -324,7 +345,7 @@
                             </div>
                         </div>
                         <small class="text-muted d-block mt-1" style="font-size: 10px;">
-                            💡 <span class="font-weight-bold text-primary">Tips:</span> Anda bisa menekan <kbd>Ctrl + V</kbd> untuk menempelkan gambar screenshot langsung ke kolom chat ini.
+                            💡 <span class="font-weight-bold text-primary">Tips:</span> Klik tombol template di atas untuk pesan otomatis, atau tekan <kbd>Ctrl + V</kbd> untuk menempelkan screenshot.
                         </small>
                     </form>
                 @endif
@@ -359,6 +380,56 @@
     </div>
 </div>
 
+<!-- Modal Semua Template Chat -->
+<div id="modal-all-chat-templates" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-2.5">
+                <h5 class="modal-title text-sm font-weight-bold">
+                    <i class="fas fa-comments mr-2"></i>Daftar Semua Template Chat
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-3">
+                @if(isset($chatTemplates) && $chatTemplates->count() > 0)
+                    <div class="list-group list-group-flush">
+                        @foreach($chatTemplates as $tpl)
+                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-2.5 rounded mb-2 border">
+                                <div style="max-width: 80%;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <b class="text-dark">{{ $tpl->title }}</b>
+                                        <span class="badge {{ $tpl->category_badge_class }} text-xs ml-2 font-weight-bold">{{ $tpl->category_label }}</span>
+                                    </div>
+                                    <p class="text-muted text-xs mb-0" style="white-space: pre-wrap;">{{ $tpl->message }}</p>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-primary btn-xs font-weight-bold shadow-2xs" 
+                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }}); $('#modal-all-chat-templates').modal('hide');">
+                                        <i class="fas fa-check mr-1"></i> Gunakan
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-comment-slash fa-2x mb-2 d-block"></i>
+                        Belum ada template aktif.
+                    </div>
+                @endif
+            </div>
+            <div class="modal-footer bg-light py-2 d-flex justify-content-between">
+                <a href="{{ route('admin.chat-templates.index') }}" target="_blank" class="btn btn-xs btn-outline-secondary font-weight-bold">
+                    <i class="fas fa-cog mr-1"></i> Kelola Template Chat
+                </a>
+                <button type="button" class="btn btn-xs btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @stop
 
 @section('js')
@@ -377,6 +448,33 @@
     document.querySelectorAll('[data-comment-id]').forEach(el => {
         knownCommentIds.add(parseInt(el.getAttribute('data-comment-id')));
     });
+
+    // Apply Quick Chat Template with Auto-Variable Replacement
+    window.applyChatTemplate = function(rawMessage) {
+        if (!rawMessage) return;
+
+        const ticketData = {
+            user_name: @json($ticket->nama ?: 'Pengguna'),
+            nomor_laptop: @json($ticket->nomor_laptop ?: '-'),
+            ticket_code: @json($ticket->ticket_code ?: '-'),
+            admin_name: @json(auth()->user()->name ?? 'Admin IT'),
+            kategori: @json(ucfirst($ticket->kategori ?? 'General'))
+        };
+
+        let parsed = rawMessage
+            .replace(/\{user_name\}/g, ticketData.user_name)
+            .replace(/\{nomor_laptop\}/g, ticketData.nomor_laptop)
+            .replace(/\{laptop_sn\}/g, ticketData.nomor_laptop)
+            .replace(/\{ticket_code\}/g, ticketData.ticket_code)
+            .replace(/\{admin_name\}/g, ticketData.admin_name)
+            .replace(/\{kategori\}/g, ticketData.kategori);
+
+        if (commentInput) {
+            commentInput.value = parsed;
+            commentInput.focus();
+            commentInput.setSelectionRange(commentInput.value.length, commentInput.value.length);
+        }
+    };
 
     // Lightbox Modal
     function openImageModal(imgUrl) {

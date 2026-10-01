@@ -80,6 +80,13 @@ Route::prefix('admin')->middleware(['auth'])->group(function(){
         Route::get('/admins/edit/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'edit'])->name('admin.admins.edit');
         Route::post('/admins/update/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'update'])->name('admin.admins.update');
         Route::delete('/admins/delete/{id}', [\App\Http\Controllers\Admin\AdminManagementController::class, 'destroy'])->name('admin.admins.delete');
+
+        // Route Management Template Chat
+        Route::get('/chat-templates', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'index'])->name('admin.chat-templates.index');
+        Route::post('/chat-templates', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'store'])->name('admin.chat-templates.store');
+        Route::put('/chat-templates/{id}', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'update'])->name('admin.chat-templates.update');
+        Route::delete('/chat-templates/{id}', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'destroy'])->name('admin.chat-templates.destroy');
+        Route::post('/chat-templates/{id}/toggle', [\App\Http\Controllers\Admin\ChatTemplateController::class, 'toggleStatus'])->name('admin.chat-templates.toggle');
     });
 
     //route import bulk user

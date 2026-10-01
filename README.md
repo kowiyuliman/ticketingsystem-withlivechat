@@ -19,7 +19,7 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
 [![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![AdminLTE](https://img.shields.io/badge/AdminLTE-3.x-3c8dbc?style=for-the-badge&logo=adminlte&logoColor=white)](https://adminlte.io)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-4.6%20%7C%205-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
-[![Tests](https://img.shields.io/badge/Tests-70%20Passed-brightgreen?style=for-the-badge&logo=php)](https://phpunit.de)
+[![Tests](https://img.shields.io/badge/Tests-79%20Passed-brightgreen?style=for-the-badge&logo=php)](https://phpunit.de)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 > **Sistem Manajemen Tiket Kendala IT dan Komunikasi Real-Time Dua Arah (Live Chat)** yang dirancang untuk mempercepat respon penanganan masalah teknis dan menyajikan analitik performa IT secara instan.
@@ -65,9 +65,15 @@ Jika aplikasi ini bermanfaat dan Anda ingin mendukung pengembangannya, Anda dapa
   - Distribusi kategori kendala (*Hardware, Software, Network, Other*).
   - Statistik beban kerja teknisi dan riwayat tiket per perangkat laptop.
 
-### 3. Manajemen Pengguna & Hak Akses (Multi-Role)
+### 3. ⚡ Template Chat Cepat (Quick Replies & Auto-Variables)
+- **Tombol Sekali Klik di Live Chat**: Admin dapat memilih template balasan cepat langsung di atas input chat tanpa mengetik ulang.
+- **Auto-Replacement Variabel Dinamis**: Otomatis mengganti placeholder `{user_name}`, `{nomor_laptop}`, `{ticket_code}`, `{admin_name}`, dan `{kategori}` dengan data riil tiket.
+- **Kategori Template**: Terbagi rapi berdasarkan status tiket (*On Progress*, *Pending*, *Closed*, *Umum*).
+- **Menu Manajemen Template**: Menu CRUD lengkap di panel admin (`/admin/chat-templates`) untuk menambah, mengedit, mengurutkan, dan mengaktifkan/menonaktifkan template dengan chip penyisip variabel instan.
+
+### 4. Manajemen Pengguna & Hak Akses (Multi-Role)
 - **Role Khusus Management (Bos)**: Mode monitoring dashboard eksekutif secara *read-only* tanpa opsi mengubah tiket/data aset.
-- **Role Admin / IT Support**: Akses penuh penanganan tiket, manajemen inventaris, dan konfigurasi sistem.
+- **Role Admin / IT Support**: Akses penuh penanganan tiket, manajemen inventaris, template chat, dan konfigurasi sistem.
 - **Role User / Karyawan**: Pembuatan tiket kendala operasional, tracking status mandiri, dan komunikasi live chat.
 - **Menu Kelola Admin**: Manajemen akun administrator secara mandiri dengan perlindungan anti-hapus akun sendiri (*self-delete protection*).
 

@@ -361,6 +361,13 @@ return [
         ],
 
         [
+            'text' => 'Template Chat',
+            'url'  => 'admin/chat-templates',
+            'icon' => 'fas fa-comments',
+            'can'  => 'admin',
+        ],
+
+        [
             'text' => 'Portal Pengaduan',
             'url'  => 'portal',
             'icon' => 'fas fa-ticket-alt',

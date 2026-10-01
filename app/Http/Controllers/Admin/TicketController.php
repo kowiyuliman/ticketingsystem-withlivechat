@@ -287,7 +287,9 @@ class TicketController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        return view('admin.tickets.show', compact('ticket'));
+        $chatTemplates = \App\Models\ChatTemplate::getActiveTemplates();
+
+        return view('admin.tickets.show', compact('ticket', 'chatTemplates'));
     }
 
     public function edit($id){
