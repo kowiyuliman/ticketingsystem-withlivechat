@@ -71,3 +71,4 @@ class ChatTemplate extends Model
         };
     }
 }
+

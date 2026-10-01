@@ -18,14 +18,74 @@
 </div>
 @stop
 
+@section('css')
+<style>
+    /* White & Blue Theme Custom Styling */
+    .template-card {
+        border-top: 3px solid #007bff !important;
+        border-radius: 8px;
+    }
+    .nav-pills .nav-link {
+        border-radius: 6px;
+        color: #495057;
+        font-weight: 600;
+        padding: 8px 16px;
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        margin-right: 6px;
+        margin-bottom: 4px;
+        transition: all 0.2s ease;
+    }
+    .nav-pills .nav-link:hover {
+        background-color: #f0f7ff;
+        color: #007bff;
+        border-color: #b8daff;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #007bff !important;
+        color: #ffffff !important;
+        border-color: #007bff !important;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.25);
+    }
+    .nav-pills .nav-link .badge-count {
+        background-color: rgba(0, 0, 0, 0.08);
+        color: inherit;
+    }
+    .nav-pills .nav-link.active .badge-count {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+    }
+    .var-chip {
+        border: 1px solid #b8daff;
+        background-color: #f0f7ff;
+        color: #0056b3;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 3px 10px;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+    .var-chip:hover {
+        background-color: #007bff;
+        color: #ffffff;
+        border-color: #007bff;
+        transform: translateY(-1px);
+    }
+    .table-template tbody tr:hover {
+        background-color: #f8fbff !important;
+    }
+</style>
+@stop
+
 @section('content')
 
 @include('partials.floating_toast')
 
 @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show font-weight-semibold shadow-xs" role="alert">
-        <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <div class="alert alert-primary alert-dismissible fade show font-weight-semibold shadow-xs bg-white text-primary border-primary" role="alert" style="border-left: 4px solid #007bff !important;">
+        <i class="fas fa-check-circle mr-2 text-primary"></i>{{ session('success') }}
+        <button type="button" class="close text-primary" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
@@ -45,91 +105,105 @@
     </div>
 @endif
 
-<div class="card card-primary card-outline card-outline-tabs shadow-sm">
-    <div class="card-header p-0 border-bottom-0">
-        <ul class="nav nav-tabs font-weight-bold" id="template-tabs" role="tablist">
+<div class="card template-card shadow-sm bg-white">
+    <div class="card-header bg-light p-2.5 border-bottom">
+        <ul class="nav nav-pills" id="template-tabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'all' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'all']) }}">
-                    <i class="fas fa-layer-group mr-1"></i> Semua Template 
-                    <span class="badge badge-secondary ml-1">{{ $counts['all'] }}</span>
+                    <i class="fas fa-layer-group mr-1.5"></i> Semua Template 
+                    <span class="badge badge-count ml-1">{{ $counts['all'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'on_progress' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'on_progress']) }}">
-                    <i class="fas fa-spinner mr-1 text-primary"></i> On Progress 
-                    <span class="badge badge-primary ml-1">{{ $counts['on_progress'] }}</span>
+                    <i class="fas fa-spinner mr-1.5"></i> On Progress 
+                    <span class="badge badge-count ml-1">{{ $counts['on_progress'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'pending' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'pending']) }}">
-                    <i class="fas fa-clock mr-1 text-warning"></i> Pending 
-                    <span class="badge badge-warning ml-1">{{ $counts['pending'] }}</span>
+                    <i class="fas fa-clock mr-1.5"></i> Pending 
+                    <span class="badge badge-count ml-1">{{ $counts['pending'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'closed' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'closed']) }}">
-                    <i class="fas fa-check-circle mr-1 text-success"></i> Closed 
-                    <span class="badge badge-success ml-1">{{ $counts['closed'] }}</span>
+                    <i class="fas fa-check-circle mr-1.5"></i> Closed 
+                    <span class="badge badge-count ml-1">{{ $counts['closed'] }}</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'general' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'general']) }}">
-                    <i class="fas fa-comment-alt mr-1 text-secondary"></i> Umum 
-                    <span class="badge badge-light border ml-1">{{ $counts['general'] }}</span>
+                    <i class="fas fa-comment-alt mr-1.5"></i> Umum 
+                    <span class="badge badge-count ml-1">{{ $counts['general'] }}</span>
                 </a>
             </li>
         </ul>
     </div>
     
-    <div class="card-body p-3">
+    <div class="card-body p-3 bg-white">
         <div class="table-responsive">
-            <table class="table table-hover table-striped align-middle mb-0" id="table-chat-templates">
-                <thead class="bg-light">
+            <table class="table table-hover table-template align-middle mb-0" id="table-chat-templates">
+                <thead class="bg-light text-dark">
                     <tr>
                         <th class="text-center" style="width: 50px;">No</th>
                         <th style="width: 220px;">Judul Template</th>
                         <th class="text-center" style="width: 140px;">Kategori</th>
                         <th>Isi Pesan</th>
-                        <th class="text-center" style="width: 100px;">Status</th>
+                        <th class="text-center" style="width: 110px;">Status</th>
                         <th class="text-center" style="width: 150px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($templates as $template)
                     <tr>
-                        <td class="text-center font-weight-bold">{{ $loop->iteration }}</td>
+                        <td class="text-center font-weight-bold text-muted">{{ $loop->iteration }}</td>
                         <td>
                             <b class="text-dark">{{ $template->title }}</b>
                             @if($template->order_index > 0)
-                                <span class="badge badge-light border ml-1 text-muted" title="Urutan prioritas">#{{ $template->order_index }}</span>
+                                <span class="badge badge-light border ml-1 text-primary" title="Urutan prioritas">#{{ $template->order_index }}</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge {{ $template->category_badge_class }} px-2.5 py-1 text-uppercase font-weight-bold">
-                                {{ $template->category_label }}
-                            </span>
+                            @if($template->category === 'on_progress')
+                                <span class="badge badge-primary px-2.5 py-1 text-uppercase font-weight-bold">
+                                    <i class="fas fa-spinner mr-1"></i> On Progress
+                                </span>
+                            @elseif($template->category === 'pending')
+                                <span class="badge badge-info px-2.5 py-1 text-uppercase font-weight-bold">
+                                    <i class="fas fa-clock mr-1"></i> Pending
+                                </span>
+                            @elseif($template->category === 'closed')
+                                <span class="badge badge-secondary px-2.5 py-1 text-uppercase font-weight-bold" style="background-color: #0284c7;">
+                                    <i class="fas fa-check-circle mr-1"></i> Closed
+                                </span>
+                            @else
+                                <span class="badge badge-light border text-dark px-2.5 py-1 text-uppercase font-weight-bold">
+                                    <i class="fas fa-comment-dots mr-1 text-primary"></i> Umum
+                                </span>
+                            @endif
                         </td>
                         <td>
-                            <div class="text-sm p-2 rounded bg-white border" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap;">{{ $template->message }}</div>
+                            <div class="text-sm p-2.5 rounded bg-light border text-dark" style="max-height: 80px; overflow-y: auto; white-space: pre-wrap; font-family: inherit;">{{ $template->message }}</div>
                         </td>
                         <td class="text-center">
                             <form action="{{ route('admin.chat-templates.toggle', $template->id) }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-xs font-weight-bold {{ $template->is_active ? 'btn-success' : 'btn-secondary' }}" title="Klik untuk mengubah status aktif">
+                                <button type="submit" class="btn btn-xs font-weight-bold {{ $template->is_active ? 'btn-primary' : 'btn-outline-secondary' }}" title="Klik untuk mengubah status aktif">
                                     {{ $template->is_active ? '✓ Aktif' : 'Non-Aktif' }}
                                 </button>
                             </form>
                         </td>
                         <td class="text-center">
                             <div class="btn-group">
-                                <button type="button" class="btn btn-warning btn-xs font-weight-bold mr-1 shadow-2xs" 
+                                <button type="button" class="btn btn-outline-primary btn-xs font-weight-bold mr-1 shadow-2xs" 
                                         onclick="openEditModal({{ json_encode($template) }})" title="Edit Template">
                                     <i class="fas fa-edit mr-1"></i> Edit
                                 </button>
                                 <form action="{{ route('admin.chat-templates.destroy', $template->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template \'{{ $template->title }}\'?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Template">
+                                    <button type="submit" class="btn btn-outline-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Template">
                                         <i class="fas fa-trash-alt mr-1"></i> Hapus
                                     </button>
                                 </form>
@@ -139,7 +213,7 @@
                     @empty
                     <tr>
                         <td colspan="6" class="text-center text-muted py-5">
-                            <i class="fas fa-comment-slash fa-3x mb-3 text-muted d-block"></i>
+                            <i class="fas fa-comments fa-3x mb-3 text-primary d-block" style="opacity: 0.3;"></i>
                             <b>Belum ada template chat pada kategori ini.</b>
                             <div class="mt-2">
                                 <button type="button" class="btn btn-primary btn-sm font-weight-bold" data-toggle="modal" data-target="#modal-add-template">
@@ -155,13 +229,13 @@
     </div>
 </div>
 
-<!-- Modal Tambah Template -->
+<!-- Modal Tambah Template (Clean White & Blue) -->
 <div class="modal fade" id="modal-add-template" tabindex="-1" role="dialog" aria-labelledby="modalAddTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content border-0 shadow">
             <form action="{{ route('admin.chat-templates.store') }}" method="POST">
                 @csrf
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-primary text-white py-3">
                     <h5 class="modal-title font-weight-bold" id="modalAddTitle">
                         <i class="fas fa-plus-circle mr-2"></i>Tambah Template Chat Baru
                     </h5>
@@ -169,16 +243,16 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 bg-white">
                     <div class="row">
                         <div class="col-md-7 form-group">
                             <label class="font-weight-bold text-dark">Judul Template <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" placeholder="Contoh: Konfirmasi Remote Pengerjaan" required maxlength="100">
+                            <input type="text" name="title" class="form-control border-light shadow-2xs" placeholder="Contoh: Konfirmasi Remote Pengerjaan" required maxlength="100">
                             <small class="text-muted">Nama singkat untuk label tombol quick reply di live chat.</small>
                         </div>
                         <div class="col-md-5 form-group">
                             <label class="font-weight-bold text-dark">Kategori Status <span class="text-danger">*</span></label>
-                            <select name="category" class="form-control font-weight-bold" required>
+                            <select name="category" class="form-control font-weight-bold border-light shadow-2xs" required>
                                 <option value="on_progress" {{ $activeTab === 'on_progress' ? 'selected' : '' }}>🔵 On Progress</option>
                                 <option value="pending" {{ $activeTab === 'pending' ? 'selected' : '' }}>🟡 Pending</option>
                                 <option value="closed" {{ $activeTab === 'closed' ? 'selected' : '' }}>🟢 Closed</option>
@@ -190,35 +264,35 @@
                     <div class="form-group">
                         <label class="font-weight-bold text-dark d-flex justify-content-between align-items-center">
                             <span>Isi Pesan Template <span class="text-danger">*</span></span>
-                            <small class="text-muted font-weight-normal">Klik variabel di bawah untuk menyisipkan otomatis:</small>
+                            <small class="text-muted font-weight-normal">Klik tombol di bawah untuk menyisipkan variabel:</small>
                         </label>
                         
                         <!-- Variable Helper Chips -->
-                        <div class="mb-2 d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold mr-1 mb-1" onclick="insertVariable('add-message-input', '{user_name}')">
-                                + {user_name} <small class="text-muted font-weight-normal">(Nama User)</small>
+                        <div class="mb-2 d-flex flex-wrap" style="gap: 6px;">
+                            <button type="button" class="var-chip" onclick="insertVariable('add-message-input', '{user_name}')">
+                                + {user_name} <span class="text-muted font-weight-normal">(Nama User)</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-info font-weight-bold mr-1 mb-1" onclick="insertVariable('add-message-input', '{nomor_laptop}')">
-                                + {nomor_laptop} <small class="text-muted font-weight-normal">(No. Laptop)</small>
+                            <button type="button" class="var-chip" onclick="insertVariable('add-message-input', '{nomor_laptop}')">
+                                + {nomor_laptop} <span class="text-muted font-weight-normal">(No. Laptop)</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-success font-weight-bold mr-1 mb-1" onclick="insertVariable('add-message-input', '{ticket_code}')">
-                                + {ticket_code} <small class="text-muted font-weight-normal">(Kode Tiket)</small>
+                            <button type="button" class="var-chip" onclick="insertVariable('add-message-input', '{ticket_code}')">
+                                + {ticket_code} <span class="text-muted font-weight-normal">(Kode Tiket)</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-warning text-dark font-weight-bold mr-1 mb-1" onclick="insertVariable('add-message-input', '{admin_name}')">
-                                + {admin_name} <small class="text-muted font-weight-normal">(Nama Admin)</small>
+                            <button type="button" class="var-chip" onclick="insertVariable('add-message-input', '{admin_name}')">
+                                + {admin_name} <span class="text-muted font-weight-normal">(Nama Admin)</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary font-weight-bold mb-1" onclick="insertVariable('add-message-input', '{kategori}')">
-                                + {kategori} <small class="text-muted font-weight-normal">(Kategori)</small>
+                            <button type="button" class="var-chip" onclick="insertVariable('add-message-input', '{kategori}')">
+                                + {kategori} <span class="text-muted font-weight-normal">(Kategori)</span>
                             </button>
                         </div>
 
-                        <textarea name="message" id="add-message-input" rows="4" class="form-control" placeholder="Tuliskan isi pesan balasan..." required></textarea>
+                        <textarea name="message" id="add-message-input" rows="4" class="form-control border-light shadow-2xs" placeholder="Tuliskan isi pesan balasan..." required></textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 form-group mb-0">
                             <label class="font-weight-bold text-dark">Urutan Tampilan</label>
-                            <input type="number" name="order_index" class="form-control" value="0" min="0">
+                            <input type="number" name="order_index" class="form-control border-light shadow-2xs" value="0" min="0">
                             <small class="text-muted">Nomor lebih kecil akan tampil lebih awal di tombol live chat.</small>
                         </div>
                         <div class="col-md-6 form-group mb-0 d-flex align-items-center pt-3">
@@ -229,8 +303,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal">Batal</button>
+                <div class="modal-footer bg-light py-2.5">
+                    <button type="button" class="btn btn-outline-secondary font-weight-bold" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
                         <i class="fas fa-save mr-1"></i> Simpan Template
                     </button>
@@ -240,30 +314,30 @@
     </div>
 </div>
 
-<!-- Modal Edit Template -->
+<!-- Modal Edit Template (Clean White & Blue) -->
 <div class="modal fade" id="modal-edit-template" tabindex="-1" role="dialog" aria-labelledby="modalEditTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content border-0 shadow">
             <form id="form-edit-template" method="POST">
                 @csrf
                 @method('PUT')
-                <div class="modal-header bg-warning text-dark">
+                <div class="modal-header bg-primary text-white py-3">
                     <h5 class="modal-title font-weight-bold" id="modalEditTitle">
                         <i class="fas fa-edit mr-2"></i>Edit Template Chat
                     </h5>
-                    <button type="button" class="close text-dark" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 bg-white">
                     <div class="row">
                         <div class="col-md-7 form-group">
                             <label class="font-weight-bold text-dark">Judul Template <span class="text-danger">*</span></label>
-                            <input type="text" name="title" id="edit-title" class="form-control" required maxlength="100">
+                            <input type="text" name="title" id="edit-title" class="form-control border-light shadow-2xs" required maxlength="100">
                         </div>
                         <div class="col-md-5 form-group">
                             <label class="font-weight-bold text-dark">Kategori Status <span class="text-danger">*</span></label>
-                            <select name="category" id="edit-category" class="form-control font-weight-bold" required>
+                            <select name="category" id="edit-category" class="form-control font-weight-bold border-light shadow-2xs" required>
                                 <option value="on_progress">🔵 On Progress</option>
                                 <option value="pending">🟡 Pending</option>
                                 <option value="closed">🟢 Closed</option>
@@ -275,35 +349,35 @@
                     <div class="form-group">
                         <label class="font-weight-bold text-dark d-flex justify-content-between align-items-center">
                             <span>Isi Pesan Template <span class="text-danger">*</span></span>
-                            <small class="text-muted font-weight-normal">Klik variabel di bawah untuk menyisipkan otomatis:</small>
+                            <small class="text-muted font-weight-normal">Klik tombol di bawah untuk menyisipkan variabel:</small>
                         </label>
                         
                         <!-- Variable Helper Chips -->
-                        <div class="mb-2 d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold mr-1 mb-1" onclick="insertVariable('edit-message-input', '{user_name}')">
+                        <div class="mb-2 d-flex flex-wrap" style="gap: 6px;">
+                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{user_name}')">
                                 + {user_name}
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-info font-weight-bold mr-1 mb-1" onclick="insertVariable('edit-message-input', '{nomor_laptop}')">
+                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{nomor_laptop}')">
                                 + {nomor_laptop}
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-success font-weight-bold mr-1 mb-1" onclick="insertVariable('edit-message-input', '{ticket_code}')">
+                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{ticket_code}')">
                                 + {ticket_code}
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-warning text-dark font-weight-bold mr-1 mb-1" onclick="insertVariable('edit-message-input', '{admin_name}')">
+                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{admin_name}')">
                                 + {admin_name}
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary font-weight-bold mb-1" onclick="insertVariable('edit-message-input', '{kategori}')">
+                            <button type="button" class="var-chip" onclick="insertVariable('edit-message-input', '{kategori}')">
                                 + {kategori}
                             </button>
                         </div>
 
-                        <textarea name="message" id="edit-message-input" rows="4" class="form-control" required></textarea>
+                        <textarea name="message" id="edit-message-input" rows="4" class="form-control border-light shadow-2xs" required></textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 form-group mb-0">
                             <label class="font-weight-bold text-dark">Urutan Tampilan</label>
-                            <input type="number" name="order_index" id="edit-order-index" class="form-control" min="0">
+                            <input type="number" name="order_index" id="edit-order-index" class="form-control border-light shadow-2xs" min="0">
                         </div>
                         <div class="col-md-6 form-group mb-0 d-flex align-items-center pt-3">
                             <div class="custom-control custom-switch">
@@ -313,9 +387,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning font-weight-bold shadow-sm">
+                <div class="modal-footer bg-light py-2.5">
+                    <button type="button" class="btn btn-outline-secondary font-weight-bold" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
                         <i class="fas fa-save mr-1"></i> Perbarui Template
                     </button>
                 </div>

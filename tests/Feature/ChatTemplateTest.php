@@ -185,3 +185,4 @@ class ChatTemplateTest extends TestCase
         $this->assertFalse(Cache::has('chat_templates_active'));
     }
 }
+

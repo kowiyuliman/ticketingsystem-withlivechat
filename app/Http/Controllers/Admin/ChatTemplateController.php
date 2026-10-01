@@ -136,3 +136,4 @@ class ChatTemplateController extends Controller
         return redirect()->back()->with('success', 'Status template "' . $template->title . '" berhasil diubah.');
     }
 }
+
