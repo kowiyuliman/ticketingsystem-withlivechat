@@ -522,28 +522,31 @@
     function getRankedTemplates(query) {
         const q = (query || '').toLowerCase().trim();
         if (!q) {
-            return allChatTemplates.slice(0, 8);
+            return allChatTemplates.slice(0, 10);
         }
 
         const scored = [];
         allChatTemplates.forEach(tpl => {
             const sc = (tpl.shortcut || '').toLowerCase().trim();
             const title = (tpl.title || '').toLowerCase().trim();
-            const msg = (tpl.message || '').toLowerCase().trim();
+            const titleWords = title.split(/\s+/);
 
             let score = 999;
             if (sc === q) {
-                score = 1; // Exact shortcut match (e.g. /m -> shortcut 'm')
+                score = 1; // Exact shortcut match (e.g. /d -> shortcut 'd')
             } else if (sc.startsWith(q)) {
-                score = 2; // Shortcut starts with query (e.g. /m -> shortcut 'menunggu')
+                score = 2; // Shortcut starts with query (e.g. /d -> shortcut 'driver')
             } else if (title.startsWith(q)) {
-                score = 3; // Title starts with query (e.g. /m -> title 'Menunggu...')
-            } else if (sc.includes(q)) {
-                score = 4; // Shortcut contains query
-            } else if (title.includes(q)) {
-                score = 5; // Title contains query
-            } else if (msg.includes(q)) {
-                score = 6; // Message contains query
+                score = 3; // Title starts with query (e.g. /d -> title 'Driver...')
+            } else if (titleWords.some(w => w.startsWith(q))) {
+                score = 4; // Word in title starts with query (e.g. /r -> title "Konfirmasi Remote")
+            } else if (q.length >= 2) {
+                // For 2+ characters, allow sub-string matching within shortcut or title
+                if (sc.includes(q)) {
+                    score = 5;
+                } else if (title.includes(q)) {
+                    score = 6;
+                }
             }
 
             if (score < 999) {
