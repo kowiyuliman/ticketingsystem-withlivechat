@@ -48,6 +48,25 @@
         box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3) !important;
         font-weight: 700 !important;
     }
+    .slash-item {
+        transition: all 0.12s ease !important;
+        background-color: #ffffff;
+        color: #333333;
+        border-bottom: 1px solid #f0f2f5 !important;
+    }
+    .slash-item:hover, .slash-item.active {
+        background-color: #007bff !important;
+        color: #ffffff !important;
+    }
+    .slash-item:hover b, .slash-item.active b,
+    .slash-item:hover small, .slash-item.active small {
+        color: #ffffff !important;
+    }
+    .slash-item:hover .badge-light, .slash-item.active .badge-light {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.6) !important;
+    }
 </style>
 @stop
 
@@ -361,15 +380,28 @@
                             </button>
                             
                             <div class="flex-grow-1 position-relative">
-                                <textarea id="admin-comment-input" name="comment" rows="1" class="form-control shadow-2xs" placeholder="Ketik pesan atau klik template di atas..." style="resize: none; min-height: 40px; max-height: 160px; overflow-y: hidden; line-height: 1.45; padding: 8px 14px; border-radius: 10px; border-color: #ced4da; font-size: 13px;"></textarea>
+                                <!-- Floating Slash Command Macro Popover -->
+                                <div id="slash-macro-popover" class="shadow-lg border bg-white position-absolute d-none" style="bottom: 100%; left: 0; right: 0; margin-bottom: 8px; z-index: 1050; max-height: 240px; overflow-y: auto; border-color: #b8daff !important; border-radius: 12px;">
+                                    <div class="p-2 bg-light border-bottom d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+                                        <span class="text-xs font-weight-bold text-primary">
+                                            <i class="fas fa-bolt mr-1"></i> Template Shortcut (<kbd style="padding: 1px 5px; font-size: 10px;">/</kbd>)
+                                        </span>
+                                        <span class="text-muted" style="font-size: 10px;">Gunakan <kbd style="padding: 1px 4px;">↑</kbd> <kbd style="padding: 1px 4px;">↓</kbd> lalu <kbd style="padding: 1px 4px;">Enter</kbd></span>
+                                    </div>
+                                    <div class="list-group list-group-flush" id="slash-macro-list">
+                                        <!-- Dynamically populated -->
+                                    </div>
+                                </div>
+
+                                <textarea id="admin-comment-input" name="comment" rows="1" class="form-control shadow-2xs" placeholder="Ketik pesan, ketik / untuk shortcut template (misal /remote)..." style="resize: none; min-height: 40px; max-height: 160px; overflow-y: hidden; line-height: 1.45; padding: 8px 14px; border-radius: 10px; border-color: #ced4da; font-size: 13px;"></textarea>
                             </div>
 
                             <button type="submit" id="btn-send-admin-chat" class="btn btn-primary font-weight-bold shadow-2xs d-flex align-items-center justify-content-center px-3.5 flex-shrink-0" style="height: 40px; border-radius: 10px; font-size: 13px;">
-                                <i class="fas fa-paper-plane mr-1.5"></i>
+                                <i class="fas fa-paper-plane mr-1.5"></i> Kirim
                             </button>
                         </div>
                         <small class="text-muted d-block mt-1" style="font-size: 10px;">
-                            💡 <span class="font-weight-bold text-primary">Tips:</span> Tekan <kbd>Enter</kbd> untuk kirim, <kbd>Shift + Enter</kbd> untuk baris baru, atau <kbd>Ctrl + V</kbd> untuk menempelkan screenshot.
+                            💡 <span class="font-weight-bold text-primary">Tips:</span> Ketik <kbd>/</kbd> untuk shortcut macro, tekan <kbd>Enter</kbd> untuk kirim, <kbd>Shift + Enter</kbd> untuk baris baru, atau <kbd>Ctrl + V</kbd> untuk screenshot.
                         </small>
                     </form>
                 @endif
@@ -473,6 +505,115 @@
         knownCommentIds.add(parseInt(el.getAttribute('data-comment-id')));
     });
 
+    const allChatTemplates = @json(isset($chatTemplates) ? $chatTemplates : []);
+    const slashPopover = document.getElementById('slash-macro-popover');
+    const slashList = document.getElementById('slash-macro-list');
+    let slashActiveIndex = 0;
+    let currentSlashFiltered = [];
+    let slashMatchInfo = null;
+
+    function renderSlashTemplates(templates) {
+        if (!slashList) return;
+        slashList.innerHTML = '';
+        currentSlashFiltered = templates;
+        slashActiveIndex = 0;
+
+        if (templates.length === 0) {
+            slashList.innerHTML = '<div class="p-3 text-muted text-center text-xs font-italic">Tidak ada template yang cocok dengan pencarian</div>';
+            return;
+        }
+
+        templates.forEach((tpl, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `list-group-item list-group-item-action py-2 px-3 d-flex justify-content-between align-items-center border-0 slash-item ${idx === 0 ? 'active' : ''}`;
+            btn.setAttribute('data-index', idx);
+            
+            const shortcutBadge = tpl.shortcut 
+                ? `<span class="badge badge-light border border-primary text-primary font-weight-bold mr-1.5" style="font-size: 10px;">/${escapeHtml(tpl.shortcut)}</span>`
+                : `<span class="badge badge-light border text-muted mr-1.5" style="font-size: 10px;">/tpl</span>`;
+
+            btn.innerHTML = `
+                <div class="text-truncate mr-2 text-left" style="max-width: 78%;">
+                    <div>${shortcutBadge}<b class="text-dark">${escapeHtml(tpl.title)}</b></div>
+                    <small class="text-muted d-block text-truncate mt-0.5">${escapeHtml(tpl.message)}</small>
+                </div>
+                <span class="badge ${tpl.category_badge_class || 'badge-secondary'} text-xs font-weight-bold flex-shrink-0">${escapeHtml(tpl.category_label || 'Umum')}</span>
+            `;
+
+            btn.addEventListener('click', () => {
+                selectSlashTemplate(tpl);
+            });
+
+            slashList.appendChild(btn);
+        });
+    }
+
+    function updateSlashActiveItem() {
+        if (!slashList) return;
+        const items = slashList.querySelectorAll('.slash-item');
+        items.forEach((el, idx) => {
+            if (idx === slashActiveIndex) {
+                el.classList.add('active');
+                el.scrollIntoView({ block: 'nearest' });
+            } else {
+                el.classList.remove('active');
+            }
+        });
+    }
+
+    function checkSlashTrigger() {
+        if (!commentInput || !slashPopover) return;
+        const cursor = commentInput.selectionStart;
+        const textBeforeCursor = commentInput.value.substring(0, cursor);
+        
+        // Match slash keyword before cursor (either at start of input or after whitespace)
+        const match = textBeforeCursor.match(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/);
+        
+        if (match) {
+            const query = match[1].toLowerCase();
+            const startPos = textBeforeCursor.lastIndexOf('/' + match[1]);
+            slashMatchInfo = {
+                query: query,
+                start: startPos,
+                end: cursor
+            };
+
+            const filtered = allChatTemplates.filter(tpl => {
+                const shortcutMatch = tpl.shortcut && tpl.shortcut.toLowerCase().includes(query);
+                const titleMatch = tpl.title && tpl.title.toLowerCase().includes(query);
+                const msgMatch = tpl.message && tpl.message.toLowerCase().includes(query);
+                return query === '' || shortcutMatch || titleMatch || msgMatch;
+            });
+
+            renderSlashTemplates(filtered);
+            slashPopover.classList.remove('d-none');
+        } else {
+            hideSlashPopover();
+        }
+    }
+
+    function hideSlashPopover() {
+        if (slashPopover) {
+            slashPopover.classList.add('d-none');
+        }
+        slashMatchInfo = null;
+    }
+
+    function selectSlashTemplate(tpl) {
+        if (!commentInput || !tpl) return;
+
+        const pillBtn = document.querySelector(`.quick-tpl-btn[data-tpl-id="${tpl.id}"]`);
+
+        if (slashMatchInfo) {
+            const fullText = commentInput.value;
+            commentInput.value = fullText.substring(0, slashMatchInfo.start) + fullText.substring(slashMatchInfo.end);
+        }
+
+        applyChatTemplate(tpl.message, pillBtn);
+        hideSlashPopover();
+    }
+
     function autoResizeAdminInput() {
         if (!commentInput) return;
         commentInput.style.height = 'auto';
@@ -532,16 +673,60 @@
         $('#image-modal').modal('hide');
     }
 
-    // Dynamic Textarea Auto-Expansion & Keyboard Listeners
+    // Dynamic Textarea Auto-Expansion, Keyboard & Slash Command Listeners
     if (commentInput) {
-        commentInput.addEventListener('input', autoResizeAdminInput);
+        commentInput.addEventListener('input', function () {
+            autoResizeAdminInput();
+            checkSlashTrigger();
+        });
 
         commentInput.addEventListener('keydown', function (e) {
+            const isSlashOpen = slashPopover && !slashPopover.classList.contains('d-none');
+
+            if (isSlashOpen) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (currentSlashFiltered.length > 0) {
+                        slashActiveIndex = (slashActiveIndex + 1) % currentSlashFiltered.length;
+                        updateSlashActiveItem();
+                    }
+                    return;
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (currentSlashFiltered.length > 0) {
+                        slashActiveIndex = (slashActiveIndex - 1 + currentSlashFiltered.length) % currentSlashFiltered.length;
+                        updateSlashActiveItem();
+                    }
+                    return;
+                }
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                    if (currentSlashFiltered.length > 0 && currentSlashFiltered[slashActiveIndex]) {
+                        e.preventDefault();
+                        selectSlashTemplate(currentSlashFiltered[slashActiveIndex]);
+                        return;
+                    }
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideSlashPopover();
+                    return;
+                }
+            }
+
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                hideSlashPopover();
                 if (adminChatForm) {
                     adminChatForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                 }
+            }
+        });
+
+        // Close slash popover on blur / click outside
+        document.addEventListener('click', function (e) {
+            if (slashPopover && !slashPopover.contains(e.target) && e.target !== commentInput) {
+                hideSlashPopover();
             }
         });
 

@@ -160,8 +160,11 @@
                         <td class="text-center font-weight-bold text-muted">{{ $loop->iteration }}</td>
                         <td>
                             <b class="text-dark">{{ $template->title }}</b>
+                            @if(!empty($template->shortcut))
+                                <span class="badge badge-light border border-primary text-primary ml-1 font-weight-bold" title="Ketik /{{ $template->shortcut }} di live chat">/{{ $template->shortcut }}</span>
+                            @endif
                             @if($template->order_index > 0)
-                                <span class="badge badge-light border ml-1 text-primary" title="Urutan prioritas">#{{ $template->order_index }}</span>
+                                <span class="badge badge-light border ml-1 text-secondary" title="Urutan prioritas">#{{ $template->order_index }}</span>
                             @endif
                         </td>
                         <td class="text-center">
@@ -244,12 +247,22 @@
                 </div>
                 <div class="modal-body p-4 bg-white">
                     <div class="row">
-                        <div class="col-md-7 form-group">
-                            <label class="font-weight-bold text-dark">Judul Template <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control border-light shadow-2xs" placeholder="Contoh: Konfirmasi Remote Pengerjaan" required maxlength="100">
-                            <small class="text-muted">Nama singkat untuk label tombol quick reply di live chat.</small>
-                        </div>
                         <div class="col-md-5 form-group">
+                            <label class="font-weight-bold text-dark">Judul Template <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control border-light shadow-2xs" placeholder="Contoh: Setting Printer" required maxlength="100">
+                            <small class="text-muted">Nama singkat / label tombol quick reply.</small>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label class="font-weight-bold text-dark">Shortcut <span class="text-muted font-weight-normal">(Opsional)</span></label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light border-light font-weight-bold text-primary">/</span>
+                                </div>
+                                <input type="text" name="shortcut" class="form-control border-light shadow-2xs" placeholder="printer" maxlength="50">
+                            </div>
+                            <small class="text-muted">Ketik <code>/printer</code> di live chat.</small>
+                        </div>
+                        <div class="col-md-4 form-group">
                             <label class="font-weight-bold text-dark">Kategori Status <span class="text-danger">*</span></label>
                             <select name="category" class="form-control font-weight-bold border-light shadow-2xs" required>
                                 <option value="on_progress" {{ $activeTab === 'on_progress' ? 'selected' : '' }}>🔵 On Progress</option>

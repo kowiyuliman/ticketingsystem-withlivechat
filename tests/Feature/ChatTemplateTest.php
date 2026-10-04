@@ -205,5 +205,74 @@ class ChatTemplateTest extends TestCase
         $tpl->update(['title' => 'Cache Test Updated']);
         $this->assertFalse(Cache::has('chat_templates_active'));
     }
+
+    public function test_admin_can_store_and_update_chat_template_with_shortcut()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        // Store with leading slash and uppercase - should be sanitized
+        $response = $this->actingAs($admin)->post('/admin/chat-templates', [
+            'title'       => 'Template Remote Shortcut',
+            'category'    => 'on_progress',
+            'shortcut'    => '/REMOTE-PC',
+            'message'     => 'Halo {user_name}, izin remote laptop {nomor_laptop}.',
+            'order_index' => 1,
+            'is_active'   => 1,
+        ]);
+
+        $response->assertRedirect(route('admin.chat-templates.index', ['tab' => 'on_progress']));
+        $this->assertDatabaseHas('chat_templates', [
+            'title'    => 'Template Remote Shortcut',
+            'shortcut' => 'remote-pc',
+        ]);
+
+        $template = ChatTemplate::where('title', 'Template Remote Shortcut')->first();
+
+        // Update shortcut
+        $updateResponse = $this->actingAs($admin)->put('/admin/chat-templates/' . $template->id, [
+            'title'       => 'Template Remote Shortcut',
+            'category'    => 'on_progress',
+            'shortcut'    => '/quick-remote',
+            'message'     => 'Halo {user_name}, izin remote laptop {nomor_laptop}.',
+            'order_index' => 1,
+            'is_active'   => 1,
+        ]);
+
+        $updateResponse->assertRedirect(route('admin.chat-templates.index', ['tab' => 'on_progress']));
+        $template->refresh();
+        $this->assertEquals('quick-remote', $template->shortcut);
+    }
+
+    public function test_admin_ticket_show_renders_slash_command_popover_and_shortcuts()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
+
+        $ticket = Ticket::create([
+            'ticket_code'  => 'HD-TPL-002',
+            'user_id'      => $user->id,
+            'nama'         => 'Rian Firmansyah',
+            'nomor_laptop' => 'LAP-0777',
+            'kategori'     => 'software',
+            'deskripsi'    => 'Need slash command test',
+            'status'       => 'on_progress',
+            'assigned_to'  => $admin->id,
+            'created_by'   => $user->id,
+        ]);
+
+        ChatTemplate::create([
+            'title'     => 'Printer Solution',
+            'category'  => 'on_progress',
+            'shortcut'  => 'printer',
+            'message'   => 'Langkah perbaikan printer...',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/admin/ticket/show/' . $ticket->id);
+
+        $response->assertStatus(200);
+        $response->assertSee('slash-macro-popover');
+        $response->assertSee('"shortcut":"printer"', false);
+    }
 }
 

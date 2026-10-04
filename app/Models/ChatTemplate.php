@@ -11,6 +11,7 @@ class ChatTemplate extends Model
 
     protected $fillable = [
         'title',
+        'shortcut',
         'category',
         'message',
         'is_active',
@@ -47,7 +48,7 @@ class ChatTemplate extends Model
             return static::where('is_active', true)
                 ->orderBy('order_index', 'asc')
                 ->orderBy('id', 'asc')
-                ->get(['id', 'title', 'category', 'message', 'order_index']);
+                ->get(['id', 'title', 'shortcut', 'category', 'message', 'order_index']);
         });
     }
 

@@ -52,6 +52,7 @@ class ChatTemplateController extends Controller
     {
         $validated = $request->validate([
             'title'       => 'required|string|max:100',
+            'shortcut'    => 'nullable|string|max:50',
             'category'    => 'required|string|in:general,on_progress,pending,closed',
             'message'     => 'required|string|min:3',
             'order_index' => 'nullable|integer|min:0',
@@ -62,6 +63,12 @@ class ChatTemplateController extends Controller
             'message.required'  => 'Isi pesan template wajib diisi.',
             'message.min'       => 'Isi pesan minimal 3 karakter.',
         ]);
+
+        if (!empty($validated['shortcut'])) {
+            $validated['shortcut'] = strtolower(trim(ltrim($validated['shortcut'], '/')));
+        } else {
+            $validated['shortcut'] = null;
+        }
 
         $validated['created_by'] = Auth::id();
         $validated['is_active'] = $request->has('is_active') ? (bool)$request->input('is_active') : true;
@@ -91,6 +98,7 @@ class ChatTemplateController extends Controller
 
         $validated = $request->validate([
             'title'       => 'required|string|max:100',
+            'shortcut'    => 'nullable|string|max:50',
             'category'    => 'required|string|in:general,on_progress,pending,closed',
             'message'     => 'required|string|min:3',
             'order_index' => 'nullable|integer|min:0',
@@ -100,6 +108,12 @@ class ChatTemplateController extends Controller
             'category.required' => 'Kategori status wajib dipilih.',
             'message.required'  => 'Isi pesan template wajib diisi.',
         ]);
+
+        if (!empty($validated['shortcut'])) {
+            $validated['shortcut'] = strtolower(trim(ltrim($validated['shortcut'], '/')));
+        } else {
+            $validated['shortcut'] = null;
+        }
 
         $validated['is_active'] = $request->has('is_active') ? (bool)$request->input('is_active') : false;
         $validated['order_index'] = $request->filled('order_index') ? (int)$request->input('order_index') : 0;

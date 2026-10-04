@@ -79,7 +79,7 @@
 
                     <div class="row">
                         {{-- JUDUL TEMPLATE --}}
-                        <div class="col-md-7 form-group mb-3">
+                        <div class="col-md-5 form-group mb-3">
                             <label class="font-weight-bold text-dark" for="title">
                                 Judul Template <span class="text-danger">*</span>
                             </label>
@@ -87,18 +87,41 @@
                                    name="title" 
                                    id="title" 
                                    class="form-control border-light shadow-2xs @error('title') is-invalid @enderror" 
-                                   placeholder="Contoh: Konfirmasi Remote Pengerjaan" 
+                                   placeholder="Contoh: Setting Printer" 
                                    value="{{ old('title', $template->title) }}" 
                                    required 
                                    maxlength="100">
-                            <small class="text-muted">Nama singkat untuk label tombol quick reply di live chat.</small>
+                            <small class="text-muted">Nama singkat / label tombol quick reply.</small>
                             @error('title')
                                 <div class="invalid-feedback font-weight-bold">{{ $message }}</div>
                             @enderror
                         </div>
 
+                        {{-- SHORTCUT / KODE CEPAT --}}
+                        <div class="col-md-3 form-group mb-3">
+                            <label class="font-weight-bold text-dark" for="shortcut">
+                                Shortcut <span class="text-muted font-weight-normal">(Opsional)</span>
+                            </label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-light border-light font-weight-bold text-primary">/</span>
+                                </div>
+                                <input type="text" 
+                                       name="shortcut" 
+                                       id="shortcut" 
+                                       class="form-control border-light shadow-2xs @error('shortcut') is-invalid @enderror" 
+                                       placeholder="printer" 
+                                       value="{{ old('shortcut', $template->shortcut) }}" 
+                                       maxlength="50">
+                            </div>
+                            <small class="text-muted">Ketik <code>/printer</code> di live chat.</small>
+                            @error('shortcut')
+                                <div class="invalid-feedback font-weight-bold">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         {{-- KATEGORI STATUS --}}
-                        <div class="col-md-5 form-group mb-3">
+                        <div class="col-md-4 form-group mb-3">
                             <label class="font-weight-bold text-dark" for="category">
                                 Kategori Status <span class="text-danger">*</span>
                             </label>
