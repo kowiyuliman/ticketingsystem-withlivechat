@@ -360,7 +360,7 @@
                         @if(isset($chatTemplates) && $chatTemplates->count() > 0)
                             <div class="mb-2 d-flex align-items-center flex-nowrap overflow-auto py-1" style="gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin;">
                                 <span class="badge badge-light border text-secondary font-weight-bold flex-shrink-0" style="font-size: 11px; padding: 5px 8px;">
-                                    ⚡ Template:
+                                     Template:
                                 </span>
                                 @foreach($chatTemplates as $tpl)
                                     <button type="button" 
@@ -384,7 +384,7 @@
                                 <div id="slash-macro-popover" class="shadow-lg border bg-white position-absolute d-none" style="bottom: 100%; left: 0; right: 0; margin-bottom: 8px; z-index: 1050; max-height: 240px; overflow-y: auto; border-color: #b8daff !important; border-radius: 12px;">
                                     <div class="p-2 bg-light border-bottom d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                                         <span class="text-xs font-weight-bold text-primary">
-                                            <i class="fas fa-bolt mr-1"></i> Template Shortcut (<kbd style="padding: 1px 5px; font-size: 10px;">/</kbd>)
+                                            Template Shortcut (<kbd style="padding: 1px 5px; font-size: 10px;">/</kbd>)
                                         </span>
                                         <span class="text-muted" style="font-size: 10px;">Gunakan <kbd style="padding: 1px 4px;">↑</kbd> <kbd style="padding: 1px 4px;">↓</kbd> lalu <kbd style="padding: 1px 4px;">Enter</kbd></span>
                                     </div>

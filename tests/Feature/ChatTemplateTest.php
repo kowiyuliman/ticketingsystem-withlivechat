@@ -181,7 +181,7 @@ class ChatTemplateTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin/ticket/show/' . $ticket->id);
 
         $response->assertStatus(200);
-        $response->assertSee('⚡ Template:');
+        $response->assertSee('Template:');
         $response->assertSee('Quick Remote Pill');
         $response->assertSee('Daftar Semua Template Chat');
     }

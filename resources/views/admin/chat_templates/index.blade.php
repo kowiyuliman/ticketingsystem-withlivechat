@@ -6,9 +6,8 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
     <div>
         <h1 class="m-0 font-weight-bold text-dark">
-            <i class="fas fa-comments text-primary mr-2"></i>Manajemen Template Chat
+            <i class="text-primary mr-2"></i>Manajemen Template Chat
         </h1>
-        <p class="text-muted text-sm mb-0">Kelola balasan pesan cepat (quick replies) untuk Live Chat IT Support</p>
     </div>
     <div class="mt-2 mt-md-0">
         <button type="button" class="btn btn-primary font-weight-bold shadow-sm" data-toggle="modal" data-target="#modal-add-template">
@@ -82,15 +81,6 @@
 
 @include('partials.floating_toast')
 
-@if(session('success'))
-    <div class="alert alert-primary alert-dismissible fade show font-weight-semibold shadow-xs bg-white text-primary border-primary" role="alert" style="border-left: 4px solid #007bff !important;">
-        <i class="fas fa-check-circle mr-2 text-primary"></i>{{ session('success') }}
-        <button type="button" class="close text-primary" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-@endif
-
 @if($errors->any())
     <div class="alert alert-danger alert-dismissible fade show font-weight-semibold shadow-xs" role="alert">
         <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -110,7 +100,7 @@
         <ul class="nav nav-pills" id="template-tabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'all' ? 'active' : '' }}" href="{{ route('admin.chat-templates.index', ['tab' => 'all']) }}">
-                    <i class="fas fa-layer-group mr-1.5"></i> Semua Template 
+                    Semua Template 
                     <span class="badge badge-count ml-1">{{ $counts['all'] }}</span>
                 </a>
             </li>
@@ -260,7 +250,7 @@
                                 </div>
                                 <input type="text" name="shortcut" class="form-control border-light shadow-2xs" placeholder="printer" maxlength="50">
                             </div>
-                            <small class="text-muted">Ketik <code>/printer</code> di live chat.</small>
+                            <small class="text-muted">Ketik <code>/microsip</code> di live chat.</small>
                         </div>
                         <div class="col-md-4 form-group">
                             <label class="font-weight-bold text-dark">Kategori Status <span class="text-danger">*</span></label>
@@ -318,7 +308,7 @@
                 <div class="modal-footer bg-light py-2.5">
                     <button type="button" class="btn btn-outline-secondary font-weight-bold" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
-                        <i class="fas fa-save mr-1"></i> Simpan Template
+                         Simpan Template
                     </button>
                 </div>
             </form>
