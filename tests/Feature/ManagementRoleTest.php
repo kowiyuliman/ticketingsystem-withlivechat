@@ -29,9 +29,16 @@ test('management role can fetch realtime dashboard metrics and charts', function
         'role' => 'management',
     ]);
 
+    $tech = User::factory()->create([
+        'name' => 'IT Specialist',
+        'username' => 'tech1',
+        'role' => 'admin',
+    ]);
+
     Ticket::create([
         'ticket_code' => 'MPTB-IT-' . date('Ymd') . '-HW-001',
         'user_id' => $boss->id,
+        'assigned_to' => $tech->id,
         'nama' => 'Staff A',
         'nomor_laptop' => 'LP-001',
         'kategori' => 'hardware',
@@ -39,13 +46,18 @@ test('management role can fetch realtime dashboard metrics and charts', function
         'status' => 'open',
     ]);
 
-    $response = $this->actingAs($boss)->get(route('admin.dashboard.realtime'));
+    $response = $this->actingAs($boss)->get(route('admin.dashboard.realtime', [
+        'kategori_month' => date('n'),
+        'workload_month' => date('n'),
+    ]));
 
     $response->assertOk();
     $data = $response->json();
     expect($data['total'])->toBe(1);
     expect($data['open'])->toBe(1);
     expect(count($data['daily_labels']))->toBe(14);
+    expect($data)->toHaveKeys(['daily_datasets', 'admin_daily_summary', 'workload_colors']);
+    expect($data['kategori_values'][0])->toBe(1); // hardware
 });
 
 test('management role is redirected directly to dashboard on login', function () {

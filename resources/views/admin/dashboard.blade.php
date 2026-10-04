@@ -293,30 +293,46 @@
 
     {{-- CHART ROW 1 --}}
     <div class="row mt-2">
-        <div class="col-lg-6 col-12 mb-3">
-            <div class="card card-outline card-primary shadow-sm">
-                <div class="card-header">
-                    <h3 class="card-title font-weight-bold">
-                        Grafik Tiket Harian
+        <div class="col-lg-6 col-12 mb-3 d-flex">
+            <div class="card card-outline card-primary shadow-sm w-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold mb-0">
+                        Grafik Tiket Harian (14 Hari)
                     </h3>
+                    <span class="badge badge-light border text-xs font-weight-bold ml-auto text-primary">
+                        <i class="fas fa-users-cog mr-1"></i> Per Admin
+                    </span>
                 </div>
-                <div class="card-body">
-                    <div class="chart-container">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div class="chart-container" style="position: relative; height: 260px;">
                         <canvas id="dailyChart"></canvas>
+                    </div>
+                    {{-- Keterangan / Legend Admin di Bawah Grafik --}}
+                    <div class="d-flex flex-wrap justify-content-center align-items-center pt-2 mt-2 border-top" id="daily-admin-legend">
+                        @foreach($adminDailySummary as $adm)
+                        <div class="d-flex align-items-center mx-2 my-1" title="{{ $adm['name'] }}: {{ $adm['total_14d'] }} tiket (14 hari)">
+                            <span class="d-inline-block rounded-circle mr-1.5" style="width: 10px; height: 10px; background-color: {{ $adm['color'] }};"></span>
+                            <span class="text-xs font-weight-bold text-dark mr-1">{{ $adm['name'] }}</span>
+                            <span class="badge badge-light border font-weight-bold px-1.5 py-0.5" style="font-size: 10px;" id="admin-daily-count-{{ $adm['id'] }}">{{ $adm['total_14d'] }}</span>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6 col-12 mb-3">
-            <div class="card card-outline card-success shadow-sm">
-                <div class="card-header">
-                    <h3 class="card-title font-weight-bold">
+        <div class="col-lg-6 col-12 mb-3 d-flex">
+            <div class="card card-outline card-success shadow-sm w-100 mb-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title font-weight-bold mb-0">
                         Grafik Tiket Bulanan
                     </h3>
+                    <span class="badge badge-light border text-xs font-weight-bold ml-auto text-success">
+                        <i class="fas fa-calendar-alt mr-1"></i> {{ date('Y') }}
+                    </span>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
+                    <div class="chart-container" style="position: relative; height: 295px;">
                         <canvas id="monthlyChart"></canvas>
                     </div>
                 </div>
@@ -328,11 +344,21 @@
     <div class="row">
         <div class="col-lg-6 col-12 mb-3 d-flex">
             <div class="card card-outline card-warning shadow-sm w-100 mb-0">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                     <h3 class="card-title font-weight-bold mb-0" style="float: none;">
                         Chart Kategori Kendala
                     </h3>
-                    <small class="text-muted ml-auto font-weight-normal"><i class="fas fa-hand-pointer mr-1"></i> Klik kategori untuk detail</small>
+                    <div class="d-flex align-items-center ml-auto">
+                        <label for="filter-kategori-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal"><i class="fas fa-filter mr-1"></i>Bulan:</label>
+                        <select id="filter-kategori-month" class="custom-select custom-select-sm font-weight-bold shadow-2xs border-secondary" style="width: auto; height: 30px; font-size: 12px; border-radius: 6px;">
+                            <option value="all" {{ $kategoriMonth === 'all' ? 'selected' : '' }}>Semua Bulan ({{ date('Y') }})</option>
+                            @foreach($monthsList as $num => $name)
+                            <option value="{{ $num }}" {{ (int)$kategoriMonth === $num ? 'selected' : '' }}>
+                                {{ $name }} {{ $num === (int)now()->format('n') ? '(Bulan Ini)' : '' }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -381,14 +407,6 @@
                                     </a>
                                 @endforeach
                             </div>
-
-                            {{-- TOTAL SUMMARY FOOTER --}}
-                            <!-- <div class="d-flex justify-content-between align-items-center pt-1.5 px-1 border-top mt-1">
-                                <span class="text-xs font-weight-bold text-muted uppercase">Total:</span>
-                                <span class="text-xs font-weight-bold text-dark badge badge-light border px-2 py-0.5" id="cat-total-summary">
-                                    <b>{{ $totalKategori }} Tiket (100%)</b>
-                                </span>
-                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -397,10 +415,21 @@
 
         <div class="col-lg-6 col-12 mb-3 d-flex">
             <div class="card card-outline card-info shadow-sm w-100 mb-0">
-                <div class="card-header">
-                    <h3 class="card-title font-weight-bold">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h3 class="card-title font-weight-bold mb-0" style="float: none;">
                         Grafik Workload IT
                     </h3>
+                    <div class="d-flex align-items-center ml-auto">
+                        <label for="filter-workload-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal"><i class="fas fa-filter mr-1"></i>Bulan:</label>
+                        <select id="filter-workload-month" class="custom-select custom-select-sm font-weight-bold shadow-2xs border-secondary" style="width: auto; height: 30px; font-size: 12px; border-radius: 6px;">
+                            <option value="all" {{ $workloadMonth === 'all' ? 'selected' : '' }}>Semua Bulan ({{ date('Y') }})</option>
+                            @foreach($monthsList as $num => $name)
+                            <option value="{{ $num }}" {{ (int)$workloadMonth === $num ? 'selected' : '' }}>
+                                {{ $name }} {{ $num === (int)now()->format('n') ? '(Bulan Ini)' : '' }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="chart-container" style="position: relative; height: 210px;">
@@ -508,27 +537,14 @@
             }
         });
 
-        // DAILY CHART (14-Day Continuous Line)
+        // DAILY CHART (14-Day Continuous Multi-Line per Admin)
         dailyChart = new Chart(
             document.getElementById('dailyChart'),
             {
                 type: 'line',
                 data: {
                     labels: {!! json_encode($dailyLabels) !!},
-                    datasets: [{
-                        label: 'Tiket Harian',
-                        data: {!! json_encode($dailyValues) !!},
-                        borderColor: '#0284c7',
-                        backgroundColor: 'rgba(2, 132, 199, 0.15)',
-                        borderWidth: 2.5,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#0284c7',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        tension: 0.35,
-                        fill: true
-                    }]
+                    datasets: {!! json_encode($dailyDatasets) !!}
                 },
                 options: {
                     responsive: true,
@@ -545,7 +561,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(ctx) {
-                                    return ' ' + ctx.parsed.y + ' Tiket';
+                                    return ' ' + (ctx.dataset.label || 'Admin') + ': ' + ctx.parsed.y + ' Tiket';
                                 }
                             }
                         }
@@ -567,19 +583,6 @@
             '#eab308', // Okt - Amber
             '#10b981', // Nov - Emerald
             '#14b8a6'  // Des - Teal
-        ];
-
-        const workloadColorPalette = [
-            '#0284c7', // Sky Blue
-            '#10b981', // Emerald
-            '#f59e0b', // Amber
-            '#8b5cf6', // Violet
-            '#ec4899', // Pink
-            '#14b8a6', // Teal
-            '#6366f1', // Indigo
-            '#f97316', // Orange
-            '#06b6d4', // Cyan
-            '#84cc16'  // Lime
         ];
 
         // MONTHLY CHART
@@ -665,7 +668,10 @@
         );
 
         // WORKLOAD CHART
-        const techLabelsData = {!! json_encode($technicianWorkload->map(fn($t) => $t->technician?->name ?? 'IT')) !!};
+        const techLabelsData = {!! json_encode($workloadLabels) !!};
+        const techValuesData = {!! json_encode($workloadValues) !!};
+        const techColorsData = {!! json_encode($workloadColors) !!};
+
         workloadChart = new Chart(
             document.getElementById('workloadChart'),
             {
@@ -674,8 +680,8 @@
                     labels: techLabelsData,
                     datasets: [{
                         label: 'Jumlah Tiket',
-                        data: {!! json_encode($technicianWorkload->pluck('total_ticket')) !!},
-                        backgroundColor: techLabelsData.map((_, i) => workloadColorPalette[i % workloadColorPalette.length]),
+                        data: techValuesData,
+                        backgroundColor: techColorsData,
                         borderRadius: 6
                     }]
                 },
@@ -695,6 +701,15 @@
                 }
             }
         );
+
+        // FILTER EVENT LISTENERS
+        $('#filter-kategori-month').on('change', function () {
+            loadDashboardRealtime();
+        });
+
+        $('#filter-workload-month').on('change', function () {
+            loadDashboardRealtime();
+        });
 
         // NOTIFICATION PERMISSION
         if (Notification.permission === 'default') {
@@ -722,7 +737,10 @@
         // REALTIME DASHBOARD UPDATE FUNCTION
         async function loadDashboardRealtime() {
             try {
-                const response = await fetch('/admin/dashboard/realtime');
+                const katMonth = $('#filter-kategori-month').val() || '{{ $kategoriMonth }}';
+                const workMonth = $('#filter-workload-month').val() || '{{ $workloadMonth }}';
+
+                const response = await fetch(`/admin/dashboard/realtime?kategori_month=${encodeURIComponent(katMonth)}&workload_month=${encodeURIComponent(workMonth)}`);
                 if (!response.ok) return;
                 const data = await response.json();
 
@@ -734,13 +752,22 @@
                 if (document.getElementById('card-closed')) document.getElementById('card-closed').innerText = data.closed;
                 if (document.getElementById('card-cancelled')) document.getElementById('card-cancelled').innerText = data.cancelled;
 
-                // 2. Update Charts Seamlessly
-                if (dailyChart && data.daily_labels && data.daily_values) {
+                // 2. Update Daily Multi-Line Chart
+                if (dailyChart && data.daily_labels && data.daily_datasets) {
                     dailyChart.data.labels = data.daily_labels;
-                    dailyChart.data.datasets[0].data = data.daily_values;
+                    dailyChart.data.datasets = data.daily_datasets;
                     dailyChart.update('none');
+
+                    // Update admin daily summary badges in footer
+                    if (data.admin_daily_summary) {
+                        data.admin_daily_summary.forEach(adm => {
+                            const countEl = document.getElementById(`admin-daily-count-${adm.id}`);
+                            if (countEl) countEl.innerText = adm.total_14d;
+                        });
+                    }
                 }
 
+                // Update Monthly Chart
                 if (monthlyChart && data.monthly_labels && data.monthly_values) {
                     monthlyChart.data.labels = data.monthly_labels;
                     monthlyChart.data.datasets[0].data = data.monthly_values;
@@ -748,6 +775,7 @@
                     monthlyChart.update('none');
                 }
 
+                // Update Kategori Chart & Breakdown List
                 if (kategoriChart && data.kategori_labels && data.kategori_values) {
                     kategoriChart.data.labels = data.kategori_labels;
                     kategoriChart.data.datasets[0].data = data.kategori_values;
@@ -773,17 +801,15 @@
                             barEl.setAttribute('aria-valuenow', pct);
                         }
                     });
-
-                    const totalSumEl = document.getElementById('cat-total-summary');
-                    if (totalSumEl) {
-                        totalSumEl.innerHTML = `<b>${totalCat} Tiket (100%)</b>`;
-                    }
                 }
 
+                // Update Workload Chart & Workload Table
                 if (workloadChart && data.workload_labels && data.workload_values) {
                     workloadChart.data.labels = data.workload_labels;
                     workloadChart.data.datasets[0].data = data.workload_values;
-                    workloadChart.data.datasets[0].backgroundColor = data.workload_labels.map((_, i) => workloadColorPalette[i % workloadColorPalette.length]);
+                    if (data.workload_colors) {
+                        workloadChart.data.datasets[0].backgroundColor = data.workload_colors;
+                    }
                     workloadChart.update('none');
                 }
 

@@ -46,24 +46,104 @@ class DashboardController extends Controller
         // TODAY
         $today = (clone $query)->whereDate('created_at', now())->count();
 
-        // DAILY: Continuous 14-day series so chart is always populated
+        // DAILY: Continuous 14-day series multi-line per admin
         $isSqlite = DB::connection()->getDriverName() === 'sqlite';
         $dateExpr = $isSqlite ? 'date(created_at)' : 'DATE(created_at)';
         $monthExpr = $isSqlite ? 'cast(strftime(\'%m\', created_at) as integer)' : 'MONTH(created_at)';
 
-        $rawDaily = (clone $query)
-            ->selectRaw("{$dateExpr} as date, COUNT(*) as total")
-            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-            ->groupBy('date')
-            ->pluck('total', 'date');
+        $adminColors = [
+            '#0284c7', // Sky Blue
+            '#10b981', // Emerald
+            '#f59e0b', // Amber
+            '#8b5cf6', // Violet
+            '#ec4899', // Pink
+            '#14b8a6', // Teal
+            '#6366f1', // Indigo
+            '#f97316', // Orange
+        ];
 
-        $dailyLabels = [];
-        $dailyValues = [];
-        for ($i = 13; $i >= 0; $i--) {
-            $d = now()->subDays($i)->format('Y-m-d');
-            $dailyLabels[] = now()->subDays($i)->format('d M');
-            $dailyValues[] = (int)($rawDaily[$d] ?? 0);
+        $monthsList = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
+        $currentMonth = (int)now()->format('n');
+        $kategoriMonth = request()->input('kategori_month', $currentMonth);
+        $workloadMonth = request()->input('workload_month', $currentMonth);
+
+        // Fetch Admins & Technicians
+        $admins = User::whereIn('role', ['admin', 'technician'])->orderBy('id')->get();
+        if ($admins->isEmpty()) {
+            $assignedUserIds = Ticket::whereNotNull('assigned_to')->distinct()->pluck('assigned_to');
+            $admins = User::whereIn('id', $assignedUserIds)->orderBy('id')->get();
         }
+
+        $adminColorLookup = [];
+        foreach ($admins as $index => $adm) {
+            $adminColorLookup[$adm->id] = $adminColors[$index % count($adminColors)];
+        }
+
+        // Daily 14 Days Range
+        $daysRange = [];
+        $dailyLabels = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $dateStr = now()->subDays($i)->format('Y-m-d');
+            $daysRange[] = $dateStr;
+            $dailyLabels[] = now()->subDays($i)->format('d M');
+        }
+
+        $rawDailyAdmin = (clone $query)
+            ->selectRaw("{$dateExpr} as date, assigned_to, COUNT(*) as total")
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->whereNotNull('assigned_to')
+            ->groupBy('date', 'assigned_to')
+            ->get();
+
+        $adminDailyMap = [];
+        foreach ($rawDailyAdmin as $row) {
+            $adminDailyMap[$row->assigned_to][$row->date] = (int)$row->total;
+        }
+
+        $dailyDatasets = [];
+        $adminDailySummary = [];
+        $dailyTotalValues = array_fill(0, count($daysRange), 0);
+
+        foreach ($admins as $index => $admin) {
+            $color = $adminColorLookup[$admin->id] ?? $adminColors[$index % count($adminColors)];
+            $values = [];
+            $total14d = 0;
+            foreach ($daysRange as $dayIdx => $d) {
+                $cnt = $adminDailyMap[$admin->id][$d] ?? 0;
+                $values[] = $cnt;
+                $total14d += $cnt;
+                $dailyTotalValues[$dayIdx] += $cnt;
+            }
+
+            $dailyDatasets[] = [
+                'admin_id' => $admin->id,
+                'label' => $admin->name ?? ($admin->username ?? 'IT #' . $admin->id),
+                'data' => $values,
+                'borderColor' => $color,
+                'backgroundColor' => $color . '20',
+                'pointBackgroundColor' => $color,
+                'pointBorderColor' => '#ffffff',
+                'borderWidth' => 2.5,
+                'pointRadius' => 4,
+                'pointHoverRadius' => 6,
+                'tension' => 0.35,
+                'fill' => false,
+            ];
+
+            $adminDailySummary[] = [
+                'id' => $admin->id,
+                'name' => $admin->name ?? ($admin->username ?? 'IT #' . $admin->id),
+                'color' => $color,
+                'total_14d' => $total14d,
+            ];
+        }
+
+        $dailyValues = $dailyTotalValues;
 
         // MONTHLY
         $monthly = (clone $query)
@@ -90,8 +170,13 @@ class DashboardController extends Controller
             $monthlyValues = collect([0]);
         }
 
-        // KATEGORI
-        $kategoriData = (clone $query)
+        // KATEGORI (Filtered by Month)
+        $kategoriQuery = (clone $query);
+        if ($kategoriMonth !== 'all' && (int)$kategoriMonth > 0) {
+            $kategoriQuery->whereYear('created_at', now()->year)->whereMonth('created_at', (int)$kategoriMonth);
+        }
+
+        $kategoriData = $kategoriQuery
             ->selectRaw('kategori, COUNT(*) as total')
             ->groupBy('kategori')
             ->pluck('total', 'kategori');
@@ -114,16 +199,36 @@ class DashboardController extends Controller
         // LATEST OPEN TICKETS FOR QUICK ACTION
         $latestOpenTickets = Ticket::where('status', 'open')->latest()->take(5)->get();
 
-        // WORKLOAD
-        $technicianWorkload = Ticket::select(
+        // WORKLOAD (Filtered by Month, Default Current Month)
+        $workloadQuery = Ticket::select(
             'assigned_to',
             DB::raw('COUNT(*) as total_ticket')
         )
         ->whereNotNull('assigned_to')
-        ->groupBy('assigned_to')
-        ->with('technician')
-        ->orderByDesc('total_ticket')
-        ->get();
+        ->whereYear('created_at', now()->year);
+
+        if ($workloadMonth !== 'all' && (int)$workloadMonth > 0) {
+            $workloadQuery->whereMonth('created_at', (int)$workloadMonth);
+        }
+
+        $technicianWorkload = $workloadQuery
+            ->groupBy('assigned_to')
+            ->with('technician')
+            ->orderByDesc('total_ticket')
+            ->get();
+
+        $workloadLabels = [];
+        $workloadValues = [];
+        $workloadColors = [];
+        foreach ($technicianWorkload as $tech) {
+            $adminId = $tech->assigned_to;
+            $adminName = $tech->technician?->name ?? ($tech->technician?->username ?? 'IT');
+            $color = $adminColorLookup[$adminId] ?? '#0284c7';
+
+            $workloadLabels[] = $adminName;
+            $workloadValues[] = (int)$tech->total_ticket;
+            $workloadColors[] = $color;
+        }
 
         // STATISTIK TIKET PER LAPTOP & PENGGUNA (HANYA KODE LAPTOP "LAP-xxx", ABAIKAN HED, LAN, CHA)
         $inventories = \App\Models\Inventory::where(function ($q) {
@@ -207,6 +312,12 @@ class DashboardController extends Controller
             'today',
             'dailyLabels',
             'dailyValues',
+            'dailyDatasets',
+            'adminDailySummary',
+            'monthsList',
+            'currentMonth',
+            'kategoriMonth',
+            'workloadMonth',
             'monthly',
             'monthlyLabels',
             'monthlyValues',
@@ -216,12 +327,15 @@ class DashboardController extends Controller
             'slaMinutes',
             'latestOpenTickets',
             'technicianWorkload',
+            'workloadLabels',
+            'workloadValues',
+            'workloadColors',
             'laptopStats'
         ));
     }
 
 
-    public function realtime()
+    public function realtime(Request $request)
     {
         try {
             $user = auth()->user();
@@ -239,24 +353,96 @@ class DashboardController extends Controller
             $closed = (clone $query)->where('status','closed')->count();
             $cancelled = (clone $query)->where('status','cancelled')->count();
 
-            // Daily 14-day series
+            // Daily 14-day series multi-line per admin
             $isSqlite = DB::connection()->getDriverName() === 'sqlite';
             $dateExpr = $isSqlite ? 'date(created_at)' : 'DATE(created_at)';
             $monthExpr = $isSqlite ? 'cast(strftime(\'%m\', created_at) as integer)' : 'MONTH(created_at)';
 
-            $rawDaily = (clone $query)
-                ->selectRaw("{$dateExpr} as date, COUNT(*) as total")
-                ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-                ->groupBy('date')
-                ->pluck('total', 'date');
+            $adminColors = [
+                '#0284c7', // Sky Blue
+                '#10b981', // Emerald
+                '#f59e0b', // Amber
+                '#8b5cf6', // Violet
+                '#ec4899', // Pink
+                '#14b8a6', // Teal
+                '#6366f1', // Indigo
+                '#f97316', // Orange
+            ];
 
-            $dailyLabels = [];
-            $dailyValues = [];
-            for ($i = 13; $i >= 0; $i--) {
-                $d = now()->subDays($i)->format('Y-m-d');
-                $dailyLabels[] = now()->subDays($i)->format('d M');
-                $dailyValues[] = (int)($rawDaily[$d] ?? 0);
+            $currentMonth = (int)now()->format('n');
+            $kategoriMonth = $request->input('kategori_month', $currentMonth);
+            $workloadMonth = $request->input('workload_month', $currentMonth);
+
+            $admins = User::whereIn('role', ['admin', 'technician'])->orderBy('id')->get();
+            if ($admins->isEmpty()) {
+                $assignedUserIds = Ticket::whereNotNull('assigned_to')->distinct()->pluck('assigned_to');
+                $admins = User::whereIn('id', $assignedUserIds)->orderBy('id')->get();
             }
+
+            $adminColorLookup = [];
+            foreach ($admins as $index => $adm) {
+                $adminColorLookup[$adm->id] = $adminColors[$index % count($adminColors)];
+            }
+
+            $daysRange = [];
+            $dailyLabels = [];
+            for ($i = 13; $i >= 0; $i--) {
+                $dateStr = now()->subDays($i)->format('Y-m-d');
+                $daysRange[] = $dateStr;
+                $dailyLabels[] = now()->subDays($i)->format('d M');
+            }
+
+            $rawDailyAdmin = (clone $query)
+                ->selectRaw("{$dateExpr} as date, assigned_to, COUNT(*) as total")
+                ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+                ->whereNotNull('assigned_to')
+                ->groupBy('date', 'assigned_to')
+                ->get();
+
+            $adminDailyMap = [];
+            foreach ($rawDailyAdmin as $row) {
+                $adminDailyMap[$row->assigned_to][$row->date] = (int)$row->total;
+            }
+
+            $dailyDatasets = [];
+            $adminDailySummary = [];
+            $dailyTotalValues = array_fill(0, count($daysRange), 0);
+
+            foreach ($admins as $index => $admin) {
+                $color = $adminColorLookup[$admin->id] ?? $adminColors[$index % count($adminColors)];
+                $values = [];
+                $total14d = 0;
+                foreach ($daysRange as $dayIdx => $d) {
+                    $cnt = $adminDailyMap[$admin->id][$d] ?? 0;
+                    $values[] = $cnt;
+                    $total14d += $cnt;
+                    $dailyTotalValues[$dayIdx] += $cnt;
+                }
+
+                $dailyDatasets[] = [
+                    'admin_id' => $admin->id,
+                    'label' => $admin->name ?? ($admin->username ?? 'IT #' . $admin->id),
+                    'data' => $values,
+                    'borderColor' => $color,
+                    'backgroundColor' => $color . '20',
+                    'pointBackgroundColor' => $color,
+                    'pointBorderColor' => '#ffffff',
+                    'borderWidth' => 2.5,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 6,
+                    'tension' => 0.35,
+                    'fill' => false,
+                ];
+
+                $adminDailySummary[] = [
+                    'id' => $admin->id,
+                    'name' => $admin->name ?? ($admin->username ?? 'IT #' . $admin->id),
+                    'color' => $color,
+                    'total_14d' => $total14d,
+                ];
+            }
+
+            $dailyValues = $dailyTotalValues;
 
             // Monthly
             $monthly = (clone $query)
@@ -282,8 +468,13 @@ class DashboardController extends Controller
                 $monthlyValues = collect([0]);
             }
 
-            // Kategori
-            $kategoriData = (clone $query)
+            // Kategori (Filtered by Month)
+            $kategoriQuery = (clone $query);
+            if ($kategoriMonth !== 'all' && (int)$kategoriMonth > 0) {
+                $kategoriQuery->whereYear('created_at', now()->year)->whereMonth('created_at', (int)$kategoriMonth);
+            }
+
+            $kategoriData = $kategoriQuery
                 ->selectRaw('kategori, COUNT(*) as total')
                 ->groupBy('kategori')
                 ->pluck('total', 'kategori');
@@ -296,23 +487,43 @@ class DashboardController extends Controller
                 (int)($kategoriData['other'] ?? 0),
             ];
 
-            // Workload
-            $technicianWorkload = Ticket::select(
-                    'assigned_to',
-                    DB::raw('COUNT(*) as total_ticket')
-                )
-                ->whereNotNull('assigned_to')
+            // Workload (Filtered by Month)
+            $workloadQuery = Ticket::select(
+                'assigned_to',
+                DB::raw('COUNT(*) as total_ticket')
+            )
+            ->whereNotNull('assigned_to')
+            ->whereYear('created_at', now()->year);
+
+            if ($workloadMonth !== 'all' && (int)$workloadMonth > 0) {
+                $workloadQuery->whereMonth('created_at', (int)$workloadMonth);
+            }
+
+            $technicianWorkload = $workloadQuery
                 ->groupBy('assigned_to')
                 ->with('technician')
                 ->orderByDesc('total_ticket')
                 ->get();
 
-            $workloadLabels = $technicianWorkload->map(fn($t) => $t->technician?->name ?? 'IT')->values();
-            $workloadValues = $technicianWorkload->pluck('total_ticket')->values();
-            $workloadTable = $technicianWorkload->map(fn($t) => [
-                'name' => $t->technician?->name ?? 'IT',
-                'total' => (int)$t->total_ticket,
-            ])->values();
+            $workloadLabels = [];
+            $workloadValues = [];
+            $workloadColors = [];
+            $workloadTable = [];
+
+            foreach ($technicianWorkload as $tech) {
+                $adminId = $tech->assigned_to;
+                $adminName = $tech->technician?->name ?? ($tech->technician?->username ?? 'IT');
+                $color = $adminColorLookup[$adminId] ?? '#0284c7';
+
+                $workloadLabels[] = $adminName;
+                $workloadValues[] = (int)$tech->total_ticket;
+                $workloadColors[] = $color;
+                $workloadTable[] = [
+                    'name' => $adminName,
+                    'total' => (int)$tech->total_ticket,
+                    'color' => $color,
+                ];
+            }
 
             // Latest Open Tickets
             $latestOpenTickets = Ticket::where('status', 'open')
@@ -348,16 +559,21 @@ class DashboardController extends Controller
                 'cancelled'             => $cancelled,
                 'daily_labels'          => $dailyLabels,
                 'daily_values'          => $dailyValues,
+                'daily_datasets'        => $dailyDatasets,
+                'admin_daily_summary'   => $adminDailySummary,
                 'monthly_labels'        => $monthlyLabels,
                 'monthly_values'        => $monthlyValues,
                 'kategori_labels'       => $kategoriLabels,
                 'kategori_values'       => $kategoriValues,
                 'workload_labels'       => $workloadLabels,
                 'workload_values'       => $workloadValues,
+                'workload_colors'       => $workloadColors,
                 'workload_table'        => $workloadTable,
                 'latest_open_tickets'   => $latestOpenTickets,
                 'latest_ticket_id'      => $latestTicketId,
                 'latest_ticket_message' => $latestTicketMessage,
+                'selected_kategori_month' => $kategoriMonth,
+                'selected_workload_month' => $workloadMonth,
             ]);
 
         } catch (\Exception $e) {
