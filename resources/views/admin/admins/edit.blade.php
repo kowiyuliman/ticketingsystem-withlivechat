@@ -5,14 +5,14 @@
 @section('content_header')
 <div class="d-flex justify-content-between align-items-center mb-2">
     <div>
-        <h1 class="m-0 font-weight-bold text-dark"><i class="fas fa-user-edit text-warning mr-2"></i>Edit Data Admin</h1>
+        <h1 class="m-0 font-weight-bold text-dark"><i class="fas fa-user-edit text-primary mr-2"></i>Edit Data Admin</h1>
         <p class="text-muted text-sm mb-0">Perbarui informasi profil atau reset password administrator</p>
     </div>
-    <div>
+    <!-- <div>
         <a href="{{ route('admin.admins.index') }}" class="btn btn-secondary font-weight-bold shadow-sm">
             <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar Admin
         </a>
-    </div>
+    </div> -->
 </div>
 @stop
 
@@ -22,10 +22,10 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-7 col-md-10 col-12">
-        <div class="card card-outline card-warning shadow-sm">
+        <div class="card card-outline card-primary shadow-sm">
             <div class="card-header bg-light">
                 <h3 class="card-title font-weight-bold text-dark mb-0">
-                    <i class="fas fa-user-shield text-warning mr-1"></i> Edit Administrator: <u>{{ $admin->name }}</u>
+                    <i class="fas fa-user-shield text-primary mr-1"></i> Edit Administrator: <u>{{ $admin->name }}</u>
                 </h3>
             </div>
             
@@ -50,7 +50,7 @@
                     {{-- NAMA LENGKAP --}}
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-dark" for="name">
-                            <i class="fas fa-user text-secondary mr-1"></i> Nama Lengkap <span class="text-danger">*</span>
+                            Nama Lengkap <span class="text-danger">*</span>
                         </label>
                         <input type="text" 
                                name="name" 
@@ -67,7 +67,7 @@
                     {{-- USERNAME --}}
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-dark" for="username">
-                            <i class="fas fa-at text-secondary mr-1"></i> Username <span class="text-danger">*</span>
+                             Username <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <div class="input-group-prepend">
@@ -90,7 +90,7 @@
                     {{-- PASSWORD (OPSIONAL) --}}
                     <div class="form-group mb-4">
                         <label class="font-weight-bold text-dark" for="password">
-                            <i class="fas fa-key text-secondary mr-1"></i> Password Baru <span class="text-muted font-weight-normal">(Kosongkan jika tidak ingin mengubah password)</span>
+                             Password Baru <span class="text-muted font-weight-normal">(Kosongkan jika tidak ingin mengubah password)</span>
                         </label>
                         <div class="input-group">
                             <input type="password" 
@@ -110,14 +110,14 @@
                     {{-- ROLE SELECTION --}}
                     <div class="form-group mb-4">
                         <label class="font-weight-bold text-dark" for="role">
-                            <i class="fas fa-user-tag text-secondary mr-1"></i> Role Hak Akses <span class="text-danger">*</span>
+                        Role Hak Akses <span class="text-danger">*</span>
                         </label>
                         <select name="role" id="role" class="form-control form-control-lg @error('role') is-invalid @enderror" required>
                             <option value="admin" {{ old('role', $admin->role) == 'admin' ? 'selected' : '' }}>
-                                🛡️ Admin / IT Support (Full Access - Kelola Tiket, Aset & Admin)
+                                Admin / IT Support (Full Access - Kelola Tiket, Aset & Admin)
                             </option>
                             <option value="management" {{ old('role', $admin->role) == 'management' ? 'selected' : '' }}>
-                                👔 Management / Bos (Hanya Dashboard Monitoring)
+                                Management / Bos (Hanya Dashboard Monitoring)
                             </option>
                         </select>
                         @error('role')
@@ -128,11 +128,11 @@
                 </div>
 
                 <div class="card-footer bg-light d-flex justify-content-between align-items-center p-3">
-                    <a href="{{ route('admin.admins.index') }}" class="btn btn-default font-weight-bold">
-                        <i class="fas fa-times mr-1"></i> Batal
+                    <a href="{{ route('admin.admins.index') }}" class="btn btn-warning font-weight-bold">
+                        Batal
                     </a>
-                    <button type="submit" class="btn btn-warning font-weight-bold px-4 shadow-sm">
-                        <i class="fas fa-save mr-1"></i> Simpan Perubahan
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4 shadow-sm">
+                        Simpan Perubahan
                     </button>
                 </div>
             </form>

@@ -299,9 +299,6 @@
                     <h3 class="card-title font-weight-bold mb-0">
                         Grafik Tiket Harian (14 Hari)
                     </h3>
-                    <span class="badge badge-light border text-xs font-weight-bold ml-auto text-primary">
-                        <i class="fas fa-users-cog mr-1"></i> Per Admin
-                    </span>
                 </div>
                 <div class="card-body d-flex flex-column justify-content-between">
                     <div class="chart-container" style="position: relative; height: 260px;">
@@ -309,6 +306,11 @@
                     </div>
                     {{-- Keterangan / Legend Admin di Bawah Grafik --}}
                     <div class="d-flex flex-wrap justify-content-center align-items-center pt-2 mt-2 border-top" id="daily-admin-legend">
+                        <div class="d-flex align-items-center mx-2 my-1" title="Total Semua Tiket: {{ $dailyTotal14d }} tiket (14 hari)">
+                            <span class="d-inline-block rounded mr-1.5" style="width: 12px; height: 10px; background-color: #1e293b;"></span>
+                            <span class="text-xs font-weight-bold text-dark mr-1">Total Tiket</span>
+                            <span class="badge badge-dark font-weight-bold px-1.5 py-0.5" style="font-size: 10px;" id="admin-daily-count-total">{{ $dailyTotal14d }}</span>
+                        </div>
                         @foreach($adminDailySummary as $adm)
                         <div class="d-flex align-items-center mx-2 my-1" title="{{ $adm['name'] }}: {{ $adm['total_14d'] }} tiket (14 hari)">
                             <span class="d-inline-block rounded-circle mr-1.5" style="width: 10px; height: 10px; background-color: {{ $adm['color'] }};"></span>
@@ -349,7 +351,7 @@
                         Chart Kategori Kendala
                     </h3>
                     <div class="d-flex align-items-center ml-auto">
-                        <label for="filter-kategori-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal"><i class="fas fa-filter mr-1"></i>Bulan:</label>
+                        <label for="filter-kategori-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal">Filter Bulan : </label>
                         <select id="filter-kategori-month" class="custom-select custom-select-sm font-weight-bold shadow-2xs border-secondary" style="width: auto; height: 30px; font-size: 12px; border-radius: 6px;">
                             <option value="all" {{ $kategoriMonth === 'all' ? 'selected' : '' }}>Semua Bulan ({{ date('Y') }})</option>
                             @foreach($monthsList as $num => $name)
@@ -420,7 +422,7 @@
                         Grafik Workload IT
                     </h3>
                     <div class="d-flex align-items-center ml-auto">
-                        <label for="filter-workload-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal"><i class="fas fa-filter mr-1"></i>Bulan:</label>
+                        <label for="filter-workload-month" class="text-xs text-muted mb-0 mr-1.5 d-none d-sm-inline font-weight-normal">Filter Bulan :</label>
                         <select id="filter-workload-month" class="custom-select custom-select-sm font-weight-bold shadow-2xs border-secondary" style="width: auto; height: 30px; font-size: 12px; border-radius: 6px;">
                             <option value="all" {{ $workloadMonth === 'all' ? 'selected' : '' }}>Semua Bulan ({{ date('Y') }})</option>
                             @foreach($monthsList as $num => $name)
@@ -561,7 +563,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(ctx) {
-                                    return ' ' + (ctx.dataset.label || 'Admin') + ': ' + ctx.parsed.y + ' Tiket';
+                                    return ' ' + (ctx.dataset.label || 'Tiket') + ': ' + ctx.parsed.y + ' Tiket';
                                 }
                             }
                         }
@@ -759,6 +761,11 @@
                     dailyChart.update('none');
 
                     // Update admin daily summary badges in footer
+                    const totalCountEl = document.getElementById('admin-daily-count-total');
+                    if (totalCountEl && data.daily_total_14d !== undefined) {
+                        totalCountEl.innerText = data.daily_total_14d;
+                    }
+
                     if (data.admin_daily_summary) {
                         data.admin_daily_summary.forEach(adm => {
                             const countEl = document.getElementById(`admin-daily-count-${adm.id}`);

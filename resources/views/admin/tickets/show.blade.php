@@ -169,7 +169,7 @@
         <div class="card card-outline card-primary shadow-sm">
             <div class="card-header bg-light">
                 <h3 class="card-title font-weight-bold text-dark">
-                    <i class="fas fa-tasks text-primary mr-1"></i> Update Status Tiket
+                     Update Status Tiket
                 </h3>
             </div>
             <div class="card-body">

@@ -100,24 +100,51 @@ class DashboardController extends Controller
             ->groupBy('date', 'assigned_to')
             ->get();
 
+        $rawDailyTotal = (clone $query)
+            ->selectRaw("{$dateExpr} as date, COUNT(*) as total")
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
         $adminDailyMap = [];
         foreach ($rawDailyAdmin as $row) {
             $adminDailyMap[$row->assigned_to][$row->date] = (int)$row->total;
         }
 
-        $dailyDatasets = [];
+        $dailyTotalValues = [];
+        $dailyTotal14d = 0;
+        foreach ($daysRange as $d) {
+            $tVal = (int)($rawDailyTotal[$d] ?? 0);
+            $dailyTotalValues[] = $tVal;
+            $dailyTotal14d += $tVal;
+        }
+
+        $dailyDatasets = [
+            [
+                'admin_id' => 'total',
+                'label' => 'Total Semua Tiket',
+                'data' => $dailyTotalValues,
+                'borderColor' => '#1e293b',
+                'backgroundColor' => 'rgba(30, 41, 59, 0.08)',
+                'pointBackgroundColor' => '#1e293b',
+                'pointBorderColor' => '#ffffff',
+                'borderWidth' => 3,
+                'pointRadius' => 4.5,
+                'pointHoverRadius' => 7,
+                'tension' => 0.35,
+                'fill' => false,
+            ]
+        ];
         $adminDailySummary = [];
-        $dailyTotalValues = array_fill(0, count($daysRange), 0);
 
         foreach ($admins as $index => $admin) {
             $color = $adminColorLookup[$admin->id] ?? $adminColors[$index % count($adminColors)];
             $values = [];
             $total14d = 0;
-            foreach ($daysRange as $dayIdx => $d) {
+            foreach ($daysRange as $d) {
                 $cnt = $adminDailyMap[$admin->id][$d] ?? 0;
                 $values[] = $cnt;
                 $total14d += $cnt;
-                $dailyTotalValues[$dayIdx] += $cnt;
             }
 
             $dailyDatasets[] = [
@@ -313,6 +340,7 @@ class DashboardController extends Controller
             'dailyLabels',
             'dailyValues',
             'dailyDatasets',
+            'dailyTotal14d',
             'adminDailySummary',
             'monthsList',
             'currentMonth',
@@ -353,7 +381,7 @@ class DashboardController extends Controller
             $closed = (clone $query)->where('status','closed')->count();
             $cancelled = (clone $query)->where('status','cancelled')->count();
 
-            // Daily 14-day series multi-line per admin
+            // Daily 14-day series multi-line per admin + total line
             $isSqlite = DB::connection()->getDriverName() === 'sqlite';
             $dateExpr = $isSqlite ? 'date(created_at)' : 'DATE(created_at)';
             $monthExpr = $isSqlite ? 'cast(strftime(\'%m\', created_at) as integer)' : 'MONTH(created_at)';
@@ -399,24 +427,51 @@ class DashboardController extends Controller
                 ->groupBy('date', 'assigned_to')
                 ->get();
 
+            $rawDailyTotal = (clone $query)
+                ->selectRaw("{$dateExpr} as date, COUNT(*) as total")
+                ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+                ->groupBy('date')
+                ->pluck('total', 'date');
+
             $adminDailyMap = [];
             foreach ($rawDailyAdmin as $row) {
                 $adminDailyMap[$row->assigned_to][$row->date] = (int)$row->total;
             }
 
-            $dailyDatasets = [];
+            $dailyTotalValues = [];
+            $dailyTotal14d = 0;
+            foreach ($daysRange as $d) {
+                $tVal = (int)($rawDailyTotal[$d] ?? 0);
+                $dailyTotalValues[] = $tVal;
+                $dailyTotal14d += $tVal;
+            }
+
+            $dailyDatasets = [
+                [
+                    'admin_id' => 'total',
+                    'label' => 'Total Semua Tiket',
+                    'data' => $dailyTotalValues,
+                    'borderColor' => '#1e293b',
+                    'backgroundColor' => 'rgba(30, 41, 59, 0.08)',
+                    'pointBackgroundColor' => '#1e293b',
+                    'pointBorderColor' => '#ffffff',
+                    'borderWidth' => 3,
+                    'pointRadius' => 4.5,
+                    'pointHoverRadius' => 7,
+                    'tension' => 0.35,
+                    'fill' => false,
+                ]
+            ];
             $adminDailySummary = [];
-            $dailyTotalValues = array_fill(0, count($daysRange), 0);
 
             foreach ($admins as $index => $admin) {
                 $color = $adminColorLookup[$admin->id] ?? $adminColors[$index % count($adminColors)];
                 $values = [];
                 $total14d = 0;
-                foreach ($daysRange as $dayIdx => $d) {
+                foreach ($daysRange as $d) {
                     $cnt = $adminDailyMap[$admin->id][$d] ?? 0;
                     $values[] = $cnt;
                     $total14d += $cnt;
-                    $dailyTotalValues[$dayIdx] += $cnt;
                 }
 
                 $dailyDatasets[] = [
@@ -560,6 +615,7 @@ class DashboardController extends Controller
                 'daily_labels'          => $dailyLabels,
                 'daily_values'          => $dailyValues,
                 'daily_datasets'        => $dailyDatasets,
+                'daily_total_14d'       => $dailyTotal14d,
                 'admin_daily_summary'   => $adminDailySummary,
                 'monthly_labels'        => $monthlyLabels,
                 'monthly_values'        => $monthlyValues,
