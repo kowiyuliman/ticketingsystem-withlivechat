@@ -140,6 +140,7 @@
     </div>
 </div>
 
+@include('layouts.footer')
 @stop
 
 @section('js')

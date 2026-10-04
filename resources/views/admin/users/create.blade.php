@@ -77,6 +77,8 @@
     </div>
 </div>
 
+@include('layouts.footer')
+@stop
 
 @section('js')
 
@@ -102,6 +104,4 @@
             }
         }
     </script>
-@stop
-
 @stop

@@ -11,7 +11,7 @@
     </div>
     <div class="mt-2 mt-md-0">
         <button type="button" class="btn btn-primary font-weight-bold shadow-sm" data-toggle="modal" data-target="#modal-add-template">
-            <i class="fas fa-plus-circle mr-1"></i> Tambah Template Baru
+            <i class="fas fa-plus-circle mr-1"></i> Tambah
         </button>
     </div>
 </div>
@@ -183,20 +183,20 @@
                             <form action="{{ route('admin.chat-templates.toggle', $template->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-xs font-weight-bold {{ $template->is_active ? 'btn-primary' : 'btn-outline-secondary' }}" title="Klik untuk mengubah status aktif">
-                                    {{ $template->is_active ? '✓ Aktif' : 'Non-Aktif' }}
+                                    {{ $template->is_active ? 'Aktif' : 'Non-Aktif' }}
                                 </button>
                             </form>
                         </td>
                         <td class="text-center">
                             <div class="btn-group">
                                 <a href="{{ route('admin.chat-templates.edit', $template->id) }}" class="btn btn-outline-primary btn-xs font-weight-bold mr-1 shadow-2xs" title="Edit Template">
-                                    <i class="fas fa-edit mr-1"></i> Edit
+                                    <i class="fas fa-edit mr-1"></i>
                                 </a>
                                 <form action="{{ route('admin.chat-templates.destroy', $template->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus template \'{{ $template->title }}\'?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-xs font-weight-bold shadow-2xs" title="Hapus Template">
-                                        <i class="fas fa-trash-alt mr-1"></i> Hapus
+                                    <button type="submit" class="btn btn-outline-danger btn-xs font-weight-bold mr-1 shadow-2xs" title="Hapus Template">
+                                        <i class="fas fa-trash-alt mr-1"></i>
                                     </button>
                                 </form>
                             </div>
@@ -316,6 +316,7 @@
     </div>
 </div>
 
+@include('layouts.footer')
 @stop
 
 @section('js')

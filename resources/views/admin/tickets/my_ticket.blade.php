@@ -74,6 +74,7 @@
     </div>
 </div>
 
+@include('layouts.footer')
 @stop
 
 @section('css')
