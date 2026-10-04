@@ -519,6 +519,46 @@
     let currentSlashFiltered = [];
     let slashMatchInfo = null;
 
+    function getRankedTemplates(query) {
+        const q = (query || '').toLowerCase().trim();
+        if (!q) {
+            return allChatTemplates.slice(0, 8);
+        }
+
+        const scored = [];
+        allChatTemplates.forEach(tpl => {
+            const sc = (tpl.shortcut || '').toLowerCase().trim();
+            const title = (tpl.title || '').toLowerCase().trim();
+            const msg = (tpl.message || '').toLowerCase().trim();
+
+            let score = 999;
+            if (sc === q) {
+                score = 1; // Exact shortcut match (e.g. /m -> shortcut 'm')
+            } else if (sc.startsWith(q)) {
+                score = 2; // Shortcut starts with query (e.g. /m -> shortcut 'menunggu')
+            } else if (title.startsWith(q)) {
+                score = 3; // Title starts with query (e.g. /m -> title 'Menunggu...')
+            } else if (sc.includes(q)) {
+                score = 4; // Shortcut contains query
+            } else if (title.includes(q)) {
+                score = 5; // Title contains query
+            } else if (msg.includes(q)) {
+                score = 6; // Message contains query
+            }
+
+            if (score < 999) {
+                scored.push({ tpl, score, order: tpl.order_index || 0 });
+            }
+        });
+
+        scored.sort((a, b) => {
+            if (a.score !== b.score) return a.score - b.score;
+            return a.order - b.order;
+        });
+
+        return scored.map(item => item.tpl);
+    }
+
     function renderSlashTemplates(templates) {
         if (!slashList) return;
         slashList.innerHTML = '';
@@ -540,9 +580,11 @@
                 ? `<span class="badge badge-light border border-primary text-primary font-weight-bold mr-1.5" style="font-size: 10px;">/${escapeHtml(tpl.shortcut)}</span>`
                 : `<span class="badge badge-light border text-muted mr-1.5" style="font-size: 10px;">/tpl</span>`;
 
+            const tabHint = idx === 0 ? `<span class="badge badge-light border text-primary font-weight-bold ml-1" style="font-size: 9px; padding: 2px 4px;" title="Tekan Tab untuk langsung gunakan">Tab ↹</span>` : '';
+
             btn.innerHTML = `
                 <div class="text-truncate mr-2 text-left" style="max-width: 78%;">
-                    <div>${shortcutBadge}<b class="text-dark">${escapeHtml(tpl.title)}</b></div>
+                    <div>${shortcutBadge}<b class="text-dark">${escapeHtml(tpl.title)}</b>${tabHint}</div>
                     <small class="text-muted d-block text-truncate mt-0.5">${escapeHtml(tpl.message)}</small>
                 </div>
                 <span class="badge ${tpl.category_badge_class || 'badge-secondary'} text-xs font-weight-bold flex-shrink-0">${escapeHtml(tpl.category_label || 'Umum')}</span>
@@ -586,13 +628,7 @@
                 end: cursor
             };
 
-            const filtered = allChatTemplates.filter(tpl => {
-                const shortcutMatch = tpl.shortcut && tpl.shortcut.toLowerCase().includes(query);
-                const titleMatch = tpl.title && tpl.title.toLowerCase().includes(query);
-                const msgMatch = tpl.message && tpl.message.toLowerCase().includes(query);
-                return query === '' || shortcutMatch || titleMatch || msgMatch;
-            });
-
+            const filtered = getRankedTemplates(query);
             renderSlashTemplates(filtered);
             slashPopover.classList.remove('d-none');
         } else {
@@ -719,17 +755,39 @@
         });
 
         commentInput.addEventListener('keydown', function (e) {
-            const isSlashOpen = slashPopover && !slashPopover.classList.contains('d-none');
+            const cursor = commentInput.selectionStart;
+            const textBeforeCursor = commentInput.value.substring(0, cursor);
+            const slashMatch = textBeforeCursor.match(/(?:^|\s)\/([a-zA-Z0-9_-]*)$/);
 
-            // Handle Tab or Enter key for instant autocomplete insertion
-            if (isSlashOpen && (e.key === 'Tab' || e.keyCode === 9 || (e.key === 'Enter' && !e.shiftKey))) {
+            // Handle Tab or Enter key for instant autocomplete insertion when typing a slash shortcut
+            if (slashMatch && (e.key === 'Tab' || e.keyCode === 9 || (e.key === 'Enter' && !e.shiftKey))) {
+                const query = slashMatch[1].toLowerCase();
+                const startPos = textBeforeCursor.lastIndexOf('/' + slashMatch[1]);
+                slashMatchInfo = {
+                    query: query,
+                    start: startPos,
+                    end: cursor
+                };
+
+                let targetTemplate = null;
                 if (currentSlashFiltered.length > 0 && currentSlashFiltered[slashActiveIndex]) {
+                    targetTemplate = currentSlashFiltered[slashActiveIndex];
+                } else {
+                    const ranked = getRankedTemplates(query);
+                    if (ranked.length > 0) {
+                        targetTemplate = ranked[0];
+                    }
+                }
+
+                if (targetTemplate) {
                     e.preventDefault();
                     e.stopPropagation();
-                    selectSlashTemplate(currentSlashFiltered[slashActiveIndex]);
-                    return;
+                    selectSlashTemplate(targetTemplate);
+                    return false;
                 }
             }
+
+            const isSlashOpen = slashPopover && !slashPopover.classList.contains('d-none');
 
             if (isSlashOpen) {
                 if (e.key === 'ArrowDown') {
@@ -756,7 +814,7 @@
             }
 
             // Normal send message on Enter without shift
-            if (e.key === 'Enter' && !e.shiftKey && !isSlashOpen) {
+            if (e.key === 'Enter' && !e.shiftKey && !isSlashOpen && !slashMatch) {
                 e.preventDefault();
                 hideSlashPopover();
                 if (adminChatForm) {
