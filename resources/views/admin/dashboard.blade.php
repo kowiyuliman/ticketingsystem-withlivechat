@@ -348,10 +348,10 @@
                             @php
                                 $totalKategori = array_sum($kategoriValues);
                                 $kategoriMeta = [
-                                    ['key' => 'hardware', 'name' => 'Hardware', 'icon' => 'fas fa-plug', 'color' => '#0284c7', 'badge_class' => 'badge-primary', 'val' => $kategoriValues[0] ?? 0],
-                                    ['key' => 'software', 'name' => 'Software', 'icon' => 'fas fa-code', 'color' => '#f59e0b', 'badge_class' => 'badge-warning text-dark', 'val' => $kategoriValues[1] ?? 0],
-                                    ['key' => 'network',  'name' => 'Network',  'icon' => 'fas fa-wifi', 'color' => '#10b981', 'badge_class' => 'badge-success', 'val' => $kategoriValues[2] ?? 0],
-                                    ['key' => 'other',    'name' => 'Other',    'icon' => 'fas fa-question-circle', 'color' => '#64748b', 'badge_class' => 'badge-secondary', 'val' => $kategoriValues[3] ?? 0],
+                                    ['key' => 'hardware', 'name' => 'Hardware', 'color' => '#0284c7', 'badge_class' => 'badge-primary', 'val' => $kategoriValues[0] ?? 0],
+                                    ['key' => 'software', 'name' => 'Software', 'color' => '#f59e0b', 'badge_class' => 'badge-warning text-dark', 'val' => $kategoriValues[1] ?? 0],
+                                    ['key' => 'network',  'name' => 'Network',  'color' => '#10b981', 'badge_class' => 'badge-success', 'val' => $kategoriValues[2] ?? 0],
+                                    ['key' => 'other',    'name' => 'Other',    'color' => '#64748b', 'badge_class' => 'badge-secondary', 'val' => $kategoriValues[3] ?? 0],
                                 ];
                             @endphp
 
@@ -365,8 +365,7 @@
                                        title="Lihat semua tiket {{ $cat['name'] }}">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <div class="d-flex align-items-center">
-                                                <span class="d-inline-block rounded-circle mr-1.5" style="width: 9px; height: 9px; background-color: {{ $cat['color'] }};"></span>
-                                                <i class="{{ $cat['icon'] }} mr-1.5" style="color: {{ $cat['color'] }}; font-size: 12px;"></i>
+                                                <span class="d-inline-block rounded-circle mr-2" style="width: 10px; height: 10px; background-color: {{ $cat['color'] }};"></span>
                                                 <b class="text-xs font-weight-bold">{{ $cat['name'] }}</b>
                                             </div>
                                             <div>
