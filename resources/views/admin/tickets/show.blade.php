@@ -356,22 +356,29 @@
                         <input type="hidden" name="attachment_base64" id="attachment_base64">
                         <input type="file" id="attachment_file" name="attachment" accept="image/*" class="d-none" onchange="handleFileSelect(event)">
 
-                        <!-- Quick Template Pills Bar -->
+                        <!-- Quick Template Pills Bar (Only Status Categories: On Progress/Konfirmasi Remote, Pending, Closed/Selesai) -->
                         @if(isset($chatTemplates) && $chatTemplates->count() > 0)
-                            <div class="mb-2 d-flex align-items-center flex-nowrap overflow-auto py-1" style="gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin;">
-                                <span class="badge badge-light border text-secondary font-weight-bold flex-shrink-0" style="font-size: 11px; padding: 5px 8px;">
-                                     Template:
-                                </span>
-                                @foreach($chatTemplates as $tpl)
-                                    <button type="button" 
-                                            class="btn btn-xs quick-tpl-btn font-weight-bold text-nowrap shadow-2xs flex-shrink-0"
-                                            data-tpl-id="{{ $tpl->id }}"
-                                            onclick="applyChatTemplate({{ json_encode($tpl->message) }}, this)"
-                                            title="{{ $tpl->message }}">
-                                        {{ $tpl->title }}
-                                    </button>
-                                @endforeach
-                            </div>
+                            @php
+                                $statusPillTemplates = $chatTemplates->filter(function($t) {
+                                    return in_array($t->category, ['on_progress', 'pending', 'closed']);
+                                });
+                            @endphp
+                            @if($statusPillTemplates->count() > 0)
+                                <div class="mb-2 d-flex align-items-center flex-nowrap overflow-auto py-1" style="gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin;">
+                                    <span class="badge badge-light border text-secondary font-weight-bold flex-shrink-0" style="font-size: 11px; padding: 5px 8px;">
+                                         Template:
+                                    </span>
+                                    @foreach($statusPillTemplates as $tpl)
+                                        <button type="button" 
+                                                class="btn btn-xs quick-tpl-btn font-weight-bold text-nowrap shadow-2xs flex-shrink-0"
+                                                data-tpl-id="{{ $tpl->id }}"
+                                                onclick="applyChatTemplate({{ json_encode($tpl->message) }}, this)"
+                                                title="{{ $tpl->message }}">
+                                            {{ $tpl->title }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
                         @endif
 
                         <div class="d-flex align-items-end" style="gap: 10px;">
@@ -604,13 +611,44 @@
         if (!commentInput || !tpl) return;
 
         const pillBtn = document.querySelector(`.quick-tpl-btn[data-tpl-id="${tpl.id}"]`);
+        
+        // Reset all quick template buttons, highlight if matched
+        document.querySelectorAll('.quick-tpl-btn').forEach(btn => btn.classList.remove('active'));
+        if (pillBtn) {
+            pillBtn.classList.add('active');
+        }
+
+        const ticketData = {
+            user_name: @json($ticket->nama ?: 'Pengguna'),
+            nomor_laptop: @json($ticket->nomor_laptop ?: '-'),
+            ticket_code: @json($ticket->ticket_code ?: '-'),
+            admin_name: @json(auth()->user()->name ?? 'Admin IT'),
+            kategori: @json(ucfirst($ticket->kategori ?? 'General'))
+        };
+
+        let parsed = (tpl.message || '')
+            .replace(/\{user_name\}/g, ticketData.user_name)
+            .replace(/\{nomor_laptop\}/g, ticketData.nomor_laptop)
+            .replace(/\{laptop_sn\}/g, ticketData.nomor_laptop)
+            .replace(/\{ticket_code\}/g, ticketData.ticket_code)
+            .replace(/\{admin_name\}/g, ticketData.admin_name)
+            .replace(/\{kategori\}/g, ticketData.kategori);
 
         if (slashMatchInfo) {
             const fullText = commentInput.value;
-            commentInput.value = fullText.substring(0, slashMatchInfo.start) + fullText.substring(slashMatchInfo.end);
+            const before = fullText.substring(0, slashMatchInfo.start);
+            const after = fullText.substring(slashMatchInfo.end);
+            commentInput.value = before + parsed + after;
+            const newPos = before.length + parsed.length;
+            commentInput.focus();
+            commentInput.setSelectionRange(newPos, newPos);
+        } else {
+            commentInput.value = parsed;
+            commentInput.focus();
+            commentInput.setSelectionRange(commentInput.value.length, commentInput.value.length);
         }
 
-        applyChatTemplate(tpl.message, pillBtn);
+        autoResizeAdminInput();
         hideSlashPopover();
     }
 
@@ -683,6 +721,16 @@
         commentInput.addEventListener('keydown', function (e) {
             const isSlashOpen = slashPopover && !slashPopover.classList.contains('d-none');
 
+            // Handle Tab or Enter key for instant autocomplete insertion
+            if (isSlashOpen && (e.key === 'Tab' || e.keyCode === 9 || (e.key === 'Enter' && !e.shiftKey))) {
+                if (currentSlashFiltered.length > 0 && currentSlashFiltered[slashActiveIndex]) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectSlashTemplate(currentSlashFiltered[slashActiveIndex]);
+                    return;
+                }
+            }
+
             if (isSlashOpen) {
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
@@ -700,13 +748,6 @@
                     }
                     return;
                 }
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                    if (currentSlashFiltered.length > 0 && currentSlashFiltered[slashActiveIndex]) {
-                        e.preventDefault();
-                        selectSlashTemplate(currentSlashFiltered[slashActiveIndex]);
-                        return;
-                    }
-                }
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     hideSlashPopover();
@@ -714,7 +755,8 @@
                 }
             }
 
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Normal send message on Enter without shift
+            if (e.key === 'Enter' && !e.shiftKey && !isSlashOpen) {
                 e.preventDefault();
                 hideSlashPopover();
                 if (adminChatForm) {
