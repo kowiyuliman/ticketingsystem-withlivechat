@@ -326,8 +326,8 @@
 
     {{-- CHART ROW 2 --}}
     <div class="row">
-        <div class="col-lg-6 col-12 mb-3">
-            <div class="card card-outline card-warning shadow-sm">
+        <div class="col-lg-6 col-12 mb-3 d-flex">
+            <div class="card card-outline card-warning shadow-sm w-100 mb-0">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title font-weight-bold mb-0" style="float: none;">
                         Chart Kategori Kendala
@@ -395,15 +395,15 @@
             </div>
         </div>
 
-        <div class="col-lg-6 col-12 mb-3">
-            <div class="card card-outline card-info shadow-sm">
+        <div class="col-lg-6 col-12 mb-3 d-flex">
+            <div class="card card-outline card-info shadow-sm w-100 mb-0">
                 <div class="card-header">
                     <h3 class="card-title font-weight-bold">
                         Grafik Workload IT
                     </h3>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
+                    <div class="chart-container" style="position: relative; height: 210px;">
                         <canvas id="workloadChart"></canvas>
                     </div>
                 </div>
@@ -536,7 +536,8 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { precision: 0, stepSize: 1 }
+                            min: 0,
+                            ticks: { precision: 0, stepSize: 10 }
                         }
                     },
                     plugins: {
@@ -602,7 +603,8 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { precision: 0, stepSize: 1 }
+                            min: 0,
+                            ticks: { precision: 0, stepSize: 10 }
                         }
                     },
                     plugins: {
@@ -683,7 +685,8 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { precision: 0, stepSize: 1 }
+                            min: 0,
+                            ticks: { precision: 0, stepSize: 10 }
                         }
                     },
                     plugins: {
