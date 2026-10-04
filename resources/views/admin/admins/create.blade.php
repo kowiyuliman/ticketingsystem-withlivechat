@@ -5,12 +5,12 @@
 @section('content_header')
 <div class="d-flex justify-content-between align-items-center mb-2">
     <div>
-        <h1 class="m-0 font-weight-bold text-dark"><i class="fas fa-user-plus text-primary mr-2"></i>Tambah Admin Baru</h1>
+        <h1 class="m-0 font-weight-bold text-dark">Tambah Admin Baru</h1>
         <p class="text-muted text-sm mb-0">Lengkapi formulir di bawah ini untuk mendaftarkan akun administrator baru</p>
     </div>
     <div>
-        <a href="{{ route('admin.admins.index') }}" class="btn btn-secondary font-weight-bold shadow-sm">
-            <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar Admin
+        <a href="{{ route('admin.admins.index') }}" class="btn btn-primary font-weight-bold shadow-sm">
+            <i class="fas fa-arrow-left mr-1"></i>
         </a>
     </div>
 </div>
@@ -25,7 +25,7 @@
         <div class="card card-outline card-primary shadow-sm">
             <div class="card-header bg-light">
                 <h3 class="card-title font-weight-bold text-dark mb-0">
-                    <i class="fas fa-id-card text-primary mr-1"></i> Form Akun Administrator
+                    Form Akun Administrator
                 </h3>
             </div>
             
@@ -50,13 +50,13 @@
                     {{-- NAMA LENGKAP --}}
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-dark" for="name">
-                            <i class="fas fa-user text-secondary mr-1"></i> Nama Lengkap <span class="text-danger">*</span>
+                            Nama Lengkap <span class="text-danger">*</span>
                         </label>
                         <input type="text" 
                                name="name" 
                                id="name" 
                                class="form-control form-control-lg @error('name') is-invalid @enderror" 
-                               placeholder="Contoh: Budi Santoso, S.Kom" 
+                               placeholder="Contoh: Saipul" 
                                value="{{ old('name') }}" 
                                required 
                                autofocus>
@@ -69,7 +69,7 @@
                     {{-- USERNAME --}}
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-dark" for="username">
-                            <i class="fas fa-at text-secondary mr-1"></i> Username <span class="text-danger">*</span>
+                            Username <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <div class="input-group-prepend">
@@ -79,7 +79,7 @@
                                    name="username" 
                                    id="username" 
                                    class="form-control form-control-lg @error('username') is-invalid @enderror" 
-                                   placeholder="Contoh: budi.it" 
+                                   placeholder="Contoh: saipul.it" 
                                    value="{{ old('username') }}" 
                                    required 
                                    style="text-transform: lowercase;">
@@ -93,7 +93,7 @@
                     {{-- PASSWORD --}}
                     <div class="form-group mb-4">
                         <label class="font-weight-bold text-dark" for="password">
-                            <i class="fas fa-key text-secondary mr-1"></i> Password <span class="text-danger">*</span>
+                            Password <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                             <input type="password" 
@@ -117,14 +117,14 @@
                     {{-- ROLE SELECTION --}}
                     <div class="form-group mb-4">
                         <label class="font-weight-bold text-dark" for="role">
-                            <i class="fas fa-user-tag text-secondary mr-1"></i> Role Hak Akses <span class="text-danger">*</span>
+                            Role Hak Akses <span class="text-danger">*</span>
                         </label>
                         <select name="role" id="role" class="form-control form-control-lg @error('role') is-invalid @enderror" required>
                             <option value="admin" {{ old('role', 'admin') == 'admin' ? 'selected' : '' }}>
-                                🛡️ Admin / IT Support (Full Access - Kelola Tiket, Aset & Admin)
+                                Admin / IT Support (Full Access - Kelola Tiket, Aset & Admin)
                             </option>
                             <option value="management" {{ old('role') == 'management' ? 'selected' : '' }}>
-                                👔 Management / Bos (Hanya Dashboard Monitoring)
+                                Management / Bos (Hanya Dashboard Monitoring)
                             </option>
                         </select>
                         @error('role')
@@ -142,7 +142,7 @@
                         <i class="fas fa-times mr-1"></i> Batal
                     </a>
                     <button type="submit" class="btn btn-primary font-weight-bold px-4 shadow-sm">
-                        <i class="fas fa-save mr-1"></i> Simpan Akun
+                        Simpan Akun
                     </button>
                 </div>
             </form>

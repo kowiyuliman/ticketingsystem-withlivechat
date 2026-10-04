@@ -192,7 +192,7 @@
                                 </td>
                                 <td>
                                     <b>{{ $t->nama }}</b>
-                                    <div class="text-muted text-xs">💻 {{ $t->nomor_laptop }}</div>
+                                    <div class="text-muted text-xs"><i class="fas fa-laptop mr-1"></i>{{ $t->nomor_laptop }}</div>
                                 </td>
                                 <td>
                                     <span class="badge badge-warning uppercase font-weight-bold">{{ strtoupper($t->kategori ?? 'General') }}</span>
@@ -257,7 +257,7 @@
                                 @foreach($laptopStats as $item)
                                 <tr>
                                     <td class="text-center">{{ $loop->iteration }}</td>
-                                    <td><span class="badge badge-info px-2.5 py-1">💻 {{ $item['nomor_laptop'] }}</span></td>
+                                    <td><span class="badge badge-info px-2.5 py-1"><i class="fas fa-laptop mr-1"></i>{{ $item['nomor_laptop'] }}</span></td>
                                     <td><b>{{ $item['pengguna'] }}</b></td>
                                     <td>{{ $item['department'] }}</td>
                                     <td class="text-center"><b>{{ $item['total_ticket'] }}</b></td>
@@ -658,7 +658,7 @@
                         tooltip: {
                             callbacks: {
                                 afterLabel: function() {
-                                    return '👆 Klik untuk lihat daftar tiket';
+                                    return 'Klik untuk lihat daftar tiket';
                                 }
                             }
                         }
@@ -832,7 +832,7 @@
                                     <td><span class="badge badge-light border font-weight-bold">${escapeHtml(t.ticket_code)}</span></td>
                                     <td>
                                         <b>${escapeHtml(t.nama)}</b>
-                                        <div class="text-muted text-xs">💻 ${escapeHtml(t.nomor_laptop)}</div>
+                                        <div class="text-muted text-xs"><i class="fas fa-laptop mr-1"></i>${escapeHtml(t.nomor_laptop)}</div>
                                     </td>
                                     <td><span class="badge badge-warning uppercase font-weight-bold">${escapeHtml(t.kategori)}</span></td>
                                     <td><span class="text-truncate d-inline-block" style="max-width: 180px;" title="${escapeHtml(t.deskripsi)}">${escapeHtml(t.deskripsi)}</span></td>
@@ -913,8 +913,8 @@
             notif.className = 'ticket-popup';
             notif.innerHTML = `
                 <div style="font-weight:bold; color: #0284c7; display: flex; align-items: center; justify-content: space-between;">
-                    <span>📢 Tiket Baru Masuk!</span>
-                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-weight:bold;">✕</button>
+                    <span><i class="fas fa-bell mr-1"></i> Tiket Baru Masuk!</span>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-weight:bold;"><i class="fas fa-times"></i></button>
                 </div>
                 <div style="margin-top:6px; font-size: 13px; color: #334155;">
                     ${escapeHtml(message)}

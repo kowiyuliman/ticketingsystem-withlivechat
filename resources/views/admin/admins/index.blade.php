@@ -5,12 +5,12 @@
 @section('content_header')
 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
     <div>
-        <h1 class="m-0 font-weight-bold text-dark"><i class="fas fa-user-shield text-danger mr-2"></i>Management Admin</h1>
+        <h1 class="m-0 font-weight-bold text-dark"></i>Management Admin</h1>
         <p class="text-muted text-sm mb-0">Kelola akun administrator untuk operasional sistem IT Helpdesk</p>
     </div>
     <div class="mt-2 mt-md-0">
         <a href="{{ route('admin.admins.create') }}" class="btn btn-primary font-weight-bold shadow-sm">
-            <i class="fas fa-plus-circle mr-1"></i> Tambah Admin Baru
+            <i class="fas fa-plus-circle mr-1"></i> 
         </a>
     </div>
 </div>
@@ -25,7 +25,7 @@
         <div class="card card-outline card-danger shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h3 class="card-title font-weight-bold text-dark mb-0">
-                    <i class="fas fa-users-cog mr-1 text-danger"></i> Daftar Administrator Sistem
+                    Daftar Administrator Sistem
                 </h3>
                 <span class="badge badge-danger px-3 py-1 font-weight-bold ml-auto">
                     Total: {{ $admins->count() }} Admin
@@ -69,7 +69,7 @@
                                 <td class="text-center">
                                     @if($admin->role === 'admin')
                                     <span class="badge badge-danger px-2.5 py-1 text-uppercase font-weight-bold">
-                                        <i class="fas fa-shield-alt mr-1"></i> Admin
+                                         Admin
                                     </span>
                                     @elseif($admin->role === 'management')
                                     <span class="badge badge-dark px-2.5 py-1 text-uppercase font-weight-bold" style="background-color: #343a40;">
