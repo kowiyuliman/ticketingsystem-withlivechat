@@ -11,6 +11,36 @@
 </footer>
 
 <style>
+/* Sticky Footer Support: Memastikan footer selalu berada di dasar layar meski konten/tabel kosong */
+html, body {
+    height: 100%;
+}
+
+.wrapper {
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.content-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+}
+
+.content-wrapper > .content {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.content-wrapper > .content > .container-fluid,
+.content-wrapper > .content > .container {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
 /* Footer Utama MPTB */
 .mptb-footer {
     width: 100%;
@@ -26,7 +56,7 @@
     border-radius: 6px;
     color: #6c757d;
     font-size: 13px;
-    margin-top: 25px;
+    margin-top: auto !important; /* Mendorong footer ke bagian paling bawah */
     margin-bottom: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     box-sizing: border-box;
@@ -90,7 +120,7 @@
     .mptb-footer {
         font-size: 11.5px;
         padding: 12px 8px;
-        margin-top: 15px;
+        margin-top: auto !important;
     }
 
     .footer-version {
