@@ -108,6 +108,17 @@
         transform: none !important;
         opacity: 0.65;
     }
+
+    /* Category Breakdown List Hover */
+    .hover-kategori-row {
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .hover-kategori-row:hover {
+        background-color: #f0f7ff !important;
+        border-color: #b8daff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(2, 132, 199, 0.12) !important;
+    }
 </style>
 @stop
 
@@ -324,8 +335,62 @@
                     <small class="text-muted ml-auto font-weight-normal"><i class="fas fa-hand-pointer mr-1"></i> Klik kategori untuk detail</small>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="kategoriChart"></canvas>
+                    <div class="row align-items-center">
+                        {{-- SISI KIRI: DOUGHNUT CHART --}}
+                        <div class="col-sm-6 col-12 mb-3 mb-sm-0">
+                            <div class="chart-container" style="position: relative; height: 210px;">
+                                <canvas id="kategoriChart"></canvas>
+                            </div>
+                        </div>
+
+                        {{-- SISI KANAN: LIST PERSENTASE & JUMLAH PER KATEGORI --}}
+                        <div class="col-sm-6 col-12">
+                            @php
+                                $totalKategori = array_sum($kategoriValues);
+                                $kategoriMeta = [
+                                    ['key' => 'hardware', 'name' => 'Hardware', 'icon' => 'fas fa-plug', 'color' => '#0284c7', 'badge_class' => 'badge-primary', 'val' => $kategoriValues[0] ?? 0],
+                                    ['key' => 'software', 'name' => 'Software', 'icon' => 'fas fa-code', 'color' => '#f59e0b', 'badge_class' => 'badge-warning text-dark', 'val' => $kategoriValues[1] ?? 0],
+                                    ['key' => 'network',  'name' => 'Network',  'icon' => 'fas fa-wifi', 'color' => '#10b981', 'badge_class' => 'badge-success', 'val' => $kategoriValues[2] ?? 0],
+                                    ['key' => 'other',    'name' => 'Other',    'icon' => 'fas fa-question-circle', 'color' => '#64748b', 'badge_class' => 'badge-secondary', 'val' => $kategoriValues[3] ?? 0],
+                                ];
+                            @endphp
+
+                            <div class="d-flex flex-column gap-2" id="kategori-stats-list">
+                                @foreach($kategoriMeta as $cat)
+                                    @php
+                                        $pct = $totalKategori > 0 ? round(($cat['val'] / $totalKategori) * 100, 1) : 0;
+                                    @endphp
+                                    <a href="{{ url('/admin/tickets/category/' . $cat['key']) }}" 
+                                       class="text-decoration-none text-dark p-2 rounded border bg-light d-block hover-kategori-row mb-1.5"
+                                       title="Lihat semua tiket {{ $cat['name'] }}">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="d-flex align-items-center">
+                                                <span class="d-inline-block rounded-circle mr-1.5" style="width: 9px; height: 9px; background-color: {{ $cat['color'] }};"></span>
+                                                <i class="{{ $cat['icon'] }} mr-1.5" style="color: {{ $cat['color'] }}; font-size: 12px;"></i>
+                                                <b class="text-xs font-weight-bold">{{ $cat['name'] }}</b>
+                                            </div>
+                                            <div>
+                                                <span class="font-weight-bold text-dark text-xs mr-1" id="cat-count-{{ $cat['key'] }}">{{ $cat['val'] }}</span>
+                                                <span class="badge {{ $cat['badge_class'] }} font-weight-bold" style="font-size: 10px;" id="cat-pct-{{ $cat['key'] }}">{{ $pct }}%</span>
+                                            </div>
+                                        </div>
+                                        <div class="progress" style="height: 4px; border-radius: 3px; background-color: #e2e8f0;">
+                                            <div class="progress-bar" id="cat-bar-{{ $cat['key'] }}" role="progressbar" 
+                                                 style="width: {{ $pct }}%; background-color: {{ $cat['color'] }};" 
+                                                 aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            </div>
+
+                            {{-- TOTAL SUMMARY FOOTER --}}
+                            <div class="d-flex justify-content-between align-items-center pt-1.5 px-1 border-top mt-1">
+                                <span class="text-xs font-weight-bold text-muted uppercase">Total:</span>
+                                <span class="text-xs font-weight-bold text-dark badge badge-light border px-2 py-0.5" id="cat-total-summary">
+                                    <b>{{ $totalKategori }} Tiket (100%)</b>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -553,7 +618,7 @@
                         }
                     },
                     plugins: {
-                        legend: { position: 'bottom' },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 afterLabel: function() {
@@ -648,6 +713,32 @@
                     kategoriChart.data.labels = data.kategori_labels;
                     kategoriChart.data.datasets[0].data = data.kategori_values;
                     kategoriChart.update('none');
+
+                    // Update Side Breakdown List (Counts, Percentages, Progress Bars)
+                    const catKeys = ['hardware', 'software', 'network', 'other'];
+                    const vals = data.kategori_values.map(v => parseInt(v) || 0);
+                    const totalCat = vals.reduce((a, b) => a + b, 0);
+
+                    catKeys.forEach((key, idx) => {
+                        const val = vals[idx] || 0;
+                        const pct = totalCat > 0 ? ((val / totalCat) * 100).toFixed(1) : 0;
+                        
+                        const countEl = document.getElementById(`cat-count-${key}`);
+                        const pctEl = document.getElementById(`cat-pct-${key}`);
+                        const barEl = document.getElementById(`cat-bar-${key}`);
+
+                        if (countEl) countEl.textContent = val;
+                        if (pctEl) pctEl.textContent = `${pct}%`;
+                        if (barEl) {
+                            barEl.style.width = `${pct}%`;
+                            barEl.setAttribute('aria-valuenow', pct);
+                        }
+                    });
+
+                    const totalSumEl = document.getElementById('cat-total-summary');
+                    if (totalSumEl) {
+                        totalSumEl.innerHTML = `<b>${totalCat} Tiket (100%)</b>`;
+                    }
                 }
 
                 if (workloadChart && data.workload_labels && data.workload_values) {
