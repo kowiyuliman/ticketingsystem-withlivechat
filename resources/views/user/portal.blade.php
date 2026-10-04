@@ -31,7 +31,7 @@
         .tab-underline-inactive {
             color: #64748b !important;
             border-bottom: 2px solid transparent !important;
-            font-weight: 500 !important;
+            font-weight: 700 !important;
         }
         .tab-underline-inactive:hover {
             color: #0f172a !important;
@@ -79,39 +79,33 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <div class="hidden sm:flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                <div class="flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
                     <span class="w-2 h-2 rounded-full {{ $detection['is_detected'] ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
-                    <span class="font-medium text-slate-700">{{ $detection['nama_user'] ?: 'Pengguna' }}</span>
+                    <span class="font-bold text-slate-700">{{ $detection['nama_user'] ?: 'Pengguna' }}</span>
                 </div>
-                @auth
-                    <a href="{{ url('/admin/dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-                        <i class="fas fa-shield-alt mr-1"></i> Dashboard Admin
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">
-                        Login IT &rarr;
-                    </a>
-                @endauth
+                <a href="{{ route('login') }}" class="w-9 h-9 rounded-lg bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center font-bold text-base shadow-sm transition-colors" title="Lapor IT / Login Admin">
+                    <i class="fas fa-headset"></i>
+                </a>
             </div>
         </div>
 
-        {{-- 2. UNDERLINE NAVIGATION TABS (OPSI 1) --}}
+        {{-- 2. UNDERLINE NAVIGATION TABS (CENTERED & BOLD) --}}
         @php $activeTab = request('tab', 'create'); @endphp
         <div class="border-t border-slate-100 bg-white">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 flex space-x-8 overflow-x-auto">
-                <button type="button" onclick="switchTab('create')" id="tab-create" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'create' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 flex justify-center space-x-6 sm:space-x-10 overflow-x-auto">
+                <button type="button" onclick="switchTab('create')" id="tab-create" class="py-3 px-2 text-sm sm:text-base font-bold transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'create' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
                     <span>Laporkan Kendala</span>
                 </button>
-                <button type="button" onclick="switchTab('history')" id="tab-history" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'history' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+                <button type="button" onclick="switchTab('history')" id="tab-history" class="py-3 px-2 text-sm sm:text-base font-bold transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'history' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
                     <span>Tiket Saya</span>
-                    <span class="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-slate-200">
+                    <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2 py-0.5 rounded-full border border-slate-200">
                         {{ $tickets->count() }}
                     </span>
                 </button>
-                <button type="button" onclick="switchTab('assets')" id="tab-assets" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'assets' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+                <button type="button" onclick="switchTab('assets')" id="tab-assets" class="py-3 px-2 text-sm sm:text-base font-bold transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'assets' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
                     <span>Perangkat Saya</span>
                     @if($myAssets->isNotEmpty())
-                        <span class="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-slate-200">
+                        <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2 py-0.5 rounded-full border border-slate-200">
                             {{ $myAssets->count() }}
                         </span>
                     @endif
@@ -606,12 +600,12 @@
                 if (v === tab) {
                     if (el) el.classList.remove('hidden');
                     if (btn) {
-                        btn.className = "py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 tab-underline-active";
+                        btn.className = "py-3 px-2 text-sm sm:text-base font-bold transition-all whitespace-nowrap flex items-center gap-2 tab-underline-active";
                     }
                 } else {
                     if (el) el.classList.add('hidden');
                     if (btn) {
-                        btn.className = "py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 tab-underline-inactive";
+                        btn.className = "py-3 px-2 text-sm sm:text-base font-bold transition-all whitespace-nowrap flex items-center gap-2 tab-underline-inactive";
                     }
                 }
             });
