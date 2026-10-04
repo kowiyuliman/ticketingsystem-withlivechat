@@ -383,12 +383,12 @@
                             </div>
 
                             {{-- TOTAL SUMMARY FOOTER --}}
-                            <div class="d-flex justify-content-between align-items-center pt-1.5 px-1 border-top mt-1">
+                            <!-- <div class="d-flex justify-content-between align-items-center pt-1.5 px-1 border-top mt-1">
                                 <span class="text-xs font-weight-bold text-muted uppercase">Total:</span>
                                 <span class="text-xs font-weight-bold text-dark badge badge-light border px-2 py-0.5" id="cat-total-summary">
                                     <b>{{ $totalKategori }} Tiket (100%)</b>
                                 </span>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -553,17 +553,46 @@
             }
         );
 
+        const monthlyColorPalette = [
+            '#0284c7', // Jan - Sky Blue
+            '#3b82f6', // Feb - Royal Blue
+            '#6366f1', // Mar - Indigo
+            '#8b5cf6', // Apr - Violet
+            '#a855f7', // Mei - Purple
+            '#d946ef', // Jun - Fuchsia
+            '#ec4899', // Jul - Pink
+            '#f43f5e', // Agu - Rose
+            '#f97316', // Sep - Orange
+            '#eab308', // Okt - Amber
+            '#10b981', // Nov - Emerald
+            '#14b8a6'  // Des - Teal
+        ];
+
+        const workloadColorPalette = [
+            '#0284c7', // Sky Blue
+            '#10b981', // Emerald
+            '#f59e0b', // Amber
+            '#8b5cf6', // Violet
+            '#ec4899', // Pink
+            '#14b8a6', // Teal
+            '#6366f1', // Indigo
+            '#f97316', // Orange
+            '#06b6d4', // Cyan
+            '#84cc16'  // Lime
+        ];
+
         // MONTHLY CHART
+        const monthlyLabelsData = {!! json_encode($monthlyLabels) !!};
         monthlyChart = new Chart(
             document.getElementById('monthlyChart'),
             {
                 type: 'bar',
                 data: {
-                    labels: {!! json_encode($monthlyLabels) !!},
+                    labels: monthlyLabelsData,
                     datasets: [{
                         label: 'Tiket Bulanan',
                         data: {!! json_encode($monthlyValues) !!},
-                        backgroundColor: '#10b981',
+                        backgroundColor: monthlyLabelsData.map((_, i) => monthlyColorPalette[i % monthlyColorPalette.length]),
                         borderRadius: 6
                     }]
                 },
@@ -575,6 +604,9 @@
                             beginAtZero: true,
                             ticks: { precision: 0, stepSize: 1 }
                         }
+                    },
+                    plugins: {
+                        legend: { display: false }
                     }
                 }
             }
@@ -631,16 +663,17 @@
         );
 
         // WORKLOAD CHART
+        const techLabelsData = {!! json_encode($technicianWorkload->map(fn($t) => $t->technician?->name ?? 'IT')) !!};
         workloadChart = new Chart(
             document.getElementById('workloadChart'),
             {
                 type: 'bar',
                 data: {
-                    labels: {!! json_encode($technicianWorkload->map(fn($t) => $t->technician?->name ?? 'IT')) !!},
+                    labels: techLabelsData,
                     datasets: [{
                         label: 'Jumlah Tiket',
                         data: {!! json_encode($technicianWorkload->pluck('total_ticket')) !!},
-                        backgroundColor: '#0284c7',
+                        backgroundColor: techLabelsData.map((_, i) => workloadColorPalette[i % workloadColorPalette.length]),
                         borderRadius: 6
                     }]
                 },
@@ -652,6 +685,9 @@
                             beginAtZero: true,
                             ticks: { precision: 0, stepSize: 1 }
                         }
+                    },
+                    plugins: {
+                        legend: { display: false }
                     }
                 }
             }
@@ -705,6 +741,7 @@
                 if (monthlyChart && data.monthly_labels && data.monthly_values) {
                     monthlyChart.data.labels = data.monthly_labels;
                     monthlyChart.data.datasets[0].data = data.monthly_values;
+                    monthlyChart.data.datasets[0].backgroundColor = data.monthly_labels.map((_, i) => monthlyColorPalette[i % monthlyColorPalette.length]);
                     monthlyChart.update('none');
                 }
 
@@ -743,6 +780,7 @@
                 if (workloadChart && data.workload_labels && data.workload_values) {
                     workloadChart.data.labels = data.workload_labels;
                     workloadChart.data.datasets[0].data = data.workload_values;
+                    workloadChart.data.datasets[0].backgroundColor = data.workload_labels.map((_, i) => workloadColorPalette[i % workloadColorPalette.length]);
                     workloadChart.update('none');
                 }
 
