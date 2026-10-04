@@ -3,257 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lapor IT Portal - MPTB Management</title>
+    <title>Lapor IT - Layanan Pengaduan Kendala IT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .sky-gradient-bg {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #f8fafc;
         }
-        .sky-btn {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            box-shadow: 0 4px 14px 0 rgba(2, 132, 199, 0.35);
+        .btn-primary-saas {
+            background-color: #0284c7;
+            transition: all 0.2s ease-in-out;
         }
-        .sky-btn:hover {
-            background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-            box-shadow: 0 6px 20px 0 rgba(2, 132, 199, 0.45);
+        .btn-primary-saas:hover:not(:disabled) {
+            background-color: #0369a1;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+        }
+        .btn-primary-saas:active:not(:disabled) {
+            transform: scale(0.99);
+        }
+        .tab-underline-active {
+            color: #0284c7 !important;
+            border-bottom: 2px solid #0284c7 !important;
+            font-weight: 700 !important;
+        }
+        .tab-underline-inactive {
+            color: #64748b !important;
+            border-bottom: 2px solid transparent !important;
+            font-weight: 500 !important;
+        }
+        .tab-underline-inactive:hover {
+            color: #0f172a !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+        }
+        .category-card-active {
+            border-color: #0284c7 !important;
+            background-color: #f0f9ff !important;
+            color: #0369a1 !important;
+            box-shadow: 0 0 0 1px #0284c7 !important;
+            font-weight: 700 !important;
+        }
+        .category-card-inactive {
+            border-color: #e2e8f0 !important;
+            background-color: #ffffff !important;
+            color: #334155 !important;
+        }
+        .category-card-inactive:hover {
+            border-color: #cbd5e1 !important;
+            background-color: #f8fafc !important;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-16">
+<body class="min-h-screen flex flex-col text-slate-800 antialiased">
 
-    <!-- Navbar -->
-    <header class="bg-white border-b border-sky-100 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    {{-- 1. HEADER UTAMA --}}
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <a href="{{ route('login') }}" class="flex items-center space-x-3 hover:opacity-90 transition-opacity" title="Login Admin">
-                    <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-sky-200">
-                        🛠️
+                <a href="{{ url('/') }}" class="flex items-center space-x-3 group">
+                    <div class="w-9 h-9 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                        <i class="fas fa-headset"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-none">Lapor IT</h1>
-                        <p class="text-xs text-sky-600 font-medium">
-                            @if(!empty($detection['hostname']))
-                                {{ $detection['hostname'] }} • {{ $detection['nama_user'] }}
+                        <div class="font-bold text-base text-slate-900 leading-tight tracking-tight">Lapor IT</div>
+                        <div class="text-xs text-slate-500 font-medium">
+                            @if(!empty($detection['hostname']) && !in_array($detection['hostname'], ['BELUM DIPILIH', 'BELUM TERDETEKSI', 'LAP-UNKNOWN']))
+                                {{ $detection['hostname'] }} &bull; {{ $detection['nama_user'] }}
                             @else
                                 Portal Pengaduan Kendala IT
                             @endif
-                        </p>
+                        </div>
                     </div>
                 </a>
             </div>
 
-            <!-- <div class="flex items-center space-x-2">
-                <button type="button" onclick="openLaptopModal()" class="bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
-                    <span>💻</span>
-                    <span>{{ $detection['hostname'] ?: 'Pilih Laptop' }}</span>
-                </button> -->
+            <div class="flex items-center space-x-3">
+                <div class="hidden sm:flex items-center space-x-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                    <span class="w-2 h-2 rounded-full {{ $detection['is_detected'] ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                    <span class="font-medium text-slate-700">{{ $detection['nama_user'] ?: 'Pengguna' }}</span>
+                </div>
                 @auth
-                    <a href="{{ url('/admin/dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
-                        Dashboard Admin
+                    <a href="{{ url('/admin/dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+                        <i class="fas fa-shield-alt mr-1"></i> Dashboard Admin
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+                        Login IT &rarr;
                     </a>
                 @endauth
             </div>
         </div>
-    </header>
 
-    <!-- Main Container -->
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-
-        <!-- Floating Toast Notifications -->
-        @include('partials.floating_toast')
-
-        <!-- Navigation Tabs -->
+        {{-- 2. UNDERLINE NAVIGATION TABS (OPSI 1) --}}
         @php $activeTab = request('tab', 'create'); @endphp
-        <div class="flex justify-center mb-6">
-            <div class="bg-sky-100/70 p-1.5 rounded-2xl flex items-center justify-center space-x-1 sm:space-x-2 border border-sky-200/60 overflow-x-auto w-full sm:w-auto max-w-xl">
-                <button onclick="switchTab('create')" id="tab-create" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $activeTab == 'create' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-sky-700' }} flex items-center justify-center gap-2">
-                    <span>📝 Buat Laporan</span>
+        <div class="border-t border-slate-100 bg-white">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 flex space-x-8 overflow-x-auto">
+                <button type="button" onclick="switchTab('create')" id="tab-create" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'create' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+                    <span>Laporkan Kendala</span>
                 </button>
-                <button onclick="switchTab('history')" id="tab-history" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $activeTab == 'history' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-sky-700' }} flex items-center justify-center gap-2">
-                    <span>📋 Tiket Saya</span>
-                    <span class="bg-sky-200 text-sky-800 text-[10px] px-2 py-0.5 rounded-full">{{ $tickets->count() }}</span>
+                <button type="button" onclick="switchTab('history')" id="tab-history" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'history' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+                    <span>Tiket Saya</span>
+                    <span class="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-slate-200">
+                        {{ $tickets->count() }}
+                    </span>
                 </button>
-                <button onclick="switchTab('assets')" id="tab-assets" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $activeTab == 'assets' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-sky-700' }} flex items-center justify-center gap-2">
-                    <span>💻 Perangkat Saya</span>
+                <button type="button" onclick="switchTab('assets')" id="tab-assets" class="py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 {{ $activeTab == 'assets' ? 'tab-underline-active' : 'tab-underline-inactive' }}">
+                    <span>Perangkat Saya</span>
                     @if($myAssets->isNotEmpty())
-                        <span class="bg-sky-200 text-sky-800 text-[10px] px-2 py-0.5 rounded-full">{{ $myAssets->count() }}</span>
+                        <span class="bg-slate-100 text-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-slate-200">
+                            {{ $myAssets->count() }}
+                        </span>
                     @endif
                 </button>
             </div>
         </div>
+    </header>
 
-        <!-- TAB 1: FORM PENGADUAN INSTANT -->
+    {{-- MAIN CONTAINER --}}
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-12 flex-1 w-full">
+
+        <!-- Floating Toast Notifications -->
+        @include('partials.floating_toast')
+
+        {{-- TAB 1: FORM PENGADUAN INSTANT --}}
         <div id="view-create" class="{{ $activeTab == 'create' ? '' : 'hidden' }} max-w-3xl mx-auto">
             
-            <div class="sky-gradient-bg rounded-3xl p-6 sm:p-8 mb-6 border border-sky-200/70 shadow-2xs relative overflow-hidden">
-                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">Ada Kendala Apa Hari Ini?</h2>
-                <!-- <p class="text-xs sm:text-xl text-slate-600 font-medium font-bold">Pilih kategori dan ceritakan kendala anda </p> -->
-                <p class="text-xs sm:text-sm text-slate-600 font-small">Penting ojo curhat :)</p>
+            {{-- HERO / INTRODUCTION --}}
+            <div class="mb-6">
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                    Laporkan Kendala IT
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                    Sampaikan kendala yang Anda alami kepada tim IT. Kami akan segera menindaklanjuti laporan Anda.
+                </p>
             </div>
 
-            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
-                
-                @if($detection['is_detected'])
-                    <!-- Info Summary Card (Terdeteksi Otomatis / Terpilih) -->
-                    <div class="mb-6 p-4 bg-sky-50/60 rounded-2xl border border-sky-100">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span class="text-xs font-extrabold text-slate-700">Perangkat Terdeteksi di Database Inventaris</span>
-                            </div>
-                            <button type="button" onclick="openLaptopModal()" class="text-xs font-bold text-sky-600 hover:text-sky-800 bg-white hover:bg-sky-100 border border-sky-200 px-3 py-1 rounded-xl transition-all shadow-2xs">
-                                Ganti / Pilih Laptop
-                            </button>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div class="bg-white p-3 rounded-xl border border-sky-100">
-                                <span class="text-[11px] text-slate-400 font-medium block">Nomor Laptop</span>
-                                <span class="font-extrabold text-slate-800 text-xs">💻 {{ $detection['hostname'] }}</span>
-                            </div>
-                            <div class="bg-white p-3 rounded-xl border border-sky-100">
-                                <span class="text-[11px] text-slate-400 font-medium block">Nama Pemilik</span>
-                                <span class="font-extrabold text-slate-800 text-xs">👤 {{ $detection['nama_user'] }}</span>
-                            </div>
-                            <div class="bg-white p-3 rounded-xl border border-sky-100">
-                                <span class="text-[11px] text-slate-400 font-medium block">IP Address (Kabel/LAN)</span>
-                                <span class="font-extrabold text-slate-800 text-xs">🌐 {{ $detection['ip_address'] }}</span>
-                            </div>
-                        </div>
+            {{-- INFORMASI PERANGKAT (SINGLE HORIZONTAL CONTAINER) --}}
+            <div class="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 mb-6 shadow-2xs">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full {{ $detection['is_detected'] ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                        <h2 class="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            Informasi Perangkat Anda
+                        </h2>
                     </div>
-                @else
-                    <!-- Alert Card Jika Belum Terdeteksi Otomatis -->
-                    <div class="mb-6 p-4 bg-amber-50/90 rounded-2xl border border-amber-200">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-sm flex-shrink-0">
-                                    ⚠️
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-xs sm:text-sm text-amber-900">Nomor Laptop Belum Terdeteksi Otomatis</h4>
-                                    <p class="text-[11px] text-amber-700">Silakan pilih nomor laptop Anda agar sistem mencocokkan dengan data pemilik & riwayat pengaduan.</p>
-                                </div>
-                            </div>
-                            <button type="button" onclick="openLaptopModal()" class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 flex-shrink-0">
-                                <span>🔍</span>
-                                <span>Pilih Nomor Laptop</span>
-                            </button>
-                        </div>
-                    </div>
-                @endif
+                    <button type="button" onclick="openLaptopModal()" class="text-xs font-semibold text-sky-600 hover:text-sky-800 transition-colors inline-flex items-center gap-1">
+                        <i class="fas fa-sync-alt text-[10px]"></i> Ganti Perangkat
+                    </button>
+                </div>
 
-                <form action="{{ route('ticket.store') }}" method="POST" onsubmit="return handleFormSubmit(this)">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <div class="text-xs text-slate-400 font-medium mb-0.5">Nomor Laptop</div>
+                        <div class="text-sm font-bold text-slate-900">
+                            {{ $detection['hostname'] ?: 'Belum Terdeteksi' }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 font-medium mb-0.5">Nama Pemilik</div>
+                        <div class="text-sm font-bold text-slate-900 truncate" title="{{ $detection['nama_user'] }}">
+                            {{ $detection['nama_user'] ?: '-' }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400 font-medium mb-0.5">IP Address</div>
+                        <div class="text-sm font-bold text-slate-900 font-mono">
+                            {{ $detection['ip_address'] ?: '-' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- FORM UTAMA PENGADUAN --}}
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <form action="{{ route('ticket.store') }}" method="POST" id="main-ticket-form" onsubmit="return handleFormSubmit(this)">
                     @csrf
                     
                     <input type="hidden" name="nomor_laptop" value="{{ $detection['hostname'] }}">
                     <input type="hidden" name="ip_address" value="{{ $detection['ip_address'] }}">
                     <input type="hidden" name="nama" value="{{ $detection['nama_user'] }}">
 
-                    <!-- Category Selector -->
+                    {{-- KATEGORI KENDALA --}}
                     <div class="mb-6">
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                            Kategori Kendala <span class="text-rose-500">* (Wajib Pilih)</span>
+                        <label class="block text-sm font-bold text-slate-900 mb-1">
+                            Kategori Kendala <span class="text-rose-500">*</span>
                         </label>
+                        <p class="text-xs text-slate-500 mb-3">
+                            Pilih kategori yang sesuai dengan kendala yang Anda alami.
+                        </p>
+                        
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="category-container">
-                            <label onclick="selectCategory(this)" class="kat-card border border-slate-200 hover:border-sky-300 bg-white p-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02]">
+                            {{-- HARDWARE --}}
+                            <label onclick="selectCategory(this)" class="kat-card category-card-inactive border rounded-xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-center">
                                 <input type="radio" name="kategori" value="hardware" class="sr-only">
-                                <span class="text-2xl mb-1">🔌</span>
-                                <span class="text-xs font-bold text-slate-700 kat-label">Hardware</span>
+                                <span class="text-sm font-medium kat-label">Hardware</span>
                             </label>
-                            <label onclick="selectCategory(this)" class="kat-card border border-slate-200 hover:border-sky-300 bg-white p-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02]">
+                            
+                            {{-- SOFTWARE --}}
+                            <label onclick="selectCategory(this)" class="kat-card category-card-inactive border rounded-xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-center">
                                 <input type="radio" name="kategori" value="software" class="sr-only">
-                                <span class="text-2xl mb-1">💻</span>
-                                <span class="text-xs font-bold text-slate-700 kat-label">Software</span>
+                                <span class="text-sm font-medium kat-label">Software</span>
                             </label>
-                            <label onclick="selectCategory(this)" class="kat-card border border-slate-200 hover:border-sky-300 bg-white p-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02]">
+                            
+                            {{-- NETWORK --}}
+                            <label onclick="selectCategory(this)" class="kat-card category-card-inactive border rounded-xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-center">
                                 <input type="radio" name="kategori" value="network" class="sr-only">
-                                <span class="text-2xl mb-1">🌐</span>
-                                <span class="text-xs font-bold text-slate-700 kat-label">Network</span>
+                                <span class="text-sm font-medium kat-label">Network</span>
                             </label>
-                            <label onclick="selectCategory(this)" class="kat-card border border-slate-200 hover:border-sky-300 bg-white p-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.02]">
+                            
+                            {{-- LAINNYA --}}
+                            <label onclick="selectCategory(this)" class="kat-card category-card-inactive border rounded-xl p-3.5 text-center cursor-pointer transition-all flex items-center justify-center">
                                 <input type="radio" name="kategori" value="other" class="sr-only">
-                                <span class="text-2xl mb-1">❓</span>
-                                <span class="text-xs font-bold text-slate-700 kat-label">Other</span>
+                                <span class="text-sm font-medium kat-label">Lainnya</span>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Description -->
-                    <div class="mb-8">
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ceritakan Kendala Anda <span class="text-rose-500">* (Wajib Isi)</span></label>
-                        <textarea name="deskripsi" id="ticket-deskripsi" rows="4" required class="w-full p-4 rounded-2xl border border-sky-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400" 
-                        placeholder="Contoh: Layar monitor laptop bergaris / microsip tidak bisa berdering / buka extensi chrome..."></textarea>
+                    {{-- DESKRIPSI KENDALA --}}
+                    <div class="mb-6">
+                        <label for="ticket-deskripsi" class="block text-sm font-bold text-slate-900 mb-1">
+                            Deskripsi Kendala <span class="text-rose-500">*</span>
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2.5">
+                            Jelaskan secara detail kendala yang Anda alami. Semakin jelas informasinya, semakin cepat kami membantu.
+                        </p>
+                        
+                        <textarea 
+                            name="deskripsi" 
+                            id="ticket-deskripsi" 
+                            rows="5" 
+                            maxlength="1000"
+                            required 
+                            class="w-full p-4 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400" 
+                            placeholder="Contoh: Laptop tidak dapat terhubung ke jaringan Wi-Fi, muncul pesan error saat membuka aplikasi, atau kendala lainnya..."></textarea>
+                        
+                        <div class="flex justify-end mt-1.5 text-xs text-slate-400">
+                            <span id="char-counter">0</span>/1000
+                        </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" id="btn-submit" disabled class="w-full sky-btn text-white py-3.5 rounded-2xl font-bold text-sm tracking-wide transition-all flex items-center justify-center space-x-2 opacity-50 cursor-not-allowed">
-                        <span id="btn-text">Kirim Laporan Kendala Sekarang</span>
+                    {{-- SUBMIT BUTTON (SATU TOMBOL SAJA) --}}
+                    <button type="submit" id="btn-submit" disabled class="w-full btn-primary-saas text-white py-3.5 px-6 rounded-xl font-semibold text-sm tracking-wide transition-all flex items-center justify-center space-x-2 opacity-50 cursor-not-allowed">
+                        <span id="btn-text">Kirim Laporan</span>
+                        <span id="btn-spinner" class="hidden">
+                            <i class="fas fa-circle-notch fa-spin mr-2"></i> Mengirim Laporan...
+                        </span>
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- TAB 2: TIKET SAYA & STATUS -->
+        {{-- TAB 2: TIKET SAYA & STATUS --}}
         <div id="view-history" class="{{ $activeTab == 'history' ? '' : 'hidden' }} max-w-4xl mx-auto">
-            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
-                <div class="flex items-center justify-between mb-6">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/90">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                     <div>
-                        <h2 class="text-xl font-extrabold text-slate-900">Riwayat Pengaduan Saya</h2>
-                        <p class="text-xs text-slate-500">Daftar tiket yang terdaftar untuk laptop {{ $detection['hostname'] }}</p>
+                        <h2 class="text-lg font-bold text-slate-900">Riwayat Pengaduan Saya</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Daftar tiket yang terdaftar untuk laptop {{ $detection['hostname'] }}</p>
                     </div>
-                    <button type="button" onclick="switchTab('create')" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
-                        <span>➕</span>
-                        <span>Buat Tiket Baru</span>
+                    <button type="button" onclick="switchTab('create')" class="btn-primary-saas text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-2xs transition-all flex items-center gap-1.5">
+                        <i class="fas fa-plus text-[10px]"></i> Buat Laporan Baru
                     </button>
                 </div>
 
                 @if($tickets->isEmpty())
-                    <div class="text-center py-12 border-2 border-dashed border-sky-100 rounded-2xl bg-sky-50/20">
-                        <span class="text-4xl block mb-2">📋</span>
-                        <p class="text-sm font-bold text-slate-700 mb-1">Belum Ada Pengaduan</p>
-                        <p class="text-xs text-slate-400 mb-4">Semua sistem laptop {{ $detection['hostname'] }} berjalan lancar.</p>
-                        <button type="button" onclick="switchTab('create')" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all">
+                    <div class="text-center py-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                        <i class="fas fa-clipboard-check text-3xl text-slate-300 mb-2 block"></i>
+                        <p class="text-sm font-semibold text-slate-700 mb-1">Belum Ada Pengaduan</p>
+                        <p class="text-xs text-slate-400 mb-4">Semua sistem laptop {{ $detection['hostname'] }} berjalan normal tanpa kendala aktif.</p>
+                        <button type="button" onclick="switchTab('create')" class="btn-primary-saas text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-2xs transition-all">
                             Buat Pengaduan Pertama
                         </button>
                     </div>
                 @else
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         @foreach($tickets as $t)
-                            <a href="{{ route('ticket.show', $t->id) }}" class="block p-5 rounded-2xl border border-sky-100 hover:border-sky-300 bg-sky-50/30 hover:bg-sky-50 transition-all shadow-2xs">
+                            <a href="{{ route('ticket.show', $t->id) }}" class="block p-4 sm:p-5 rounded-xl border border-slate-200 hover:border-sky-300 bg-white hover:bg-slate-50/60 transition-all shadow-2xs group">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg flex-shrink-0">
-                                            @if($t->kategori == 'hardware') 🔌 @elseif($t->kategori == 'software') 💻 @elseif($t->kategori == 'network') 🌐 @else ❓ @endif
+                                    <div class="flex items-start space-x-3.5">
+                                        <div class="w-9 h-9 rounded-lg bg-slate-100 group-hover:bg-sky-50 text-slate-600 group-hover:text-sky-600 flex items-center justify-center font-bold text-sm flex-shrink-0 transition-colors">
+                                            @if($t->kategori == 'hardware') <i class="fas fa-microchip"></i>
+                                            @elseif($t->kategori == 'software') <i class="fas fa-code"></i>
+                                            @elseif($t->kategori == 'network') <i class="fas fa-wifi"></i>
+                                            @else <i class="fas fa-question"></i> @endif
                                         </div>
                                         <div>
                                             <div class="flex items-center space-x-2 mb-1">
                                                 <span class="text-xs font-bold text-sky-800">#{{ $t->ticket_code }}</span>
-                                                <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase
+                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide
                                                     @if($t->status == 'open') bg-rose-100 text-rose-800
-                                                    @elseif($t->status == 'on_progress') bg-amber-100 text-amber-800
+                                                    @elseif($t->status == 'on_progress') bg-blue-100 text-blue-800
+                                                    @elseif($t->status == 'pending') bg-amber-100 text-amber-800
                                                     @elseif($t->status == 'closed') bg-emerald-100 text-emerald-800
                                                     @else bg-slate-100 text-slate-700 @endif">
                                                     {{ str_replace('_', ' ', $t->status) }}
                                                 </span>
                                             </div>
-                                            <h3 class="font-bold text-sm text-slate-900 leading-snug">{{ $t->deskripsi }}</h3>
-                                            <p class="text-xs text-slate-500 mt-1">
+                                            <h3 class="font-semibold text-sm text-slate-900 leading-snug">{{ $t->deskripsi }}</h3>
+                                            <p class="text-xs text-slate-400 mt-1">
                                                 Dibuat: {{ $t->created_at->format('d M Y, H:i') }}
-                                                @if($t->technician) • Teknisi: <span class="font-bold text-slate-700">{{ $t->technician->name }}</span> @endif
+                                                @if($t->technician) &bull; Teknisi: <span class="font-medium text-slate-700">{{ $t->technician->name }}</span> @endif
                                             </p>
                                             @if(($t->status == 'pending' || $t->status == 'cancelled') && $t->reason_text)
-                                                <div class="mt-2 text-xs p-2 rounded-xl {{ $t->status == 'pending' ? 'bg-amber-100/70 text-amber-900 border border-amber-200' : 'bg-slate-200/70 text-slate-800 border border-slate-300' }}">
-                                                    <span class="font-bold">⚠️ Keterangan {{ ucfirst($t->status) }}:</span> {{ $t->reason_text }}
+                                                <div class="mt-2 text-xs p-2 rounded-lg {{ $t->status == 'pending' ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-slate-100 text-slate-800 border border-slate-200' }}">
+                                                    <span class="font-semibold">Keterangan {{ ucfirst($t->status) }}:</span> {{ $t->reason_text }}
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="flex items-center justify-end">
-                                        <span class="text-xs text-sky-700 font-bold flex items-center gap-1">
-                                            💬 Buka Chat & Live Status
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                        </span>
+                                    <div class="flex items-center justify-end text-xs text-sky-600 font-semibold group-hover:text-sky-800">
+                                        Buka Chat &rarr;
                                     </div>
                                 </div>
                             </a>
@@ -263,39 +323,37 @@
             </div>
         </div>
 
-        <!-- TAB 3: PERANGKAT SAYA (ASSETS INVENTORY) -->
+        {{-- TAB 3: PERANGKAT SAYA (ASSETS INVENTORY) --}}
         <div id="view-assets" class="{{ $activeTab == 'assets' ? '' : 'hidden' }} max-w-4xl mx-auto">
-            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-sky-100/50 border border-sky-100">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-sky-50">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/90">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
                     <div>
-                        <h2 class="text-xl font-extrabold text-slate-900">Perangkat &amp; Aset IT Terdaftar</h2>
-                        <p class="text-xs text-slate-500">Daftar seluruh perlengkapan IT yang terikat pada <strong>{{ $detection['nama_user'] }}</strong> ({{ $detection['hostname'] }})</p>
+                        <h2 class="text-lg font-bold text-slate-900">Perangkat &amp; Aset IT Terdaftar</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Daftar seluruh perlengkapan IT yang terikat pada <strong>{{ $detection['nama_user'] }}</strong> ({{ $detection['hostname'] }})</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs bg-sky-50 text-sky-800 font-bold px-3 py-1.5 rounded-xl border border-sky-200/60 flex items-center gap-1.5 shadow-2xs">
-                            <span>📦 Total Aset:</span>
-                            <span class="bg-sky-600 text-white text-[11px] px-2 py-0.5 rounded-full font-black">{{ $myAssets->count() }}</span>
+                        <span class="text-xs bg-slate-50 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5">
+                            <span>Total Aset:</span>
+                            <span class="bg-sky-600 text-white text-[11px] px-2 py-0.2 rounded-full font-bold">{{ $myAssets->count() }}</span>
                         </span>
                     </div>
                 </div>
 
                 @if($myAssets->isEmpty())
-                    <div class="p-8 rounded-2xl border border-sky-200 bg-sky-50/40 text-center">
-                        <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center text-3xl font-bold mb-3 shadow-2xs">
-                            💻
-                        </div>
-                        <h3 class="font-extrabold text-base text-slate-900 mb-1">Laptop Aktif Terdeteksi</h3>
-                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-4">Belum ada periferal tambahan (seperti mouse, headset, LAN adapter, USB audio, HP root) yang terdaftar atas nama pengguna ini di database inventaris.</p>
-                        <div class="inline-flex flex-wrap items-center justify-center gap-2 bg-white px-4 py-2 rounded-xl border border-sky-100 text-xs font-semibold text-slate-700 shadow-2xs">
-                            <span>💻 {{ $detection['hostname'] }}</span>
-                            <span class="text-slate-300">•</span>
-                            <span>👤 {{ $detection['nama_user'] }}</span>
-                            <span class="text-slate-300">•</span>
-                            <span>🌐 {{ $detection['ip_address'] }}</span>
+                    <div class="p-8 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 text-center">
+                        <i class="fas fa-laptop text-3xl text-slate-300 mb-2 block"></i>
+                        <h3 class="font-semibold text-sm text-slate-800 mb-1">Laptop Aktif Terdeteksi</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto mb-3">Belum ada periferal tambahan (seperti mouse, headset, LAN adapter, USB audio) yang terdaftar atas nama pengguna ini di database inventaris.</p>
+                        <div class="inline-flex flex-wrap items-center justify-center gap-2 bg-white px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700 font-mono">
+                            <span>{{ $detection['hostname'] }}</span>
+                            <span class="text-slate-300">&bull;</span>
+                            <span>{{ $detection['nama_user'] }}</span>
+                            <span class="text-slate-300">&bull;</span>
+                            <span>{{ $detection['ip_address'] }}</span>
                         </div>
                     </div>
                 @else
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         @foreach($myAssets as $asset)
                             @php
                                 $assetType = $asset->jenis ?? $asset->type_label ?? $asset->type ?? 'Aset IT';
@@ -303,37 +361,31 @@
                                 $assetSn = $asset->sn ?? $asset->serial_number ?? $asset->asset_code ?? '-';
                                 $assetCondition = strtolower($asset->kondisi ?? $asset->condition ?? 'baik');
                                 $assetStatus = strtolower($asset->status ?? 'digunakan');
-                                $icon = $asset->jenis_icon ?? '📦';
                             @endphp
-                            <div class="p-4 sm:p-5 rounded-2xl border border-sky-100 hover:border-sky-300 bg-white hover:bg-sky-50/20 transition-all shadow-2xs flex items-start space-x-3.5">
-                                <div class="w-12 h-12 rounded-2xl bg-sky-100/80 text-sky-800 flex items-center justify-center text-2xl font-bold flex-shrink-0 shadow-2xs border border-sky-200/50">
-                                    {{ $icon }}
+                            <div class="p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/50 transition-all flex items-start space-x-3.5">
+                                <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-base font-bold flex-shrink-0 border border-slate-200/60">
+                                    @if(str_contains(strtolower($assetType), 'laptop')) <i class="fas fa-laptop"></i>
+                                    @elseif(str_contains(strtolower($assetType), 'charger')) <i class="fas fa-plug"></i>
+                                    @elseif(str_contains(strtolower($assetType), 'mouse')) <i class="fas fa-mouse"></i>
+                                    @elseif(str_contains(strtolower($assetType), 'headset')) <i class="fas fa-headphones"></i>
+                                    @elseif(str_contains(strtolower($assetType), 'lan')) <i class="fas fa-network-wired"></i>
+                                    @else <i class="fas fa-box"></i> @endif
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-1 mb-1">
-                                        <span class="text-[10px] font-extrabold text-sky-700 bg-sky-100/80 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                        <span class="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded uppercase tracking-wider border border-sky-100">
                                             {{ $assetType }}
                                         </span>
-                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md {{ in_array($assetCondition, ['baik', 'good', 'bagus']) ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded {{ in_array($assetCondition, ['baik', 'good', 'bagus']) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100' }}">
                                             {{ ucfirst($asset->kondisi ?? $asset->condition ?? 'Baik') }}
                                         </span>
                                     </div>
-                                    <h3 class="font-extrabold text-sm text-slate-900 truncate">
+                                    <h3 class="font-bold text-sm text-slate-900 truncate">
                                         {{ $assetBrand }}
                                     </h3>
                                     <p class="text-xs text-slate-500 font-mono mt-0.5 truncate">
-                                        S/N: <span class="font-bold text-slate-700">{{ $assetSn }}</span>
+                                        S/N: <span class="font-semibold text-slate-700">{{ $assetSn }}</span>
                                     </p>
-                                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
-                                        <span class="flex items-center gap-1 font-medium">
-                                            <span class="w-1.5 h-1.5 rounded-full {{ in_array($assetStatus, ['aktif', 'digunakan', 'assigned', 'available']) ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
-                                            Status: <strong class="text-slate-700 capitalize">{{ $asset->status ?? 'Aktif' }}</strong>
-                                        </span>
-                                        @if(!empty($asset->lokasi) || !empty($asset->department))
-                                            <span class="text-slate-300">•</span>
-                                            <span class="truncate">{{ $asset->lokasi ?? $asset->department }}</span>
-                                        @endif
-                                    </div>
                                 </div>
                             </div>
                         @endforeach
@@ -344,20 +396,17 @@
 
     </main>
 
-    <!-- Laptop Selection Modal -->
-    <div id="laptop-modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all" onclick="closeLaptopModal(event)">
-        <div class="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-sky-100 flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+    {{-- MODAL GANTI / PILIH LAPTOP --}}
+    <div id="laptop-modal" class="fixed inset-0 z-[100] hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 transition-all" onclick="closeLaptopModal(event)">
+        <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-sky-50/80 border-b border-sky-100 flex items-center justify-between">
-                <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">💻</span>
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 text-sm">Pilih Nomor Laptop Anda</h3>
-                        <p class="text-[11px] text-sky-700">Pilih laptop Anda untuk memfilter riwayat tiket perangkat ini</p>
-                    </div>
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Pilih / Ganti Perangkat Laptop</h3>
+                    <p class="text-xs text-slate-500">Sesuaikan nomor laptop dengan database inventaris</p>
                 </div>
-                <button type="button" onclick="closeLaptopModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold">
-                    ✕
+                <button type="button" onclick="closeLaptopModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-all text-xs font-bold">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
 
@@ -369,14 +418,14 @@
                     <input type="hidden" name="tab" value="{{ $activeTab }}">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Ketik Nomor Laptop</label>
                     <div class="flex items-center gap-2">
-                        <div class="flex-1 flex items-center bg-slate-50 border border-sky-200 rounded-xl overflow-hidden focus-within:border-sky-500 focus-within:bg-white transition-all">
-                            <span class="bg-sky-100 text-sky-800 font-extrabold text-xs sm:text-sm px-3.5 py-2.5 border-r border-sky-200 select-none">
+                        <div class="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-sky-500 focus-within:bg-white transition-all">
+                            <span class="bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm px-3.5 py-2.5 border-r border-slate-200 select-none">
                                 LAP-
                             </span>
-                            <input type="text" id="modal-lap-number" placeholder="Contoh: 0303" class="flex-1 bg-transparent px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none uppercase" autocomplete="off" required>
+                            <input type="text" id="modal-lap-number" placeholder="Contoh: 0253" class="flex-1 bg-transparent px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none uppercase" autocomplete="off" required>
                             <input type="hidden" name="nomor_laptop" id="modal-full-laptop-sn">
                         </div>
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
+                        <button type="submit" class="btn-primary-saas text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-2xs">
                             Setel
                         </button>
                     </div>
@@ -384,13 +433,13 @@
 
                 <div class="relative flex py-1 items-center">
                     <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink mx-3 text-[11px] text-slate-400 uppercase font-semibold">Atau Pilih Dari Database Inventaris</span>
+                    <span class="flex-shrink mx-3 text-[11px] text-slate-400 uppercase font-semibold">Atau Cari Dari Database</span>
                     <div class="flex-grow border-t border-slate-200"></div>
                 </div>
 
                 <!-- Live Search Box for Inventories -->
                 <div>
-                    <input type="text" id="laptop-search-input" onkeyup="filterLaptopList()" placeholder="🔍 Cari nama pengguna atau nomor laptop..." class="w-full bg-slate-50 border border-sky-100 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-sky-400 focus:bg-white transition-all">
+                    <input type="text" id="laptop-search-input" onkeyup="filterLaptopList()" placeholder="Ketik nama pengguna atau nomor laptop..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-sky-500 focus:bg-white transition-all">
                 </div>
 
                 <!-- Laptop List Grid -->
@@ -403,7 +452,9 @@
                                 <input type="hidden" name="nomor_laptop" value="{{ $inv->sn }}">
                                 <button type="submit" class="w-full text-left p-2.5 rounded-xl hover:bg-sky-50 border border-transparent hover:border-sky-200 transition-all flex items-center justify-between group laptop-item-card" data-search="{{ strtolower($inv->sn . ' ' . $inv->pengguna . ' ' . $inv->department) }}">
                                     <div class="flex items-center space-x-2.5">
-                                        <span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs flex-shrink-0">💻</span>
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                            <i class="fas fa-laptop text-[11px]"></i>
+                                        </div>
                                         <div>
                                             <span class="font-bold text-xs text-slate-800 group-hover:text-sky-700 block">{{ $inv->sn }}</span>
                                             <span class="text-[10px] text-slate-400 block">{{ $inv->pengguna ?: 'Tanpa Pengguna' }} ({{ $inv->department ?: '-' }})</span>
@@ -419,6 +470,10 @@
         </div>
     </div>
 
+    {{-- FOOTER MPTB --}}
+    @include('layouts.footer')
+
+    {{-- JAVASCRIPT LOGIC --}}
     <script>
         function handleSetLaptopSubmit(form) {
             const numInput = document.getElementById('modal-lap-number');
@@ -472,6 +527,12 @@
         function validateForm() {
             const hasCategory = document.querySelector('input[name="kategori"]:checked');
             const descEl = document.getElementById('ticket-deskripsi');
+            const charCounter = document.getElementById('char-counter');
+            
+            if (descEl && charCounter) {
+                charCounter.innerText = descEl.value.length;
+            }
+
             const hasDesc = descEl && descEl.value.trim().length >= 5;
             const btn = document.getElementById('btn-submit');
             if (!btn) return;
@@ -479,31 +540,21 @@
             if (hasCategory && hasDesc) {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                btn.classList.add('hover:opacity-95', 'active:scale-98');
             } else {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.classList.remove('hover:opacity-95', 'active:scale-98');
             }
         }
 
         function selectCategory(label) {
             document.querySelectorAll('.kat-card').forEach(card => {
-                card.classList.remove('border-2', 'border-sky-500', 'bg-sky-50');
-                card.classList.add('border', 'border-slate-200', 'bg-white');
-                const text = card.querySelector('.kat-label');
-                if (text) {
-                    text.classList.remove('text-sky-800');
-                    text.classList.add('text-slate-700');
-                }
+                card.classList.remove('category-card-active');
+                card.classList.add('category-card-inactive');
             });
-            label.classList.remove('border', 'border-slate-200', 'bg-white');
-            label.classList.add('border-2', 'border-sky-500', 'bg-sky-50');
-            const activeText = label.querySelector('.kat-label');
-            if (activeText) {
-                activeText.classList.remove('text-slate-700');
-                activeText.classList.add('text-sky-800');
-            }
+            
+            label.classList.remove('category-card-inactive');
+            label.classList.add('category-card-active');
+            
             const radio = label.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
@@ -533,8 +584,11 @@
 
             const btn = document.getElementById('btn-submit');
             const btnText = document.getElementById('btn-text');
-            if (btnText) {
-                btnText.innerHTML = "⏳ Mengirim Pengaduan...";
+            const btnSpinner = document.getElementById('btn-spinner');
+            
+            if (btnText && btnSpinner) {
+                btnText.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
             }
             if (btn) {
                 setTimeout(() => {
@@ -551,10 +605,14 @@
                 const btn = document.getElementById('tab-' + v);
                 if (v === tab) {
                     if (el) el.classList.remove('hidden');
-                    if (btn) btn.className = "flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm flex items-center justify-center gap-2";
+                    if (btn) {
+                        btn.className = "py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 tab-underline-active";
+                    }
                 } else {
                     if (el) el.classList.add('hidden');
-                    if (btn) btn.className = "flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-sky-700 flex items-center justify-center gap-2";
+                    if (btn) {
+                        btn.className = "py-3 px-1 text-xs sm:text-sm transition-all whitespace-nowrap flex items-center gap-2 tab-underline-inactive";
+                    }
                 }
             });
 
@@ -600,4 +658,3 @@
     </script>
 </body>
 </html>
-
