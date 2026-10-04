@@ -566,7 +566,14 @@
         slashActiveIndex = 0;
 
         if (templates.length === 0) {
-            slashList.innerHTML = '<div class="p-3 text-muted text-center text-xs font-italic">Tidak ada template yang cocok dengan pencarian</div>';
+            const queryDisplay = slashMatchInfo && slashMatchInfo.query ? `/${escapeHtml(slashMatchInfo.query)}` : '/';
+            slashList.innerHTML = `
+                <div class="p-3 text-center text-muted">
+                    <div class="mb-1 text-secondary"><i class="fas fa-search fa-lg opacity-50"></i></div>
+                    <div class="font-weight-bold text-dark text-xs mb-1">Tidak ada template</div>
+                    <small class="text-muted text-xs d-block">Tidak ditemukan template untuk shortcut <code>${queryDisplay}</code></small>
+                </div>
+            `;
             return;
         }
 
@@ -783,6 +790,10 @@
                     e.preventDefault();
                     e.stopPropagation();
                     selectSlashTemplate(targetTemplate);
+                    return false;
+                } else if (e.key === 'Tab' || e.keyCode === 9) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     return false;
                 }
             }
